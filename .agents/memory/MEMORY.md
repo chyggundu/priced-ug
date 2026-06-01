@@ -1,0 +1,1 @@
+- [Pricedug architecture](pricedug-arch.md) — one business per user, admin via ADMIN_USER_ID env var, Clerk proxy on API server.

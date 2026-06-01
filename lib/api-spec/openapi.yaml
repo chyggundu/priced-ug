@@ -3,20 +3,27 @@ info:
   # Do not change the title, if the title changes, the import paths will be broken
   title: Api
   version: 0.1.0
-  description: API specification
+  description: Pricedug API specification
 servers:
   - url: /api
     description: Base API path
 tags:
   - name: health
     description: Health operations
+  - name: categories
+    description: Business category operations
+  - name: businesses
+    description: Business page operations
+  - name: products
+    description: Product/merchandise operations
+  - name: storage
+    description: File storage operations
 paths:
   /healthz:
     get:
       operationId: healthCheck
       tags: [health]
       summary: Health check
-      description: Returns server health status
       responses:
         "200":
           description: Healthy
@@ -24,6 +31,321 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/HealthStatus"
+
+  /categories:
+    get:
+      operationId: getCategories
+      tags: [categories]
+      summary: List all categories
+      responses:
+        "200":
+          description: List of categories
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Category"
+    post:
+      operationId: createCategory
+      tags: [categories]
+      summary: Create a category (admin only)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateCategoryInput"
+      responses:
+        "201":
+          description: Created category
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Category"
+        "401":
+          description: Unauthorized
+        "403":
+          description: Forbidden
+
+  /categories/{id}:
+    delete:
+      operationId: deleteCategory
+      tags: [categories]
+      summary: Delete a category (admin only)
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Deleted
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SuccessResponse"
+        "401":
+          description: Unauthorized
+        "403":
+          description: Forbidden
+
+  /businesses:
+    get:
+      operationId: getBusinesses
+      tags: [businesses]
+      summary: List visible businesses (public)
+      parameters:
+        - name: categoryId
+          in: query
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: List of businesses
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Business"
+    post:
+      operationId: createBusiness
+      tags: [businesses]
+      summary: Create a business page (authenticated)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateBusinessInput"
+      responses:
+        "201":
+          description: Created business
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Business"
+        "401":
+          description: Unauthorized
+
+  /businesses/me:
+    get:
+      operationId: getMyBusiness
+      tags: [businesses]
+      summary: Get my business (authenticated)
+      responses:
+        "200":
+          description: My business
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Business"
+        "401":
+          description: Unauthorized
+        "404":
+          description: No business found
+    patch:
+      operationId: updateMyBusiness
+      tags: [businesses]
+      summary: Update my business (authenticated)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UpdateBusinessInput"
+      responses:
+        "200":
+          description: Updated business
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Business"
+        "401":
+          description: Unauthorized
+        "404":
+          description: Not found
+
+  /businesses/{id}:
+    get:
+      operationId: getBusiness
+      tags: [businesses]
+      summary: Get a business by ID (public)
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Business details
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Business"
+        "404":
+          description: Not found
+
+  /businesses/{id}/visibility:
+    patch:
+      operationId: toggleBusinessVisibility
+      tags: [businesses]
+      summary: Toggle business visibility (admin only)
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/VisibilityInput"
+      responses:
+        "200":
+          description: Updated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Business"
+        "401":
+          description: Unauthorized
+        "403":
+          description: Forbidden
+
+  /businesses/me/products:
+    get:
+      operationId: getMyProducts
+      tags: [products]
+      summary: Get my business products (authenticated)
+      responses:
+        "200":
+          description: List of products
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Product"
+        "401":
+          description: Unauthorized
+    post:
+      operationId: createProduct
+      tags: [products]
+      summary: Add a product to my business (authenticated)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateProductInput"
+      responses:
+        "201":
+          description: Created product
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Product"
+        "401":
+          description: Unauthorized
+
+  /businesses/me/products/{productId}:
+    patch:
+      operationId: updateProduct
+      tags: [products]
+      summary: Update a product (authenticated)
+      parameters:
+        - name: productId
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UpdateProductInput"
+      responses:
+        "200":
+          description: Updated product
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Product"
+        "401":
+          description: Unauthorized
+        "404":
+          description: Not found
+    delete:
+      operationId: deleteProduct
+      tags: [products]
+      summary: Delete a product (authenticated)
+      parameters:
+        - name: productId
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Deleted
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SuccessResponse"
+        "401":
+          description: Unauthorized
+        "404":
+          description: Not found
+
+  /businesses/{businessId}/products:
+    get:
+      operationId: getBusinessProducts
+      tags: [products]
+      summary: Get products for a business (public)
+      parameters:
+        - name: businessId
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: List of products
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Product"
+
+  /storage/upload-url:
+    post:
+      operationId: getUploadUrl
+      tags: [storage]
+      summary: Get a presigned upload URL (authenticated)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UploadUrlInput"
+      responses:
+        "200":
+          description: Upload URL
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/UploadUrlResponse"
+        "401":
+          description: Unauthorized
+
 components:
   schemas:
     HealthStatus:
@@ -34,3 +356,223 @@ components:
       required:
         - status
 
+    SuccessResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+      required:
+        - success
+
+    Category:
+      type: object
+      properties:
+        id:
+          type: integer
+        name:
+          type: string
+        createdAt:
+          type: string
+          format: date-time
+      required:
+        - id
+        - name
+        - createdAt
+
+    CreateCategoryInput:
+      type: object
+      properties:
+        name:
+          type: string
+      required:
+        - name
+
+    Business:
+      type: object
+      properties:
+        id:
+          type: integer
+        clerkUserId:
+          type: string
+        name:
+          type: string
+        description:
+          type: string
+          nullable: true
+        address:
+          type: string
+          nullable: true
+        phone:
+          type: string
+          nullable: true
+        categoryId:
+          type: integer
+          nullable: true
+        categoryName:
+          type: string
+          nullable: true
+        imageUrl:
+          type: string
+          nullable: true
+        isHidden:
+          type: boolean
+        createdAt:
+          type: string
+          format: date-time
+      required:
+        - id
+        - clerkUserId
+        - name
+        - isHidden
+        - createdAt
+
+    CreateBusinessInput:
+      type: object
+      properties:
+        name:
+          type: string
+        description:
+          type: string
+          nullable: true
+        address:
+          type: string
+          nullable: true
+        phone:
+          type: string
+          nullable: true
+        categoryId:
+          type: integer
+          nullable: true
+        imageUrl:
+          type: string
+          nullable: true
+      required:
+        - name
+
+    UpdateBusinessInput:
+      type: object
+      properties:
+        name:
+          type: string
+        description:
+          type: string
+          nullable: true
+        address:
+          type: string
+          nullable: true
+        phone:
+          type: string
+          nullable: true
+        categoryId:
+          type: integer
+          nullable: true
+        imageUrl:
+          type: string
+          nullable: true
+
+    VisibilityInput:
+      type: object
+      properties:
+        isHidden:
+          type: boolean
+      required:
+        - isHidden
+
+    Product:
+      type: object
+      properties:
+        id:
+          type: integer
+        businessId:
+          type: integer
+        name:
+          type: string
+        description:
+          type: string
+          nullable: true
+        price:
+          type: string
+          nullable: true
+        imageUrl:
+          type: string
+          nullable: true
+        size:
+          type: string
+          nullable: true
+        materials:
+          type: string
+          nullable: true
+        createdAt:
+          type: string
+          format: date-time
+      required:
+        - id
+        - businessId
+        - name
+        - createdAt
+
+    CreateProductInput:
+      type: object
+      properties:
+        name:
+          type: string
+        description:
+          type: string
+          nullable: true
+        price:
+          type: string
+          nullable: true
+        imageUrl:
+          type: string
+          nullable: true
+        size:
+          type: string
+          nullable: true
+        materials:
+          type: string
+          nullable: true
+      required:
+        - name
+
+    UpdateProductInput:
+      type: object
+      properties:
+        name:
+          type: string
+        description:
+          type: string
+          nullable: true
+        price:
+          type: string
+          nullable: true
+        imageUrl:
+          type: string
+          nullable: true
+        size:
+          type: string
+          nullable: true
+        materials:
+          type: string
+          nullable: true
+
+    UploadUrlInput:
+      type: object
+      properties:
+        filename:
+          type: string
+        contentType:
+          type: string
+      required:
+        - filename
+        - contentType
+
+    UploadUrlResponse:
+      type: object
+      properties:
+        uploadUrl:
+          type: string
+        publicUrl:
+          type: string
+      required:
+        - uploadUrl
+        - publicUrl
