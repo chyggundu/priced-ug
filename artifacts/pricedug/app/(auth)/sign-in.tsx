@@ -80,7 +80,7 @@ export default function SignInScreen() {
           <View style={styles.logoCircle}>
             <Text style={styles.logoText}>P</Text>
           </View>
-          <Text style={styles.appName}>Pricedug</Text>
+          <Text style={styles.appName}>Priced Ug</Text>
           <Text style={styles.tagline}>Find the best deals in Uganda</Text>
         </View>
 

@@ -37,7 +37,7 @@ export default function BrowseScreen() {
   );
 
   const openWhatsApp = () => {
-    const url = `whatsapp://send?phone=${WHATSAPP_NUMBER}&text=Hi, I found your app Pricedug and would like to know more.`;
+    const url = `whatsapp://send?phone=${WHATSAPP_NUMBER}&text=Hi, I found your app Priced Ug and would like to know more.`;
     const { Linking } = require("react-native");
     Linking.openURL(url).catch(() => {
       Linking.openURL(`https://wa.me/${WHATSAPP_NUMBER}`);
@@ -55,7 +55,7 @@ export default function BrowseScreen() {
             <View style={styles.logoCircle}>
               <Text style={styles.logoLetter}>P</Text>
             </View>
-            <Text style={styles.logoText}>ricedug</Text>
+            <Text style={styles.logoText}>riced Ug</Text>
           </View>
           <Pressable onPress={openWhatsApp} style={styles.whatsappBtn}>
             <Feather name="message-circle" size={20} color="#25D366" />

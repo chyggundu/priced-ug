@@ -25,7 +25,7 @@ export default function AccountScreen() {
 
   const openWhatsApp = () => {
     const { Linking } = require("react-native");
-    Linking.openURL(`whatsapp://send?phone=${WHATSAPP_NUMBER}&text=Hi, I need help with Pricedug.`)
+    Linking.openURL(`whatsapp://send?phone=${WHATSAPP_NUMBER}&text=Hi, I need help with Priced Ug.`)
       .catch(() => Linking.openURL(`https://wa.me/${WHATSAPP_NUMBER}`));
   };
 
