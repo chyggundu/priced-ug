@@ -1,6 +1,6 @@
 import { Router } from "express";
 import { db } from "@workspace/db";
-import { businessesTable, categoriesTable } from "@workspace/db";
+import { businessesTable, categoriesTable, productsTable } from "@workspace/db";
 import { eq, and } from "drizzle-orm";
 import { requireAuth, requireAdmin, optionalAuth } from "../lib/auth";
 
@@ -14,6 +14,7 @@ async function getBusinessWithCategory(businessId: number) {
       name: businessesTable.name,
       description: businessesTable.description,
       address: businessesTable.address,
+      city: businessesTable.city,
       phone: businessesTable.phone,
       categoryId: businessesTable.categoryId,
       categoryName: categoriesTable.name,
@@ -38,6 +39,7 @@ router.get("/businesses", optionalAuth, async (req, res) => {
         name: businessesTable.name,
         description: businessesTable.description,
         address: businessesTable.address,
+        city: businessesTable.city,
         phone: businessesTable.phone,
         categoryId: businessesTable.categoryId,
         categoryName: categoriesTable.name,
@@ -54,7 +56,28 @@ router.get("/businesses", optionalAuth, async (req, res) => {
     }
 
     const businesses = await query.where(and(...conditions));
-    res.json(businesses);
+
+    const products = await db
+      .select({ businessId: productsTable.businessId, price: productsTable.price })
+      .from(productsTable);
+
+    const minPriceByBusiness = new Map<number, number>();
+    for (const p of products) {
+      if (!p.price) continue;
+      const numeric = parseInt(p.price.replace(/[^0-9]/g, ""), 10);
+      if (!Number.isFinite(numeric) || numeric <= 0) continue;
+      const current = minPriceByBusiness.get(p.businessId);
+      if (current === undefined || numeric < current) {
+        minPriceByBusiness.set(p.businessId, numeric);
+      }
+    }
+
+    const withMinPrice = businesses.map((b) => ({
+      ...b,
+      minPrice: minPriceByBusiness.get(b.id) ?? null,
+    }));
+
+    res.json(withMinPrice);
   } catch (err) {
     req.log.error({ err }, "Failed to get businesses");
     res.status(500).json({ error: "Internal server error" });
@@ -70,6 +93,7 @@ router.get("/businesses/me", requireAuth, async (req, res) => {
         name: businessesTable.name,
         description: businessesTable.description,
         address: businessesTable.address,
+        city: businessesTable.city,
         phone: businessesTable.phone,
         categoryId: businessesTable.categoryId,
         categoryName: categoriesTable.name,
@@ -94,7 +118,7 @@ router.get("/businesses/me", requireAuth, async (req, res) => {
 
 router.post("/businesses", requireAuth, async (req, res) => {
   try {
-    const { name, description, address, phone, categoryId, imageUrl } = req.body;
+    const { name, description, address, city, phone, categoryId, imageUrl } = req.body;
     if (!name) {
       res.status(400).json({ error: "Name is required" });
       return;
@@ -117,6 +141,7 @@ router.post("/businesses", requireAuth, async (req, res) => {
         name,
         description: description ?? null,
         address: address ?? null,
+        city: city ?? null,
         phone: phone ?? null,
         categoryId: categoryId ?? null,
         imageUrl: imageUrl ?? null,
@@ -133,7 +158,7 @@ router.post("/businesses", requireAuth, async (req, res) => {
 
 router.patch("/businesses/me", requireAuth, async (req, res) => {
   try {
-    const { name, description, address, phone, categoryId, imageUrl } = req.body;
+    const { name, description, address, city, phone, categoryId, imageUrl } = req.body;
 
     const existing = await db
       .select({ id: businessesTable.id })
@@ -151,6 +176,7 @@ router.patch("/businesses/me", requireAuth, async (req, res) => {
         ...(name !== undefined && { name }),
         ...(description !== undefined && { description }),
         ...(address !== undefined && { address }),
+        ...(city !== undefined && { city }),
         ...(phone !== undefined && { phone }),
         ...(categoryId !== undefined && { categoryId }),
         ...(imageUrl !== undefined && { imageUrl }),

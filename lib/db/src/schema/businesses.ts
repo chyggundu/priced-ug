@@ -8,6 +8,7 @@ export const businessesTable = pgTable("businesses", {
   name: text("name").notNull(),
   description: text("description"),
   address: text("address"),
+  city: text("city"),
   phone: text("phone"),
   categoryId: integer("category_id"),
   imageUrl: text("image_url"),

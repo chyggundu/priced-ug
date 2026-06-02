@@ -25,16 +25,56 @@ export default function BrowseScreen() {
   const insets = useSafeAreaInsets();
   const [selectedCategory, setSelectedCategory] = useState<number | null>(null);
   const [searchQuery, setSearchQuery] = useState("");
+  const [selectedCity, setSelectedCity] = useState<string | null>(null);
+  const [sortBy, setSortBy] = useState<"newest" | "priceAsc" | "priceDesc">("newest");
 
   const { data: categories = [], isLoading: categoriesLoading } = useGetCategories();
   const { data: businesses = [], isLoading: businessesLoading } = useGetBusinesses(
     selectedCategory ? { categoryId: selectedCategory } : {}
   );
 
-  const filteredBusinesses = businesses.filter((b) =>
-    b.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    (b.description ?? "").toLowerCase().includes(searchQuery.toLowerCase())
-  );
+  const cities = Array.from(
+    new Set(
+      businesses
+        .map((b) => (b.city ?? "").trim())
+        .filter((c) => c.length > 0)
+    )
+  ).sort((a, b) => a.localeCompare(b));
+
+  const filteredBusinesses = businesses
+    .filter(
+      (b) =>
+        b.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        (b.description ?? "").toLowerCase().includes(searchQuery.toLowerCase())
+    )
+    .filter((b) =>
+      selectedCity && cities.includes(selectedCity)
+        ? (b.city ?? "").trim() === selectedCity
+        : true
+    )
+    .sort((a, b) => {
+      if (sortBy === "priceAsc" || sortBy === "priceDesc") {
+        const aHas = a.minPrice != null;
+        const bHas = b.minPrice != null;
+        if (!aHas && !bHas) return 0;
+        if (!aHas) return 1;
+        if (!bHas) return -1;
+        return sortBy === "priceAsc"
+          ? (a.minPrice as number) - (b.minPrice as number)
+          : (b.minPrice as number) - (a.minPrice as number);
+      }
+      return (
+        new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+      );
+    });
+
+  const sortOptions: { key: typeof sortBy; label: string }[] = [
+    { key: "newest", label: "Newest" },
+    { key: "priceAsc", label: "Price: Low to High" },
+    { key: "priceDesc", label: "Price: High to Low" },
+  ];
+
+  const formatPrice = (n: number) => `UGX ${n.toLocaleString()}`;
 
   const openWhatsApp = () => {
     const url = `whatsapp://send?phone=${WHATSAPP_NUMBER}&text=Hi, I found your app Priced Ug and would like to know more.`;
@@ -120,6 +160,67 @@ export default function BrowseScreen() {
           )}
         </View>
 
+        {/* Location */}
+        {cities.length > 0 && (
+          <View style={styles.section}>
+            <Text style={[styles.sectionTitle, { color: colors.foreground }]}>Location</Text>
+            <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.categoriesScroll}>
+              <Pressable
+                style={[
+                  styles.categoryChip,
+                  selectedCity === null
+                    ? { backgroundColor: colors.primary }
+                    : { backgroundColor: colors.muted },
+                ]}
+                onPress={() => setSelectedCity(null)}
+              >
+                <Text style={[styles.categoryChipText, { color: selectedCity === null ? "#fff" : colors.foreground }]}>
+                  All
+                </Text>
+              </Pressable>
+              {cities.map((cityName) => (
+                <Pressable
+                  key={cityName}
+                  style={[
+                    styles.categoryChip,
+                    selectedCity === cityName
+                      ? { backgroundColor: colors.primary }
+                      : { backgroundColor: colors.muted },
+                  ]}
+                  onPress={() => setSelectedCity(selectedCity === cityName ? null : cityName)}
+                >
+                  <Text style={[styles.categoryChipText, { color: selectedCity === cityName ? "#fff" : colors.foreground }]}>
+                    {cityName}
+                  </Text>
+                </Pressable>
+              ))}
+            </ScrollView>
+          </View>
+        )}
+
+        {/* Sort */}
+        <View style={styles.section}>
+          <Text style={[styles.sectionTitle, { color: colors.foreground }]}>Sort by</Text>
+          <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.categoriesScroll}>
+            {sortOptions.map((opt) => (
+              <Pressable
+                key={opt.key}
+                style={[
+                  styles.categoryChip,
+                  sortBy === opt.key
+                    ? { backgroundColor: colors.primary }
+                    : { backgroundColor: colors.muted },
+                ]}
+                onPress={() => setSortBy(opt.key)}
+              >
+                <Text style={[styles.categoryChipText, { color: sortBy === opt.key ? "#fff" : colors.foreground }]}>
+                  {opt.label}
+                </Text>
+              </Pressable>
+            ))}
+          </ScrollView>
+        </View>
+
         {/* Businesses */}
         <View style={styles.section}>
           <Text style={[styles.sectionTitle, { color: colors.foreground }]}>
@@ -167,11 +268,16 @@ export default function BrowseScreen() {
                         </Text>
                       </View>
                     )}
-                    {business.address && (
+                    {business.minPrice != null && (
+                      <Text style={[styles.priceText, { color: colors.primary }]} numberOfLines={1}>
+                        From {formatPrice(business.minPrice)}
+                      </Text>
+                    )}
+                    {(business.city || business.address) && (
                       <View style={styles.addressRow}>
                         <Feather name="map-pin" size={11} color={colors.mutedForeground} />
                         <Text style={[styles.addressText, { color: colors.mutedForeground }]} numberOfLines={1}>
-                          {business.address}
+                          {business.city || business.address}
                         </Text>
                       </View>
                     )}
@@ -271,4 +377,5 @@ const styles = StyleSheet.create({
   categoryBadgeText: { fontSize: 11, fontWeight: "500" as const },
   addressRow: { flexDirection: "row", alignItems: "center", gap: 4 },
   addressText: { fontSize: 11, flex: 1 },
+  priceText: { fontSize: 13, fontWeight: "700" as const, marginBottom: 4 },
 });

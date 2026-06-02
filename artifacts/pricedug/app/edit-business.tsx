@@ -39,6 +39,7 @@ export default function EditBusinessScreen() {
   const [name, setName] = useState("");
   const [description, setDescription] = useState("");
   const [address, setAddress] = useState("");
+  const [city, setCity] = useState("");
   const [phone, setPhone] = useState("");
   const [categoryId, setCategoryId] = useState<number | null>(null);
   const [imageUrl, setImageUrl] = useState<string | null>(null);
@@ -50,6 +51,7 @@ export default function EditBusinessScreen() {
       setName(business.name);
       setDescription(business.description ?? "");
       setAddress(business.address ?? "");
+      setCity(business.city ?? "");
       setPhone(business.phone ?? "");
       setCategoryId(business.categoryId ?? null);
       setImageUrl(business.imageUrl ?? null);
@@ -100,6 +102,7 @@ export default function EditBusinessScreen() {
         name: name.trim(),
         description: description.trim() || null,
         address: address.trim() || null,
+        city: city.trim() || null,
         phone: phone.trim() || null,
         categoryId: categoryId ?? null,
         imageUrl: imageUrl ?? null,
@@ -217,12 +220,21 @@ export default function EditBusinessScreen() {
             textAlignVertical="top"
           />
 
+          <Text style={[styles.label, { color: colors.foreground }]}>City / Town</Text>
+          <TextInput
+            style={[styles.input, { backgroundColor: colors.muted, color: colors.foreground }]}
+            value={city}
+            onChangeText={setCity}
+            placeholder="e.g. Kampala"
+            placeholderTextColor={colors.mutedForeground}
+          />
+
           <Text style={[styles.label, { color: colors.foreground }]}>Address</Text>
           <TextInput
             style={[styles.input, { backgroundColor: colors.muted, color: colors.foreground }]}
             value={address}
             onChangeText={setAddress}
-            placeholder="e.g. Nakasero Market, Kampala"
+            placeholder="e.g. Nakasero Market"
             placeholderTextColor={colors.mutedForeground}
           />
 

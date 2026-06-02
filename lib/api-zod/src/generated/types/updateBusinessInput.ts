@@ -10,6 +10,7 @@ export interface UpdateBusinessInput {
   name?: string;
   description?: string | null;
   address?: string | null;
+  city?: string | null;
   phone?: string | null;
   categoryId?: number | null;
   imageUrl?: string | null;

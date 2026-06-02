@@ -402,6 +402,9 @@ components:
         address:
           type: string
           nullable: true
+        city:
+          type: string
+          nullable: true
         phone:
           type: string
           nullable: true
@@ -413,6 +416,9 @@ components:
           nullable: true
         imageUrl:
           type: string
+          nullable: true
+        minPrice:
+          type: integer
           nullable: true
         isHidden:
           type: boolean
@@ -437,6 +443,9 @@ components:
         address:
           type: string
           nullable: true
+        city:
+          type: string
+          nullable: true
         phone:
           type: string
           nullable: true
@@ -458,6 +467,9 @@ components:
           type: string
           nullable: true
         address:
+          type: string
+          nullable: true
+        city:
           type: string
           nullable: true
         phone:

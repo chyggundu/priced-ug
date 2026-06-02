@@ -60,10 +60,12 @@ export const GetBusinessesResponseItem = zod.object({
   "name": zod.string(),
   "description": zod.string().nullish(),
   "address": zod.string().nullish(),
+  "city": zod.string().nullish(),
   "phone": zod.string().nullish(),
   "categoryId": zod.number().nullish(),
   "categoryName": zod.string().nullish(),
   "imageUrl": zod.string().nullish(),
+  "minPrice": zod.number().nullish(),
   "isHidden": zod.boolean(),
   "createdAt": zod.coerce.date()
 })
@@ -77,6 +79,7 @@ export const CreateBusinessBody = zod.object({
   "name": zod.string(),
   "description": zod.string().nullish(),
   "address": zod.string().nullish(),
+  "city": zod.string().nullish(),
   "phone": zod.string().nullish(),
   "categoryId": zod.number().nullish(),
   "imageUrl": zod.string().nullish()
@@ -92,10 +95,12 @@ export const GetMyBusinessResponse = zod.object({
   "name": zod.string(),
   "description": zod.string().nullish(),
   "address": zod.string().nullish(),
+  "city": zod.string().nullish(),
   "phone": zod.string().nullish(),
   "categoryId": zod.number().nullish(),
   "categoryName": zod.string().nullish(),
   "imageUrl": zod.string().nullish(),
+  "minPrice": zod.number().nullish(),
   "isHidden": zod.boolean(),
   "createdAt": zod.coerce.date()
 })
@@ -108,6 +113,7 @@ export const UpdateMyBusinessBody = zod.object({
   "name": zod.string().optional(),
   "description": zod.string().nullish(),
   "address": zod.string().nullish(),
+  "city": zod.string().nullish(),
   "phone": zod.string().nullish(),
   "categoryId": zod.number().nullish(),
   "imageUrl": zod.string().nullish()
@@ -119,10 +125,12 @@ export const UpdateMyBusinessResponse = zod.object({
   "name": zod.string(),
   "description": zod.string().nullish(),
   "address": zod.string().nullish(),
+  "city": zod.string().nullish(),
   "phone": zod.string().nullish(),
   "categoryId": zod.number().nullish(),
   "categoryName": zod.string().nullish(),
   "imageUrl": zod.string().nullish(),
+  "minPrice": zod.number().nullish(),
   "isHidden": zod.boolean(),
   "createdAt": zod.coerce.date()
 })
@@ -141,10 +149,12 @@ export const GetBusinessResponse = zod.object({
   "name": zod.string(),
   "description": zod.string().nullish(),
   "address": zod.string().nullish(),
+  "city": zod.string().nullish(),
   "phone": zod.string().nullish(),
   "categoryId": zod.number().nullish(),
   "categoryName": zod.string().nullish(),
   "imageUrl": zod.string().nullish(),
+  "minPrice": zod.number().nullish(),
   "isHidden": zod.boolean(),
   "createdAt": zod.coerce.date()
 })
@@ -167,10 +177,12 @@ export const ToggleBusinessVisibilityResponse = zod.object({
   "name": zod.string(),
   "description": zod.string().nullish(),
   "address": zod.string().nullish(),
+  "city": zod.string().nullish(),
   "phone": zod.string().nullish(),
   "categoryId": zod.number().nullish(),
   "categoryName": zod.string().nullish(),
   "imageUrl": zod.string().nullish(),
+  "minPrice": zod.number().nullish(),
   "isHidden": zod.boolean(),
   "createdAt": zod.coerce.date()
 })

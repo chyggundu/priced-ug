@@ -12,10 +12,12 @@ export interface Business {
   name: string;
   description?: string | null;
   address?: string | null;
+  city?: string | null;
   phone?: string | null;
   categoryId?: number | null;
   categoryName?: string | null;
   imageUrl?: string | null;
+  minPrice?: number | null;
   isHidden: boolean;
   createdAt: Date;
 }
