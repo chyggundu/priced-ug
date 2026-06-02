@@ -343,6 +343,83 @@ export const useDeleteCategory = <TError = ErrorType<void>,
       return useMutation(getDeleteCategoryMutationOptions(options));
     }
 
+export const getGetAdminBusinessesUrl = () => {
+
+
+
+
+  return `/api/admin/businesses`
+}
+
+/**
+ * @summary List all businesses including hidden (admin only)
+ */
+export const getAdminBusinesses = async ( options?: RequestInit): Promise<Business[]> => {
+
+  return customFetch<Business[]>(getGetAdminBusinessesUrl(),
+  {
+    ...options,
+    method: 'GET'
+
+
+  }
+);}
+
+
+
+
+
+export const getGetAdminBusinessesQueryKey = () => {
+    return [
+    `/api/admin/businesses`
+    ] as const;
+    }
+
+
+export const getGetAdminBusinessesQueryOptions = <TData = Awaited<ReturnType<typeof getAdminBusinesses>>, TError = ErrorType<void>>( options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof getAdminBusinesses>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getGetAdminBusinessesQueryKey();
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof getAdminBusinesses>>> = ({ signal }) => getAdminBusinesses({ signal, ...requestOptions });
+
+
+
+
+
+   return  { queryKey, queryFn, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof getAdminBusinesses>>, TError, TData> & { queryKey: QueryKey }
+}
+
+export type GetAdminBusinessesQueryResult = NonNullable<Awaited<ReturnType<typeof getAdminBusinesses>>>
+export type GetAdminBusinessesQueryError = ErrorType<void>
+
+
+/**
+ * @summary List all businesses including hidden (admin only)
+ */
+
+export function useGetAdminBusinesses<TData = Awaited<ReturnType<typeof getAdminBusinesses>>, TError = ErrorType<void>>(
+  options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof getAdminBusinesses>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+
+ ):  UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+
+  const queryOptions = getGetAdminBusinessesQueryOptions(options)
+
+  const query = useQuery(queryOptions) as  UseQueryResult<TData, TError> & { queryKey: QueryKey };
+
+  return { ...query, queryKey: queryOptions.queryKey };
+}
+
+
+
+
+
+
+
 export const getGetBusinessesUrl = (params?: GetBusinessesParams,) => {
   const normalizedParams = new URLSearchParams();
 

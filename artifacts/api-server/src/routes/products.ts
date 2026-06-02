@@ -2,13 +2,29 @@ import { Router } from "express";
 import { db } from "@workspace/db";
 import { productsTable, businessesTable } from "@workspace/db";
 import { eq } from "drizzle-orm";
-import { requireAuth } from "../lib/auth";
+import { requireAuth, optionalAuth } from "../lib/auth";
 
 const router = Router();
 
-router.get("/businesses/:businessId/products", async (req, res) => {
+router.get("/businesses/:businessId/products", optionalAuth, async (req, res) => {
   try {
     const businessId = parseInt(req.params.businessId);
+    const biz = await db
+      .select({ isHidden: businessesTable.isHidden })
+      .from(businessesTable)
+      .where(eq(businessesTable.id, businessId));
+
+    if (!biz[0]) {
+      res.status(404).json({ error: "Not found" });
+      return;
+    }
+
+    const isAdminUser = !!req.userId && req.userId === process.env.ADMIN_USER_ID;
+    if (biz[0].isHidden && !isAdminUser) {
+      res.status(404).json({ error: "Not found" });
+      return;
+    }
+
     const products = await db
       .select()
       .from(productsTable)
@@ -48,12 +64,16 @@ router.get("/businesses/me/products", requireAuth, async (req, res) => {
 router.post("/businesses/me/products", requireAuth, async (req, res) => {
   try {
     const business = await db
-      .select({ id: businessesTable.id })
+      .select({ id: businessesTable.id, isHidden: businessesTable.isHidden })
       .from(businessesTable)
       .where(eq(businessesTable.clerkUserId, req.userId!));
 
     if (!business[0]) {
       res.status(404).json({ error: "Create a business page first" });
+      return;
+    }
+    if (business[0].isHidden) {
+      res.status(403).json({ error: "Your page is hidden by the administrator" });
       return;
     }
 
@@ -88,12 +108,16 @@ router.patch("/businesses/me/products/:productId", requireAuth, async (req, res)
     const productId = parseInt(req.params.productId);
 
     const business = await db
-      .select({ id: businessesTable.id })
+      .select({ id: businessesTable.id, isHidden: businessesTable.isHidden })
       .from(businessesTable)
       .where(eq(businessesTable.clerkUserId, req.userId!));
 
     if (!business[0]) {
       res.status(404).json({ error: "Business not found" });
+      return;
+    }
+    if (business[0].isHidden) {
+      res.status(403).json({ error: "Your page is hidden by the administrator" });
       return;
     }
 
@@ -133,12 +157,16 @@ router.delete("/businesses/me/products/:productId", requireAuth, async (req, res
     const productId = parseInt(req.params.productId);
 
     const business = await db
-      .select({ id: businessesTable.id })
+      .select({ id: businessesTable.id, isHidden: businessesTable.isHidden })
       .from(businessesTable)
       .where(eq(businessesTable.clerkUserId, req.userId!));
 
     if (!business[0]) {
       res.status(404).json({ error: "Business not found" });
+      return;
+    }
+    if (business[0].isHidden) {
+      res.status(403).json({ error: "Your page is hidden by the administrator" });
       return;
     }
 

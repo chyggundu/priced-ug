@@ -48,6 +48,27 @@ export const DeleteCategoryResponse = zod.object({
 
 
 /**
+ * @summary List all businesses including hidden (admin only)
+ */
+export const GetAdminBusinessesResponseItem = zod.object({
+  "id": zod.number(),
+  "clerkUserId": zod.string(),
+  "name": zod.string(),
+  "description": zod.string().nullish(),
+  "address": zod.string().nullish(),
+  "city": zod.string().nullish(),
+  "phone": zod.string().nullish(),
+  "categoryId": zod.number().nullish(),
+  "categoryName": zod.string().nullish(),
+  "imageUrl": zod.string().nullish(),
+  "minPrice": zod.number().nullish(),
+  "isHidden": zod.boolean(),
+  "createdAt": zod.coerce.date()
+})
+export const GetAdminBusinessesResponse = zod.array(GetAdminBusinessesResponseItem)
+
+
+/**
  * @summary List visible businesses (public)
  */
 export const GetBusinessesQueryParams = zod.object({

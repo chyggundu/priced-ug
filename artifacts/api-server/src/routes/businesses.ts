@@ -28,6 +28,28 @@ async function getBusinessWithCategory(businessId: number) {
   return result[0] ?? null;
 }
 
+async function attachMinPrice<T extends { id: number }>(businesses: T[]) {
+  const products = await db
+    .select({ businessId: productsTable.businessId, price: productsTable.price })
+    .from(productsTable);
+
+  const minPriceByBusiness = new Map<number, number>();
+  for (const p of products) {
+    if (!p.price) continue;
+    const numeric = parseInt(p.price.replace(/[^0-9]/g, ""), 10);
+    if (!Number.isFinite(numeric) || numeric <= 0) continue;
+    const current = minPriceByBusiness.get(p.businessId);
+    if (current === undefined || numeric < current) {
+      minPriceByBusiness.set(p.businessId, numeric);
+    }
+  }
+
+  return businesses.map((b) => ({
+    ...b,
+    minPrice: minPriceByBusiness.get(b.id) ?? null,
+  }));
+}
+
 router.get("/businesses", optionalAuth, async (req, res) => {
   try {
     const categoryId = req.query.categoryId ? parseInt(req.query.categoryId as string) : undefined;
@@ -56,27 +78,7 @@ router.get("/businesses", optionalAuth, async (req, res) => {
     }
 
     const businesses = await query.where(and(...conditions));
-
-    const products = await db
-      .select({ businessId: productsTable.businessId, price: productsTable.price })
-      .from(productsTable);
-
-    const minPriceByBusiness = new Map<number, number>();
-    for (const p of products) {
-      if (!p.price) continue;
-      const numeric = parseInt(p.price.replace(/[^0-9]/g, ""), 10);
-      if (!Number.isFinite(numeric) || numeric <= 0) continue;
-      const current = minPriceByBusiness.get(p.businessId);
-      if (current === undefined || numeric < current) {
-        minPriceByBusiness.set(p.businessId, numeric);
-      }
-    }
-
-    const withMinPrice = businesses.map((b) => ({
-      ...b,
-      minPrice: minPriceByBusiness.get(b.id) ?? null,
-    }));
-
+    const withMinPrice = await attachMinPrice(businesses);
     res.json(withMinPrice);
   } catch (err) {
     req.log.error({ err }, "Failed to get businesses");
@@ -161,12 +163,16 @@ router.patch("/businesses/me", requireAuth, async (req, res) => {
     const { name, description, address, city, phone, categoryId, imageUrl } = req.body;
 
     const existing = await db
-      .select({ id: businessesTable.id })
+      .select({ id: businessesTable.id, isHidden: businessesTable.isHidden })
       .from(businessesTable)
       .where(eq(businessesTable.clerkUserId, req.userId!));
 
     if (!existing[0]) {
       res.status(404).json({ error: "Business not found" });
+      return;
+    }
+    if (existing[0].isHidden) {
+      res.status(403).json({ error: "Your page is hidden by the administrator" });
       return;
     }
 
@@ -199,7 +205,8 @@ router.get("/businesses/:id", optionalAuth, async (req, res) => {
       res.status(404).json({ error: "Not found" });
       return;
     }
-    if (business.isHidden && business.clerkUserId !== req.userId) {
+    const isAdminUser = !!req.userId && req.userId === process.env.ADMIN_USER_ID;
+    if (business.isHidden && !isAdminUser) {
       res.status(404).json({ error: "Not found" });
       return;
     }
@@ -232,6 +239,34 @@ router.patch("/businesses/:id/visibility", requireAdmin, async (req, res) => {
     res.json(full);
   } catch (err) {
     req.log.error({ err }, "Failed to toggle visibility");
+    res.status(500).json({ error: "Internal server error" });
+  }
+});
+
+router.get("/admin/businesses", requireAdmin, async (req, res) => {
+  try {
+    const businesses = await db
+      .select({
+        id: businessesTable.id,
+        clerkUserId: businessesTable.clerkUserId,
+        name: businessesTable.name,
+        description: businessesTable.description,
+        address: businessesTable.address,
+        city: businessesTable.city,
+        phone: businessesTable.phone,
+        categoryId: businessesTable.categoryId,
+        categoryName: categoriesTable.name,
+        imageUrl: businessesTable.imageUrl,
+        isHidden: businessesTable.isHidden,
+        createdAt: businessesTable.createdAt,
+      })
+      .from(businessesTable)
+      .leftJoin(categoriesTable, eq(businessesTable.categoryId, categoriesTable.id));
+
+    const withMinPrice = await attachMinPrice(businesses);
+    res.json(withMinPrice);
+  } catch (err) {
+    req.log.error({ err }, "Failed to get admin businesses");
     res.status(500).json({ error: "Internal server error" });
   }
 });

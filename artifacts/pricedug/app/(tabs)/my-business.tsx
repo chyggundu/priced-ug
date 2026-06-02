@@ -92,6 +92,18 @@ export default function MyBusinessScreen() {
     );
   }
 
+  if (business.isHidden) {
+    return (
+      <View style={[styles.container, styles.center, { backgroundColor: colors.background, paddingTop: topPad }]}>
+        <Feather name="eye-off" size={48} color={colors.primary} />
+        <Text style={[styles.centerTitle, { color: colors.foreground }]}>Page Hidden</Text>
+        <Text style={[styles.centerSubtitle, { color: colors.mutedForeground }]}>
+          Your business page has been hidden by the administrator. It is not visible to the public, and you cannot manage it until it is restored. Please contact support for more information.
+        </Text>
+      </View>
+    );
+  }
+
   return (
     <View style={[styles.container, { backgroundColor: colors.background }]}>
       {/* Header */}

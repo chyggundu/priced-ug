@@ -13,7 +13,7 @@ import {
 import { Feather } from "@expo/vector-icons";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import {
-  useGetBusinesses,
+  useGetAdminBusinesses,
   useGetCategories,
   useCreateCategory,
   useDeleteCategory,
@@ -32,7 +32,7 @@ export default function AdminPanelScreen() {
   const [newCategory, setNewCategory] = useState("");
   const [activeTab, setActiveTab] = useState<"businesses" | "categories">("businesses");
 
-  const { data: businesses = [], isLoading: bizLoading, refetch: refetchBiz } = useGetBusinesses({});
+  const { data: businesses = [], isLoading: bizLoading, refetch: refetchBiz } = useGetAdminBusinesses();
   const { data: categories = [], isLoading: catLoading, refetch: refetchCat } = useGetCategories();
   const createCategory = useCreateCategory();
   const deleteCategory = useDeleteCategory();
@@ -68,9 +68,25 @@ export default function AdminPanelScreen() {
     ]);
   };
 
-  const handleToggleVisibility = async (id: number, currentlyHidden: boolean) => {
-    await toggleVisibility.mutateAsync({ id, data: { isHidden: !currentlyHidden } });
-    refetchBiz();
+  const handleToggleVisibility = (id: number, currentlyHidden: boolean, name: string) => {
+    const willHide = !currentlyHidden;
+    Alert.alert(
+      willHide ? "Hide Business" : "Unhide Business",
+      willHide
+        ? `"${name}" will be hidden from the public and from the owner until you unhide it.`
+        : `"${name}" will be visible to the public and the owner again.`,
+      [
+        { text: "Cancel", style: "cancel" },
+        {
+          text: willHide ? "Hide" : "Unhide",
+          style: willHide ? "destructive" : "default",
+          onPress: async () => {
+            await toggleVisibility.mutateAsync({ id, data: { isHidden: willHide } });
+            refetchBiz();
+          },
+        },
+      ]
+    );
   };
 
   return (
@@ -129,11 +145,15 @@ export default function AdminPanelScreen() {
                     )}
                   </View>
                   <View style={styles.bizActions}>
-                    <Pressable onPress={() => router.push(`/business/${b.id}`)}>
+                    <Pressable onPress={() => router.push(`/business/${b.id}`)} style={styles.previewBtn}>
                       <Feather name="eye" size={18} color={colors.primary} />
                     </Pressable>
-                    <Pressable onPress={() => handleToggleVisibility(b.id, b.isHidden)}>
-                      <Feather name={b.isHidden ? "eye" : "eye-off"} size={18} color={b.isHidden ? "#22C55E" : "#E01E37"} />
+                    <Pressable
+                      onPress={() => handleToggleVisibility(b.id, b.isHidden, b.name)}
+                      style={[styles.toggleBtn, { backgroundColor: b.isHidden ? "#22C55E" : "#E01E37" }]}
+                    >
+                      <Feather name={b.isHidden ? "eye" : "eye-off"} size={13} color="#fff" />
+                      <Text style={styles.toggleBtnText}>{b.isHidden ? "Unhide" : "Hide"}</Text>
                     </Pressable>
                   </View>
                 </View>
@@ -209,7 +229,10 @@ const styles = StyleSheet.create({
   hiddenBadgeText: { fontSize: 10, fontWeight: "600" as const },
   bizCat: { fontSize: 12, marginBottom: 2 },
   bizAddr: { fontSize: 12 },
-  bizActions: { flexDirection: "row", gap: 16, marginLeft: 8 },
+  bizActions: { flexDirection: "row", alignItems: "center", gap: 10, marginLeft: 8 },
+  previewBtn: { padding: 4 },
+  toggleBtn: { flexDirection: "row", alignItems: "center", gap: 4, paddingHorizontal: 12, paddingVertical: 7, borderRadius: 8 },
+  toggleBtnText: { color: "#fff", fontSize: 13, fontWeight: "600" as const },
   addCatRow: { flexDirection: "row", alignItems: "center", gap: 10, borderRadius: 10, borderWidth: 1, padding: 10 },
   catInput: { flex: 1, fontSize: 15, borderWidth: 1, borderRadius: 8, paddingHorizontal: 12, paddingVertical: 8 },
   addBtn: { width: 40, height: 40, borderRadius: 8, alignItems: "center", justifyContent: "center" },
