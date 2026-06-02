@@ -49,7 +49,7 @@ export default function AdminPanelScreen() {
 
   const handleAddCategory = async () => {
     if (!newCategory.trim()) return;
-    await createCategory.mutateAsync({ createCategoryInput: { name: newCategory.trim() } });
+    await createCategory.mutateAsync({ data: { name: newCategory.trim() } });
     setNewCategory("");
     refetchCat();
   };
@@ -69,7 +69,7 @@ export default function AdminPanelScreen() {
   };
 
   const handleToggleVisibility = async (id: number, currentlyHidden: boolean) => {
-    await toggleVisibility.mutateAsync({ id, visibilityInput: { isHidden: !currentlyHidden } });
+    await toggleVisibility.mutateAsync({ id, data: { isHidden: !currentlyHidden } });
     refetchBiz();
   };
 

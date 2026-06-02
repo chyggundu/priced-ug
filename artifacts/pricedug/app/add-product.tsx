@@ -52,7 +52,7 @@ export default function AddProductScreen() {
       const filename = asset.uri.split("/").pop() ?? "image.jpg";
       const contentType = "image/jpeg";
       const { uploadUrl, publicUrl } = await getUploadUrl.mutateAsync({
-        uploadUrlInput: { filename, contentType },
+        data: { filename, contentType },
       });
       const response = await fetch(asset.uri);
       const blob = await response.blob();
@@ -73,7 +73,7 @@ export default function AddProductScreen() {
     setSaving(true);
     try {
       await createProduct.mutateAsync({
-        createProductInput: {
+        data: {
           name: name.trim(),
           description: description.trim() || null,
           price: price.trim() || null,

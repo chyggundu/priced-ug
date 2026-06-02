@@ -73,7 +73,7 @@ export default function EditBusinessScreen() {
       const contentType = "image/jpeg";
 
       const { uploadUrl, publicUrl } = await getUploadUrl.mutateAsync({
-        uploadUrlInput: { filename, contentType },
+        data: { filename, contentType },
       });
 
       const response = await fetch(asset.uri);
@@ -106,9 +106,9 @@ export default function EditBusinessScreen() {
       };
 
       if (business) {
-        await updateBusiness.mutateAsync({ updateBusinessInput: payload });
+        await updateBusiness.mutateAsync({ data: payload });
       } else {
-        await createBusiness.mutateAsync({ createBusinessInput: payload });
+        await createBusiness.mutateAsync({ data: payload });
       }
 
       router.replace("/(tabs)/my-business");
