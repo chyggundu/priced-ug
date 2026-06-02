@@ -42,7 +42,7 @@ A mobile app (iOS + Android via Expo) for Ugandan business owners to create page
 - **One business per user**: enforced at the API level — a Clerk user can own exactly one business page.
 - **Admin via env var**: Admin is identified by `ADMIN_USER_ID` env var matching the Clerk `userId`. Set this to your own Clerk user ID.
 - **Clerk proxy**: The API server proxies Clerk auth requests at `/api/__clerk` so the mobile app can authenticate via the same domain.
-- **Object storage**: Upload-URL endpoint exists in the API (`/api/storage/upload-url`) for image uploads; requires `REPLIT_OBJECT_STORAGE_BUCKET_ID` env var. Skip for MVP if storage isn't provisioned.
+- **Object storage**: Provisioned via Replit Object Storage (sidecar-authenticated GCS). `POST /api/storage/upload-url` (auth required) returns a signed PUT URL plus a `publicUrl`; the client PUTs the file, then stores `publicUrl`. Objects live in the private bucket and are served publicly through `GET /api/storage/objects/*`. Env vars (set automatically): `DEFAULT_OBJECT_STORAGE_BUCKET_ID`, `PRIVATE_OBJECT_DIR`, `PUBLIC_OBJECT_SEARCH_PATHS`. Storage client lives in `artifacts/api-server/src/lib/objectStorage.ts` + `objectAcl.ts`.
 - **Public browsing**: The browse screen and business detail pages are fully public — no auth required. Only business management (create/edit) and admin panel require login.
 
 ## Product

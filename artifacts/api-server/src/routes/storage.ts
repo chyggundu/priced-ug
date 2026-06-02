@@ -1,36 +1,66 @@
 import { Router } from "express";
-import { Storage } from "@google-cloud/storage";
 import { requireAuth } from "../lib/auth";
+import { ObjectNotFoundError, ObjectStorageService } from "../lib/objectStorage";
 
 const router = Router();
-const storage = new Storage();
-const bucketName = process.env.REPLIT_OBJECT_STORAGE_BUCKET_ID ?? "";
+const objectStorage = new ObjectStorageService();
+
+function getPublicBaseUrl(): string {
+  const domains = process.env.REPLIT_DOMAINS;
+  if (domains) {
+    const first = domains.split(",")[0]?.trim();
+    if (first) return `https://${first}`;
+  }
+  const devDomain = process.env.REPLIT_DEV_DOMAIN;
+  if (devDomain) return `https://${devDomain}`;
+  return "";
+}
 
 router.post("/storage/upload-url", requireAuth, async (req, res) => {
   try {
-    const { filename, contentType } = req.body;
+    const { filename, contentType } = req.body ?? {};
     if (!filename || !contentType) {
       res.status(400).json({ error: "filename and contentType are required" });
       return;
     }
 
-    const key = `uploads/${req.userId}/${Date.now()}-${filename}`;
-    const bucket = storage.bucket(bucketName);
-    const file = bucket.file(key);
+    const uploadUrl = await objectStorage.getObjectEntityUploadURL();
+    const objectPath = objectStorage.normalizeObjectEntityPath(uploadUrl);
+    const publicUrl = `${getPublicBaseUrl()}/api/storage${objectPath}`;
 
-    const [uploadUrl] = await file.generateSignedPostPolicyV4({
-      expires: Date.now() + 15 * 60 * 1000,
-      conditions: [
-        ["content-length-range", 0, 10 * 1024 * 1024],
-        ["eq", "$Content-Type", contentType],
-      ],
-      fields: { "Content-Type": contentType },
-    });
-
-    const publicUrl = `https://storage.googleapis.com/${bucketName}/${key}`;
-    res.json({ uploadUrl: uploadUrl.url, publicUrl });
+    res.json({ uploadUrl, publicUrl });
   } catch (err) {
     req.log.error({ err }, "Failed to generate upload URL");
+    res.status(500).json({ error: "Internal server error" });
+  }
+});
+
+router.get(/^\/storage\/objects\/(.+)$/, async (req, res) => {
+  const objectPath = `/objects/${req.params[0]}`;
+  try {
+    const objectFile = await objectStorage.getObjectEntityFile(objectPath);
+    const response = await objectStorage.downloadObject(objectFile);
+
+    res.status(response.status);
+    response.headers.forEach((value, key) => {
+      res.setHeader(key, value);
+    });
+
+    if (response.body) {
+      const reader = response.body.getReader();
+      for (;;) {
+        const { done, value } = await reader.read();
+        if (done) break;
+        res.write(value);
+      }
+    }
+    res.end();
+  } catch (err) {
+    if (err instanceof ObjectNotFoundError) {
+      res.status(404).json({ error: "Not found" });
+      return;
+    }
+    req.log.error({ err }, "Failed to serve object");
     res.status(500).json({ error: "Internal server error" });
   }
 });

@@ -1,1 +1,2 @@
 - [Pricedug architecture](pricedug-arch.md) — one business per user, admin via ADMIN_USER_ID env var, Clerk proxy on API server.
+- [Object storage](object-storage.md) — sidecar-auth GCS; private bucket served publicly via API; signed PUT upload; Express 5 regex route gotcha.
