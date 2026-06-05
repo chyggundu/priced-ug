@@ -64,7 +64,7 @@ Repository: https://github.com/chyggundu/priced-ug
 
 ## Gotchas
 
-- **Set `ADMIN_USER_ID`**: After signing up in the app, find your Clerk user ID (from the Clerk dashboard or by logging `userId` in AuthContext) and set it as the `ADMIN_USER_ID` environment secret. This unlocks the Admin tab.
+- **Set BOTH admin vars**: Showing the Admin tab requires two env vars set to the admin's Clerk user ID — `ADMIN_USER_ID` (server-side, enforces admin API permissions) and `EXPO_PUBLIC_ADMIN_USER_ID` (client-side, read by `AuthContext` to render the tab). Set both to the same value. Because `EXPO_PUBLIC_*` vars are inlined by Metro at bundle time, **restart the Expo workflow** after changing it so the app re-bundles. Find the Clerk user ID via the Clerk dashboard or the Clerk backend API (`GET https://api.clerk.com/v1/users`).
 - **Update WhatsApp number**: The hardcoded `WHATSAPP_NUMBER = "1234567890"` in `(tabs)/index.tsx` and `(tabs)/account.tsx` should be replaced with the actual support WhatsApp number.
 - **Always run codegen after changing `openapi.yaml`**: `pnpm --filter @workspace/api-spec run codegen`
 - **Drizzle push for schema changes**: `pnpm --filter @workspace/db run push`
