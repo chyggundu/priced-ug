@@ -115,6 +115,10 @@ export default function SignInScreen() {
           {fetchStatus === "fetching" ? <ActivityIndicator color="#fff" /> : <Text style={styles.buttonText}>Sign In</Text>}
         </Pressable>
 
+        <Link href="/(auth)/forgot-password" style={styles.forgotLink}>
+          <Text style={styles.link}>Forgot password?</Text>
+        </Link>
+
         <View style={styles.footer}>
           <Text style={styles.footerText}>Don't have an account? </Text>
           <Link href="/(auth)/sign-up">
@@ -209,5 +213,9 @@ const styles = StyleSheet.create({
     color: "#E01E37",
     fontSize: 14,
     fontWeight: "600" as const,
+  },
+  forgotLink: {
+    alignSelf: "center",
+    marginBottom: 16,
   },
 });
