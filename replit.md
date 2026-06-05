@@ -2,6 +2,8 @@
 
 A mobile app (iOS + Android via Expo) for Ugandan business owners to create pages with product photos, prices, descriptions, and categories. The public can browse freely; business owners authenticate to manage their own page. The app owner is admin and can hide pages and manage categories.
 
+Repository: https://github.com/chyggundu/priced-ug
+
 ## Run & Operate
 
 - `pnpm --filter @workspace/api-server run dev` — run the API server (port 8080, proxied at `/api`)
