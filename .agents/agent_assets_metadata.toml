@@ -1,8 +1,13 @@
 uploads = []
-outputs = []
 
 [[generated]]
 id = "wT7-W_AXSWbRnGigbpB5d"
 uri = "file://artifacts/pricedug/assets/images/icon.png"
 type = "image"
 title = "priced ug app icon"
+
+[[outputs]]
+id = "mITrqQ6QBdanvyuNuB6pZ"
+uri = "file://exports/expo-qr.png"
+type = "image"
+title = "Priced Ug — Expo QR code"
