@@ -15,6 +15,7 @@ import { useLocalSearchParams, useRouter } from "expo-router";
 import { Feather } from "@expo/vector-icons";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import * as ImagePicker from "expo-image-picker";
+import { uploadImageToSignedUrl } from "@/lib/uploadImage";
 import { useUpdateProduct, useGetMyProducts, useGetUploadUrl } from "@workspace/api-client-react";
 import { useColors } from "@/hooks/useColors";
 
@@ -70,9 +71,7 @@ export default function EditProductScreen() {
       const { uploadUrl, publicUrl } = await getUploadUrl.mutateAsync({
         data: { filename, contentType },
       });
-      const response = await fetch(asset.uri);
-      const blob = await response.blob();
-      await fetch(uploadUrl, { method: "PUT", body: blob, headers: { "Content-Type": contentType } });
+      await uploadImageToSignedUrl(uploadUrl, asset.uri, contentType);
       setImageUrl(publicUrl);
     } catch {
       Alert.alert("Upload failed", "Could not upload image. Please try again.");

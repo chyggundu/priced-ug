@@ -15,6 +15,7 @@ import { useRouter } from "expo-router";
 import { Feather } from "@expo/vector-icons";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import * as ImagePicker from "expo-image-picker";
+import { uploadImageToSignedUrl } from "@/lib/uploadImage";
 import {
   useGetMyBusiness,
   useCreateBusiness,
@@ -78,9 +79,7 @@ export default function EditBusinessScreen() {
         data: { filename, contentType },
       });
 
-      const response = await fetch(asset.uri);
-      const blob = await response.blob();
-      await fetch(uploadUrl, { method: "PUT", body: blob, headers: { "Content-Type": contentType } });
+      await uploadImageToSignedUrl(uploadUrl, asset.uri, contentType);
 
       setImageUrl(publicUrl);
     } catch (err) {

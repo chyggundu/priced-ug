@@ -2,3 +2,4 @@
 - [Object storage](object-storage.md) — sidecar-auth GCS; private bucket served publicly via API; signed PUT upload; Express 5 regex route gotcha.
 - [Admin hide/unhide visibility enforcement](admin-visibility-enforcement.md) — hidden business pages must be gated server-side (not UI-only); admin lists need a dedicated unfiltered endpoint or unhide is impossible.
 - [Clerk composable useSignIn API](clerk-composable-signin.md) — app uses future/composable hook (signIn.password / resetPasswordEmailCode.*), method names only in @clerk/shared .d.ts.
+- [Expo presigned uploads](expo-presigned-uploads.md) — RN blob-PUT uploads corrupt; use expo-file-system uploadAsync BINARY_CONTENT (legacy import in SDK 54).
