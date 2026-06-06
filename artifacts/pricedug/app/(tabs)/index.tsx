@@ -106,7 +106,7 @@ export default function BrowseScreen() {
           <Feather name="search" size={16} color={colors.mutedForeground} />
           <TextInput
             style={[styles.searchInput, { color: colors.foreground }]}
-            placeholder="Search businesses..."
+            placeholder="Search items..."
             placeholderTextColor={colors.mutedForeground}
             value={searchQuery}
             onChangeText={setSearchQuery}
@@ -226,7 +226,7 @@ export default function BrowseScreen() {
           <Text style={[styles.sectionTitle, { color: colors.foreground }]}>
             {selectedCategory
               ? `${categories.find((c) => c.id === selectedCategory)?.name ?? ""}`
-              : "All Businesses"}
+              : "All Items"}
             {" "}
             <Text style={{ color: colors.mutedForeground, fontSize: 14, fontWeight: "400" }}>
               ({filteredBusinesses.length})
@@ -239,7 +239,7 @@ export default function BrowseScreen() {
             <View style={styles.emptyState}>
               <Feather name="package" size={40} color={colors.mutedForeground} />
               <Text style={[styles.emptyText, { color: colors.mutedForeground }]}>
-                No businesses found
+                No items found
               </Text>
             </View>
           ) : (
