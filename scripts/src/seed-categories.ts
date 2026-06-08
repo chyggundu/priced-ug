@@ -22,6 +22,7 @@ const DEFAULT_CATEGORIES = [
   "Tilers",
   "Plumbers",
   "Car rental",
+  "Personal Effects",
 ];
 
 async function seed() {
