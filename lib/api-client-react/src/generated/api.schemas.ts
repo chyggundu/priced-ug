@@ -105,5 +105,6 @@ export interface UploadUrlResponse {
 
 export type GetBusinessesParams = {
 categoryId?: number;
+search?: string;
 };
 

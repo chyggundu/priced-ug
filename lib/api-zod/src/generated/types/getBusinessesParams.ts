@@ -8,4 +8,5 @@
 
 export type GetBusinessesParams = {
 categoryId?: number;
+search?: string;
 };

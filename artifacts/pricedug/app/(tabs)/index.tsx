@@ -30,9 +30,10 @@ export default function BrowseScreen() {
   const [sortBy, setSortBy] = useState<"newest" | "priceAsc" | "priceDesc">("newest");
 
   const { data: categories = [], isLoading: categoriesLoading } = useGetCategories();
-  const { data: businesses = [], isLoading: businessesLoading } = useGetBusinesses(
-    selectedCategory ? { categoryId: selectedCategory } : {}
-  );
+  const { data: businesses = [], isLoading: businessesLoading } = useGetBusinesses({
+    ...(selectedCategory ? { categoryId: selectedCategory } : {}),
+    ...(searchQuery ? { search: searchQuery } : {}),
+  });
 
   const cities = Array.from(
     new Set(
@@ -43,11 +44,6 @@ export default function BrowseScreen() {
   ).sort((a, b) => a.localeCompare(b));
 
   const filteredBusinesses = businesses
-    .filter(
-      (b) =>
-        b.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        (b.description ?? "").toLowerCase().includes(searchQuery.toLowerCase())
-    )
     .filter((b) =>
       selectedCity && cities.includes(selectedCity)
         ? (b.city ?? "").trim() === selectedCity

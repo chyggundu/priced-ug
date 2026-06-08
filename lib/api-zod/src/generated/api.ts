@@ -72,7 +72,8 @@ export const GetAdminBusinessesResponse = zod.array(GetAdminBusinessesResponseIt
  * @summary List visible businesses (public)
  */
 export const GetBusinessesQueryParams = zod.object({
-  "categoryId": zod.coerce.number().optional()
+  "categoryId": zod.coerce.number().optional(),
+  "search": zod.coerce.string().optional()
 })
 
 export const GetBusinessesResponseItem = zod.object({

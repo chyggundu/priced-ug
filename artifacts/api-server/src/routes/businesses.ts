@@ -1,7 +1,7 @@
 import { Router } from "express";
 import { db } from "@workspace/db";
 import { businessesTable, categoriesTable, productsTable } from "@workspace/db";
-import { eq, and } from "drizzle-orm";
+import { eq, and, or, ilike, inArray } from "drizzle-orm";
 import { requireAuth, requireAdmin, optionalAuth } from "../lib/auth";
 
 const router = Router();
@@ -53,6 +53,7 @@ async function attachMinPrice<T extends { id: number }>(businesses: T[]) {
 router.get("/businesses", optionalAuth, async (req, res) => {
   try {
     const categoryId = req.query.categoryId ? parseInt(req.query.categoryId as string) : undefined;
+    const search = typeof req.query.search === "string" ? req.query.search.trim() : "";
 
     let query = db
       .select({
@@ -75,6 +76,21 @@ router.get("/businesses", optionalAuth, async (req, res) => {
     const conditions = [eq(businessesTable.isHidden, false)];
     if (categoryId) {
       conditions.push(eq(businessesTable.categoryId, categoryId));
+    }
+    if (search) {
+      const pattern = `%${search}%`;
+      const matchingBusinessIds = db
+        .select({ businessId: productsTable.businessId })
+        .from(productsTable)
+        .where(ilike(productsTable.name, pattern));
+      const searchCondition = or(
+        ilike(businessesTable.name, pattern),
+        ilike(businessesTable.description, pattern),
+        inArray(businessesTable.id, matchingBusinessIds)
+      );
+      if (searchCondition) {
+        conditions.push(searchCondition);
+      }
     }
 
     const businesses = await query.where(and(...conditions));
