@@ -10,6 +10,7 @@ import {
   Alert,
   Image,
   Platform,
+  Modal,
 } from "react-native";
 import { useRouter } from "expo-router";
 import { Feather } from "@expo/vector-icons";
@@ -17,6 +18,7 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 import * as ImagePicker from "expo-image-picker";
 import * as Location from "expo-location";
 import { uploadImageToSignedUrl } from "@/lib/uploadImage";
+import MapPicker from "@/components/MapPicker";
 import {
   useGetMyBusiness,
   useCreateBusiness,
@@ -50,6 +52,7 @@ export default function EditBusinessScreen() {
   const [latitude, setLatitude] = useState<number | null>(null);
   const [longitude, setLongitude] = useState<number | null>(null);
   const [locating, setLocating] = useState(false);
+  const [showMap, setShowMap] = useState(false);
 
   useEffect(() => {
     if (business) {
@@ -287,6 +290,15 @@ export default function EditBusinessScreen() {
               </>
             )}
           </Pressable>
+          <Pressable
+            style={[styles.locationBtn, { backgroundColor: colors.muted, borderColor: colors.border, marginTop: 8 }]}
+            onPress={() => setShowMap(true)}
+          >
+            <Feather name="map" size={18} color={colors.primary} />
+            <Text style={[styles.locationBtnText, { color: colors.foreground }]}>
+              Choose exact spot on map
+            </Text>
+          </Pressable>
           {latitude != null && longitude != null && (
             <View style={styles.locationInfo}>
               <Text style={[styles.locationCoords, { color: colors.mutedForeground }]}>
@@ -330,6 +342,21 @@ export default function EditBusinessScreen() {
 
         <View style={{ height: Platform.OS === "web" ? 40 : insets.bottom + 32 }} />
       </ScrollView>
+
+      {showMap && (
+        <Modal visible animationType="slide" onRequestClose={() => setShowMap(false)}>
+          <MapPicker
+            initialLat={latitude}
+            initialLng={longitude}
+            onCancel={() => setShowMap(false)}
+            onConfirm={(lat, lng) => {
+              setLatitude(lat);
+              setLongitude(lng);
+              setShowMap(false);
+            }}
+          />
+        </Modal>
+      )}
     </View>
   );
 }
