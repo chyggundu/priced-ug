@@ -34,6 +34,8 @@ export interface Business {
   categoryId?: number | null;
   categoryName?: string | null;
   imageUrl?: string | null;
+  latitude?: number | null;
+  longitude?: number | null;
   minPrice?: number | null;
   isHidden: boolean;
   createdAt: string;
@@ -47,6 +49,8 @@ export interface CreateBusinessInput {
   phone?: string | null;
   categoryId?: number | null;
   imageUrl?: string | null;
+  latitude?: number | null;
+  longitude?: number | null;
 }
 
 export interface UpdateBusinessInput {
@@ -57,6 +61,8 @@ export interface UpdateBusinessInput {
   phone?: string | null;
   categoryId?: number | null;
   imageUrl?: string | null;
+  latitude?: number | null;
+  longitude?: number | null;
 }
 
 export interface VisibilityInput {

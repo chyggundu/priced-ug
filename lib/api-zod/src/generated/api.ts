@@ -61,6 +61,8 @@ export const GetAdminBusinessesResponseItem = zod.object({
   "categoryId": zod.number().nullish(),
   "categoryName": zod.string().nullish(),
   "imageUrl": zod.string().nullish(),
+  "latitude": zod.number().nullish(),
+  "longitude": zod.number().nullish(),
   "minPrice": zod.number().nullish(),
   "isHidden": zod.boolean(),
   "createdAt": zod.coerce.date()
@@ -87,6 +89,8 @@ export const GetBusinessesResponseItem = zod.object({
   "categoryId": zod.number().nullish(),
   "categoryName": zod.string().nullish(),
   "imageUrl": zod.string().nullish(),
+  "latitude": zod.number().nullish(),
+  "longitude": zod.number().nullish(),
   "minPrice": zod.number().nullish(),
   "isHidden": zod.boolean(),
   "createdAt": zod.coerce.date()
@@ -104,7 +108,9 @@ export const CreateBusinessBody = zod.object({
   "city": zod.string().nullish(),
   "phone": zod.string().nullish(),
   "categoryId": zod.number().nullish(),
-  "imageUrl": zod.string().nullish()
+  "imageUrl": zod.string().nullish(),
+  "latitude": zod.number().nullish(),
+  "longitude": zod.number().nullish()
 })
 
 
@@ -122,6 +128,8 @@ export const GetMyBusinessResponse = zod.object({
   "categoryId": zod.number().nullish(),
   "categoryName": zod.string().nullish(),
   "imageUrl": zod.string().nullish(),
+  "latitude": zod.number().nullish(),
+  "longitude": zod.number().nullish(),
   "minPrice": zod.number().nullish(),
   "isHidden": zod.boolean(),
   "createdAt": zod.coerce.date()
@@ -138,7 +146,9 @@ export const UpdateMyBusinessBody = zod.object({
   "city": zod.string().nullish(),
   "phone": zod.string().nullish(),
   "categoryId": zod.number().nullish(),
-  "imageUrl": zod.string().nullish()
+  "imageUrl": zod.string().nullish(),
+  "latitude": zod.number().nullish(),
+  "longitude": zod.number().nullish()
 })
 
 export const UpdateMyBusinessResponse = zod.object({
@@ -152,6 +162,8 @@ export const UpdateMyBusinessResponse = zod.object({
   "categoryId": zod.number().nullish(),
   "categoryName": zod.string().nullish(),
   "imageUrl": zod.string().nullish(),
+  "latitude": zod.number().nullish(),
+  "longitude": zod.number().nullish(),
   "minPrice": zod.number().nullish(),
   "isHidden": zod.boolean(),
   "createdAt": zod.coerce.date()
@@ -176,6 +188,8 @@ export const GetBusinessResponse = zod.object({
   "categoryId": zod.number().nullish(),
   "categoryName": zod.string().nullish(),
   "imageUrl": zod.string().nullish(),
+  "latitude": zod.number().nullish(),
+  "longitude": zod.number().nullish(),
   "minPrice": zod.number().nullish(),
   "isHidden": zod.boolean(),
   "createdAt": zod.coerce.date()
@@ -204,6 +218,8 @@ export const ToggleBusinessVisibilityResponse = zod.object({
   "categoryId": zod.number().nullish(),
   "categoryName": zod.string().nullish(),
   "imageUrl": zod.string().nullish(),
+  "latitude": zod.number().nullish(),
+  "longitude": zod.number().nullish(),
   "minPrice": zod.number().nullish(),
   "isHidden": zod.boolean(),
   "createdAt": zod.coerce.date()

@@ -440,6 +440,12 @@ components:
         imageUrl:
           type: string
           nullable: true
+        latitude:
+          type: number
+          nullable: true
+        longitude:
+          type: number
+          nullable: true
         minPrice:
           type: integer
           nullable: true
@@ -478,6 +484,12 @@ components:
         imageUrl:
           type: string
           nullable: true
+        latitude:
+          type: number
+          nullable: true
+        longitude:
+          type: number
+          nullable: true
       required:
         - name
 
@@ -503,6 +515,12 @@ components:
           nullable: true
         imageUrl:
           type: string
+          nullable: true
+        latitude:
+          type: number
+          nullable: true
+        longitude:
+          type: number
           nullable: true
 
     VisibilityInput:

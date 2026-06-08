@@ -6,6 +6,23 @@ import { requireAuth, requireAdmin, optionalAuth } from "../lib/auth";
 
 const router = Router();
 
+function validateCoordinates(latitude: unknown, longitude: unknown): string | null {
+  const latProvided = latitude !== undefined && latitude !== null;
+  const lngProvided = longitude !== undefined && longitude !== null;
+  if (latProvided !== lngProvided) {
+    return "latitude and longitude must be provided together";
+  }
+  if (latProvided) {
+    if (typeof latitude !== "number" || latitude < -90 || latitude > 90) {
+      return "latitude must be a number between -90 and 90";
+    }
+    if (typeof longitude !== "number" || longitude < -180 || longitude > 180) {
+      return "longitude must be a number between -180 and 180";
+    }
+  }
+  return null;
+}
+
 async function getBusinessWithCategory(businessId: number) {
   const result = await db
     .select({
@@ -19,6 +36,8 @@ async function getBusinessWithCategory(businessId: number) {
       categoryId: businessesTable.categoryId,
       categoryName: categoriesTable.name,
       imageUrl: businessesTable.imageUrl,
+      latitude: businessesTable.latitude,
+      longitude: businessesTable.longitude,
       isHidden: businessesTable.isHidden,
       createdAt: businessesTable.createdAt,
     })
@@ -67,6 +86,8 @@ router.get("/businesses", optionalAuth, async (req, res) => {
         categoryId: businessesTable.categoryId,
         categoryName: categoriesTable.name,
         imageUrl: businessesTable.imageUrl,
+        latitude: businessesTable.latitude,
+        longitude: businessesTable.longitude,
         isHidden: businessesTable.isHidden,
         createdAt: businessesTable.createdAt,
       })
@@ -116,6 +137,8 @@ router.get("/businesses/me", requireAuth, async (req, res) => {
         categoryId: businessesTable.categoryId,
         categoryName: categoriesTable.name,
         imageUrl: businessesTable.imageUrl,
+        latitude: businessesTable.latitude,
+        longitude: businessesTable.longitude,
         isHidden: businessesTable.isHidden,
         createdAt: businessesTable.createdAt,
       })
@@ -136,9 +159,14 @@ router.get("/businesses/me", requireAuth, async (req, res) => {
 
 router.post("/businesses", requireAuth, async (req, res) => {
   try {
-    const { name, description, address, city, phone, categoryId, imageUrl } = req.body;
+    const { name, description, address, city, phone, categoryId, imageUrl, latitude, longitude } = req.body;
     if (!name) {
       res.status(400).json({ error: "Name is required" });
+      return;
+    }
+    const coordError = validateCoordinates(latitude, longitude);
+    if (coordError) {
+      res.status(400).json({ error: coordError });
       return;
     }
 
@@ -163,6 +191,8 @@ router.post("/businesses", requireAuth, async (req, res) => {
         phone: phone ?? null,
         categoryId: categoryId ?? null,
         imageUrl: imageUrl ?? null,
+        latitude: latitude ?? null,
+        longitude: longitude ?? null,
       })
       .returning();
 
@@ -176,7 +206,13 @@ router.post("/businesses", requireAuth, async (req, res) => {
 
 router.patch("/businesses/me", requireAuth, async (req, res) => {
   try {
-    const { name, description, address, city, phone, categoryId, imageUrl } = req.body;
+    const { name, description, address, city, phone, categoryId, imageUrl, latitude, longitude } = req.body;
+
+    const coordError = validateCoordinates(latitude, longitude);
+    if (coordError) {
+      res.status(400).json({ error: coordError });
+      return;
+    }
 
     const existing = await db
       .select({ id: businessesTable.id, isHidden: businessesTable.isHidden })
@@ -202,6 +238,8 @@ router.patch("/businesses/me", requireAuth, async (req, res) => {
         ...(phone !== undefined && { phone }),
         ...(categoryId !== undefined && { categoryId }),
         ...(imageUrl !== undefined && { imageUrl }),
+        ...(latitude !== undefined && { latitude }),
+        ...(longitude !== undefined && { longitude }),
       })
       .where(eq(businessesTable.clerkUserId, req.userId!));
 
@@ -273,6 +311,8 @@ router.get("/admin/businesses", requireAdmin, async (req, res) => {
         categoryId: businessesTable.categoryId,
         categoryName: categoriesTable.name,
         imageUrl: businessesTable.imageUrl,
+        latitude: businessesTable.latitude,
+        longitude: businessesTable.longitude,
         isHidden: businessesTable.isHidden,
         createdAt: businessesTable.createdAt,
       })

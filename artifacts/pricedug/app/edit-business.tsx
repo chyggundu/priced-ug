@@ -15,6 +15,7 @@ import { useRouter } from "expo-router";
 import { Feather } from "@expo/vector-icons";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import * as ImagePicker from "expo-image-picker";
+import * as Location from "expo-location";
 import { uploadImageToSignedUrl } from "@/lib/uploadImage";
 import {
   useGetMyBusiness,
@@ -46,6 +47,9 @@ export default function EditBusinessScreen() {
   const [imageUrl, setImageUrl] = useState<string | null>(null);
   const [uploading, setUploading] = useState(false);
   const [saving, setSaving] = useState(false);
+  const [latitude, setLatitude] = useState<number | null>(null);
+  const [longitude, setLongitude] = useState<number | null>(null);
+  const [locating, setLocating] = useState(false);
 
   useEffect(() => {
     if (business) {
@@ -56,6 +60,8 @@ export default function EditBusinessScreen() {
       setPhone(business.phone ?? "");
       setCategoryId(business.categoryId ?? null);
       setImageUrl(business.imageUrl ?? null);
+      setLatitude(business.latitude ?? null);
+      setLongitude(business.longitude ?? null);
     }
   }, [business]);
 
@@ -89,6 +95,29 @@ export default function EditBusinessScreen() {
     }
   };
 
+  const pinLocation = async () => {
+    setLocating(true);
+    try {
+      const { status } = await Location.requestForegroundPermissionsAsync();
+      if (status !== "granted") {
+        Alert.alert(
+          "Permission needed",
+          "Location permission is required to pin your business location."
+        );
+        return;
+      }
+      const pos = await Location.getCurrentPositionAsync({
+        accuracy: Location.Accuracy.High,
+      });
+      setLatitude(pos.coords.latitude);
+      setLongitude(pos.coords.longitude);
+    } catch (err) {
+      Alert.alert("Location error", "Could not get your current location. Please try again.");
+    } finally {
+      setLocating(false);
+    }
+  };
+
   const handleSave = async () => {
     if (!name.trim()) {
       Alert.alert("Validation", "Business name is required.");
@@ -105,6 +134,8 @@ export default function EditBusinessScreen() {
         phone: phone.trim() || null,
         categoryId: categoryId ?? null,
         imageUrl: imageUrl ?? null,
+        latitude,
+        longitude,
       };
 
       if (business) {
@@ -237,6 +268,41 @@ export default function EditBusinessScreen() {
             placeholderTextColor={colors.mutedForeground}
           />
 
+          <Text style={[styles.label, { color: colors.foreground }]}>Map Location</Text>
+          <Pressable
+            style={[styles.locationBtn, { backgroundColor: colors.muted, borderColor: colors.border }]}
+            onPress={pinLocation}
+            disabled={locating}
+          >
+            {locating ? (
+              <ActivityIndicator size="small" color={colors.primary} />
+            ) : (
+              <>
+                <Feather name="map-pin" size={18} color={colors.primary} />
+                <Text style={[styles.locationBtnText, { color: colors.foreground }]}>
+                  {latitude != null && longitude != null
+                    ? "Update pinned location"
+                    : "Pin current location"}
+                </Text>
+              </>
+            )}
+          </Pressable>
+          {latitude != null && longitude != null && (
+            <View style={styles.locationInfo}>
+              <Text style={[styles.locationCoords, { color: colors.mutedForeground }]}>
+                Pinned: {latitude.toFixed(5)}, {longitude.toFixed(5)}
+              </Text>
+              <Pressable
+                onPress={() => {
+                  setLatitude(null);
+                  setLongitude(null);
+                }}
+              >
+                <Text style={[styles.locationClear, { color: colors.primary }]}>Remove</Text>
+              </Pressable>
+            </View>
+          )}
+
           <Text style={[styles.label, { color: colors.foreground }]}>Phone / WhatsApp Number</Text>
           <TextInput
             style={[styles.input, { backgroundColor: colors.muted, color: colors.foreground }]}
@@ -306,6 +372,24 @@ const styles = StyleSheet.create({
   categoryScroll: { marginBottom: 4 },
   categoryChip: { paddingHorizontal: 16, paddingVertical: 8, borderRadius: 20, marginRight: 8 },
   categoryChipText: { fontSize: 14, fontWeight: "500" as const },
+  locationBtn: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    gap: 8,
+    borderRadius: 10,
+    borderWidth: 1,
+    paddingVertical: 13,
+  },
+  locationBtnText: { fontSize: 15, fontWeight: "500" as const },
+  locationInfo: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    marginTop: 8,
+  },
+  locationCoords: { fontSize: 13 },
+  locationClear: { fontSize: 13, fontWeight: "600" as const },
   saveBtn: { borderRadius: 10, paddingVertical: 16, alignItems: "center", marginTop: 20 },
   saveBtnText: { color: "#fff", fontSize: 16, fontWeight: "600" as const },
 });

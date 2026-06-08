@@ -14,4 +14,6 @@ export interface UpdateBusinessInput {
   phone?: string | null;
   categoryId?: number | null;
   imageUrl?: string | null;
+  latitude?: number | null;
+  longitude?: number | null;
 }

@@ -17,6 +17,8 @@ export interface Business {
   categoryId?: number | null;
   categoryName?: string | null;
   imageUrl?: string | null;
+  latitude?: number | null;
+  longitude?: number | null;
   minPrice?: number | null;
   isHidden: boolean;
   createdAt: Date;

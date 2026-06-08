@@ -38,6 +38,10 @@ export default function BusinessDetailScreen() {
     Linking.openURL(`tel:${phone}`);
   };
 
+  const openDirections = (lat: number, lng: number) => {
+    Linking.openURL(`https://www.google.com/maps/dir/?api=1&destination=${lat},${lng}`);
+  };
+
   if (bizLoading) {
     return (
       <View style={[styles.container, styles.center, { backgroundColor: colors.background }]}>
@@ -105,6 +109,20 @@ export default function BusinessDetailScreen() {
                 <Feather name="map-pin" size={16} color={colors.primary} />
                 <Text style={[styles.detailText, { color: colors.foreground }]}>{business.address}</Text>
               </View>
+            )}
+            {business.latitude != null && business.longitude != null && (
+              <>
+                {business.address && (
+                  <View style={[styles.separator, { backgroundColor: colors.border }]} />
+                )}
+                <Pressable
+                  style={styles.detailRow}
+                  onPress={() => openDirections(business.latitude!, business.longitude!)}
+                >
+                  <Feather name="navigation" size={16} color={colors.primary} />
+                  <Text style={[styles.detailText, { color: colors.primary }]}>Get Directions</Text>
+                </Pressable>
+              </>
             )}
             {business.phone && (
               <>
