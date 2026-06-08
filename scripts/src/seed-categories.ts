@@ -10,12 +10,18 @@ const DEFAULT_CATEGORIES = [
   "Beddings",
   "Houses for Rent",
   "Electricals",
-  "Plumbing",
   "Electronics",
   "Furniture",
   "Grocery & Food",
   "Hardware",
   "Pharmacy",
+  "AB&B",
+  "Saloons",
+  "Bridal",
+  "Party rentals",
+  "Tilers",
+  "Plumbers",
+  "Car rental",
 ];
 
 async function seed() {
