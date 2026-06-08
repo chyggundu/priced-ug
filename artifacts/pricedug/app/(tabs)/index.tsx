@@ -25,6 +25,7 @@ export default function BrowseScreen() {
   const insets = useSafeAreaInsets();
   const [selectedCategory, setSelectedCategory] = useState<number | null>(null);
   const [searchQuery, setSearchQuery] = useState("");
+  const [searchInput, setSearchInput] = useState("");
   const [selectedCity, setSelectedCity] = useState<string | null>(null);
   const [sortBy, setSortBy] = useState<"newest" | "priceAsc" | "priceDesc">("newest");
 
@@ -108,14 +109,17 @@ export default function BrowseScreen() {
             style={[styles.searchInput, { color: colors.foreground }]}
             placeholder="Search items..."
             placeholderTextColor={colors.mutedForeground}
-            value={searchQuery}
-            onChangeText={setSearchQuery}
+            value={searchInput}
+            onChangeText={setSearchInput}
+            onSubmitEditing={() => setSearchQuery(searchInput.trim())}
+            returnKeyType="search"
           />
-          {searchQuery.length > 0 && (
-            <Pressable onPress={() => setSearchQuery("")}>
-              <Feather name="x" size={16} color={colors.mutedForeground} />
-            </Pressable>
-          )}
+          <Pressable
+            onPress={() => setSearchQuery(searchInput.trim())}
+            style={[styles.goButton, { backgroundColor: colors.primary }]}
+          >
+            <Text style={styles.goButtonText}>Go</Text>
+          </Pressable>
         </View>
       </View>
 
@@ -337,6 +341,12 @@ const styles = StyleSheet.create({
     gap: 8,
   },
   searchInput: { flex: 1, fontSize: 15 },
+  goButton: {
+    paddingHorizontal: 14,
+    paddingVertical: 6,
+    borderRadius: 8,
+  },
+  goButtonText: { color: "#fff", fontSize: 14, fontWeight: "600" as const },
   content: { flex: 1 },
   section: { paddingHorizontal: 16, paddingTop: 20 },
   sectionTitle: { fontSize: 18, fontWeight: "700" as const, marginBottom: 12 },
