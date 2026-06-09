@@ -35,7 +35,12 @@ router.get("/products/search", async (req, res) => {
       .where(
         and(
           eq(businessesTable.isHidden, false),
-          or(ilike(productsTable.name, pattern), ilike(productsTable.description, pattern))
+          or(
+            ilike(productsTable.name, pattern),
+            ilike(productsTable.description, pattern),
+            ilike(productsTable.size, pattern),
+            ilike(productsTable.materials, pattern)
+          )
         )
       )
       .orderBy(productsTable.createdAt);
