@@ -89,10 +89,9 @@ export default function BrowseScreen() {
       <View style={[styles.header, { paddingTop: topPad + 12 }]}>
         <View style={styles.headerTop}>
           <View style={styles.logoRow}>
-            <View style={styles.logoCircle}>
-              <Text style={styles.logoLetter}>P</Text>
+            <View style={styles.logoBadge}>
+              <Text style={styles.logoText}>Priced Ug</Text>
             </View>
-            <Text style={styles.logoText}>riced Ug</Text>
           </View>
           <Pressable onPress={openWhatsApp} style={styles.whatsappBtn}>
             <Feather name="message-circle" size={20} color="#25D366" />
@@ -309,17 +308,13 @@ const styles = StyleSheet.create({
     marginBottom: 12,
   },
   logoRow: { flexDirection: "row", alignItems: "center" },
-  logoCircle: {
-    width: 32,
-    height: 32,
-    borderRadius: 16,
+  logoBadge: {
     backgroundColor: "#E01E37",
-    alignItems: "center",
-    justifyContent: "center",
-    marginRight: 4,
+    borderRadius: 8,
+    paddingHorizontal: 10,
+    paddingVertical: 4,
   },
-  logoLetter: { color: "#fff", fontWeight: "bold" as const, fontSize: 18 },
-  logoText: { fontSize: 22, fontWeight: "bold" as const, color: "#E01E37" },
+  logoText: { fontSize: 22, fontWeight: "bold" as const, color: "#fff" },
   whatsappBtn: {
     width: 40,
     height: 40,
