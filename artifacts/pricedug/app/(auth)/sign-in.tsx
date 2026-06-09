@@ -14,6 +14,7 @@ import {
 import { Link, useRouter } from "expo-router";
 import { useSignIn } from "@clerk/expo";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
+import { Feather } from "@expo/vector-icons";
 
 export default function SignInScreen() {
   const { signIn, errors, fetchStatus } = useSignIn();
@@ -21,6 +22,7 @@ export default function SignInScreen() {
   const insets = useSafeAreaInsets();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
   const [verifyCode, setVerifyCode] = useState("");
 
   const handleSubmit = async () => {
@@ -97,14 +99,24 @@ export default function SignInScreen() {
         />
         {errors.fields.identifier && <Text style={styles.error}>{errors.fields.identifier.message}</Text>}
 
-        <TextInput
-          style={styles.input}
-          value={password}
-          onChangeText={setPassword}
-          placeholder="Password"
-          placeholderTextColor="#999"
-          secureTextEntry
-        />
+        <View style={styles.passwordWrapper}>
+          <TextInput
+            style={styles.passwordInput}
+            value={password}
+            onChangeText={setPassword}
+            placeholder="Password"
+            placeholderTextColor="#999"
+            secureTextEntry={!showPassword}
+          />
+          <Pressable
+            style={styles.eyeButton}
+            onPress={() => setShowPassword((s) => !s)}
+            hitSlop={8}
+            accessibilityLabel={showPassword ? "Hide password" : "Show password"}
+          >
+            <Feather name={showPassword ? "eye-off" : "eye"} size={20} color="#888888" />
+          </Pressable>
+        </View>
         {errors.fields.password && <Text style={styles.error}>{errors.fields.password.message}</Text>}
 
         <Pressable
@@ -178,6 +190,24 @@ const styles = StyleSheet.create({
     fontSize: 16,
     color: "#1a1a1a",
     marginBottom: 12,
+  },
+  passwordWrapper: {
+    flexDirection: "row",
+    alignItems: "center",
+    backgroundColor: "#F5F5F5",
+    borderRadius: 10,
+    marginBottom: 12,
+  },
+  passwordInput: {
+    flex: 1,
+    paddingHorizontal: 16,
+    paddingVertical: 14,
+    fontSize: 16,
+    color: "#1a1a1a",
+  },
+  eyeButton: {
+    paddingHorizontal: 16,
+    paddingVertical: 14,
   },
   button: {
     backgroundColor: "#E01E37",
