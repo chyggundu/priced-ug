@@ -60,6 +60,10 @@ export const GetAdminBusinessesResponseItem = zod.object({
   "phone": zod.string().nullish(),
   "categoryId": zod.number().nullish(),
   "categoryName": zod.string().nullish(),
+  "categories": zod.array(zod.object({
+  "id": zod.number(),
+  "name": zod.string()
+})).optional(),
   "imageUrl": zod.string().nullish(),
   "latitude": zod.number().nullish(),
   "longitude": zod.number().nullish(),
@@ -88,6 +92,10 @@ export const GetBusinessesResponseItem = zod.object({
   "phone": zod.string().nullish(),
   "categoryId": zod.number().nullish(),
   "categoryName": zod.string().nullish(),
+  "categories": zod.array(zod.object({
+  "id": zod.number(),
+  "name": zod.string()
+})).optional(),
   "imageUrl": zod.string().nullish(),
   "latitude": zod.number().nullish(),
   "longitude": zod.number().nullish(),
@@ -108,6 +116,7 @@ export const CreateBusinessBody = zod.object({
   "city": zod.string().nullish(),
   "phone": zod.string().nullish(),
   "categoryId": zod.number().nullish(),
+  "categoryIds": zod.array(zod.number()).optional(),
   "imageUrl": zod.string().nullish(),
   "latitude": zod.number().nullish(),
   "longitude": zod.number().nullish()
@@ -127,6 +136,10 @@ export const GetMyBusinessResponse = zod.object({
   "phone": zod.string().nullish(),
   "categoryId": zod.number().nullish(),
   "categoryName": zod.string().nullish(),
+  "categories": zod.array(zod.object({
+  "id": zod.number(),
+  "name": zod.string()
+})).optional(),
   "imageUrl": zod.string().nullish(),
   "latitude": zod.number().nullish(),
   "longitude": zod.number().nullish(),
@@ -146,6 +159,7 @@ export const UpdateMyBusinessBody = zod.object({
   "city": zod.string().nullish(),
   "phone": zod.string().nullish(),
   "categoryId": zod.number().nullish(),
+  "categoryIds": zod.array(zod.number()).optional(),
   "imageUrl": zod.string().nullish(),
   "latitude": zod.number().nullish(),
   "longitude": zod.number().nullish()
@@ -161,6 +175,10 @@ export const UpdateMyBusinessResponse = zod.object({
   "phone": zod.string().nullish(),
   "categoryId": zod.number().nullish(),
   "categoryName": zod.string().nullish(),
+  "categories": zod.array(zod.object({
+  "id": zod.number(),
+  "name": zod.string()
+})).optional(),
   "imageUrl": zod.string().nullish(),
   "latitude": zod.number().nullish(),
   "longitude": zod.number().nullish(),
@@ -187,6 +205,10 @@ export const GetBusinessResponse = zod.object({
   "phone": zod.string().nullish(),
   "categoryId": zod.number().nullish(),
   "categoryName": zod.string().nullish(),
+  "categories": zod.array(zod.object({
+  "id": zod.number(),
+  "name": zod.string()
+})).optional(),
   "imageUrl": zod.string().nullish(),
   "latitude": zod.number().nullish(),
   "longitude": zod.number().nullish(),
@@ -217,6 +239,10 @@ export const ToggleBusinessVisibilityResponse = zod.object({
   "phone": zod.string().nullish(),
   "categoryId": zod.number().nullish(),
   "categoryName": zod.string().nullish(),
+  "categories": zod.array(zod.object({
+  "id": zod.number(),
+  "name": zod.string()
+})).optional(),
   "imageUrl": zod.string().nullish(),
   "latitude": zod.number().nullish(),
   "longitude": zod.number().nullish(),

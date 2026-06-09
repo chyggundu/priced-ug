@@ -5,6 +5,7 @@
  * Pricedug API specification
  * OpenAPI spec version: 0.1.0
  */
+import type { BusinessCategory } from './businessCategory';
 
 export interface Business {
   id: number;
@@ -16,6 +17,7 @@ export interface Business {
   phone?: string | null;
   categoryId?: number | null;
   categoryName?: string | null;
+  categories?: BusinessCategory[];
   imageUrl?: string | null;
   latitude?: number | null;
   longitude?: number | null;

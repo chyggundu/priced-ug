@@ -348,11 +348,13 @@ export default function BrowseScreen() {
                     <Text style={[styles.businessName, { color: colors.foreground }]} numberOfLines={1}>
                       {business.name}
                     </Text>
-                    {business.categoryName && (
-                      <View style={[styles.categoryBadge, { backgroundColor: colors.secondary }]}>
-                        <Text style={[styles.categoryBadgeText, { color: colors.primary }]}>
-                          {business.categoryName}
-                        </Text>
+                    {business.categories && business.categories.length > 0 && (
+                      <View style={styles.categoryRow}>
+                        {business.categories.slice(0, 3).map((cat) => (
+                          <View key={cat.id} style={[styles.categoryBadge, { backgroundColor: colors.secondary }]}>
+                            <Text style={[styles.categoryBadgeText, { color: colors.primary }]}>{cat.name}</Text>
+                          </View>
+                        ))}
                       </View>
                     )}
                     {business.minPrice != null && (
@@ -457,12 +459,12 @@ const styles = StyleSheet.create({
   },
   businessInfo: { padding: 10 },
   businessName: { fontSize: 14, fontWeight: "600" as const, marginBottom: 6 },
+  categoryRow: { flexDirection: "row", flexWrap: "wrap", gap: 4, marginBottom: 6 },
   categoryBadge: {
     alignSelf: "flex-start",
     paddingHorizontal: 8,
     paddingVertical: 2,
     borderRadius: 8,
-    marginBottom: 6,
   },
   categoryBadgeText: { fontSize: 11, fontWeight: "500" as const },
   addressRow: { flexDirection: "row", alignItems: "center", gap: 4 },

@@ -19,6 +19,11 @@ export interface Category {
   createdAt: string;
 }
 
+export interface BusinessCategory {
+  id: number;
+  name: string;
+}
+
 export interface CreateCategoryInput {
   name: string;
 }
@@ -33,6 +38,7 @@ export interface Business {
   phone?: string | null;
   categoryId?: number | null;
   categoryName?: string | null;
+  categories?: BusinessCategory[];
   imageUrl?: string | null;
   latitude?: number | null;
   longitude?: number | null;
@@ -48,6 +54,7 @@ export interface CreateBusinessInput {
   city?: string | null;
   phone?: string | null;
   categoryId?: number | null;
+  categoryIds?: number[];
   imageUrl?: string | null;
   latitude?: number | null;
   longitude?: number | null;
@@ -60,6 +67,7 @@ export interface UpdateBusinessInput {
   city?: string | null;
   phone?: string | null;
   categoryId?: number | null;
+  categoryIds?: number[];
   imageUrl?: string | null;
   latitude?: number | null;
   longitude?: number | null;

@@ -7,6 +7,7 @@
  */
 
 export * from './business';
+export * from './businessCategory';
 export * from './category';
 export * from './createBusinessInput';
 export * from './createCategoryInput';

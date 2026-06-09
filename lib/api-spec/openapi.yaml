@@ -531,6 +531,17 @@ components:
         - name
         - createdAt
 
+    BusinessCategory:
+      type: object
+      properties:
+        id:
+          type: integer
+        name:
+          type: string
+      required:
+        - id
+        - name
+
     CreateCategoryInput:
       type: object
       properties:
@@ -566,6 +577,10 @@ components:
         categoryName:
           type: string
           nullable: true
+        categories:
+          type: array
+          items:
+            $ref: "#/components/schemas/BusinessCategory"
         imageUrl:
           type: string
           nullable: true
@@ -610,6 +625,10 @@ components:
         categoryId:
           type: integer
           nullable: true
+        categoryIds:
+          type: array
+          items:
+            type: integer
         imageUrl:
           type: string
           nullable: true
@@ -642,6 +661,10 @@ components:
         categoryId:
           type: integer
           nullable: true
+        categoryIds:
+          type: array
+          items:
+            type: integer
         imageUrl:
           type: string
           nullable: true

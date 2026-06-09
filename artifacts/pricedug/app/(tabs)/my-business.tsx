@@ -134,9 +134,13 @@ export default function MyBusinessScreen() {
 
           <View style={styles.businessInfo}>
             <Text style={[styles.businessName, { color: colors.foreground }]}>{business.name}</Text>
-            {business.categoryName && (
-              <View style={[styles.categoryBadge, { backgroundColor: colors.secondary }]}>
-                <Text style={[styles.categoryBadgeText, { color: colors.primary }]}>{business.categoryName}</Text>
+            {business.categories && business.categories.length > 0 && (
+              <View style={styles.categoryRow}>
+                {business.categories.map((cat) => (
+                  <View key={cat.id} style={[styles.categoryBadge, { backgroundColor: colors.secondary }]}>
+                    <Text style={[styles.categoryBadgeText, { color: colors.primary }]}>{cat.name}</Text>
+                  </View>
+                ))}
               </View>
             )}
             {business.description && (
@@ -287,7 +291,8 @@ const styles = StyleSheet.create({
   hiddenBannerText: { color: "#fff", fontSize: 12, fontWeight: "500" as const },
   businessInfo: { padding: 14 },
   businessName: { fontSize: 18, fontWeight: "700" as const, marginBottom: 8 },
-  categoryBadge: { alignSelf: "flex-start", paddingHorizontal: 10, paddingVertical: 3, borderRadius: 8, marginBottom: 8 },
+  categoryRow: { flexDirection: "row", flexWrap: "wrap", gap: 6, marginBottom: 8 },
+  categoryBadge: { alignSelf: "flex-start", paddingHorizontal: 10, paddingVertical: 3, borderRadius: 8 },
   categoryBadgeText: { fontSize: 12, fontWeight: "500" as const },
   description: { fontSize: 14, lineHeight: 20, marginBottom: 8 },
   infoRow: { flexDirection: "row", alignItems: "center", gap: 6, marginBottom: 4 },

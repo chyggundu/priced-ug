@@ -13,6 +13,7 @@ export interface UpdateBusinessInput {
   city?: string | null;
   phone?: string | null;
   categoryId?: number | null;
+  categoryIds?: number[];
   imageUrl?: string | null;
   latitude?: number | null;
   longitude?: number | null;

@@ -137,8 +137,10 @@ export default function AdminPanelScreen() {
                         </View>
                       )}
                     </View>
-                    {b.categoryName && (
-                      <Text style={[styles.bizCat, { color: colors.mutedForeground }]}>{b.categoryName}</Text>
+                    {b.categories && b.categories.length > 0 && (
+                      <Text style={[styles.bizCat, { color: colors.mutedForeground }]}>
+                        {b.categories.map((c) => c.name).join(", ")}
+                      </Text>
                     )}
                     {b.address && (
                       <Text style={[styles.bizAddr, { color: colors.mutedForeground }]} numberOfLines={1}>{b.address}</Text>
