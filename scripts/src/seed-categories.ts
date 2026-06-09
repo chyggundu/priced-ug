@@ -18,10 +18,10 @@ const DEFAULT_CATEGORIES = [
   "AB&B",
   "Saloons",
   "Bridal",
-  "Party rentals",
+  "Party Rentals",
   "Tilers",
   "Plumbers",
-  "Car rental",
+  "Car Rental",
   "Personal Effects",
 ];
 

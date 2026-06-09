@@ -23,7 +23,12 @@ router.post("/categories", requireAdmin, async (req, res) => {
       res.status(400).json({ error: "Name is required" });
       return;
     }
-    const [category] = await db.insert(categoriesTable).values({ name }).returning();
+    const normalized = name
+      .trim()
+      .split(/\s+/)
+      .map((word) => (word ? word[0].toUpperCase() + word.slice(1) : word))
+      .join(" ");
+    const [category] = await db.insert(categoriesTable).values({ name: normalized }).returning();
     res.status(201).json(category);
   } catch (err) {
     req.log.error({ err }, "Failed to create category");
