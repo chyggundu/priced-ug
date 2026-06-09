@@ -15,6 +15,7 @@ import { Feather } from "@expo/vector-icons";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useGetBusiness, useGetBusinessProducts } from "@workspace/api-client-react";
 import { useColors } from "@/hooks/useColors";
+import { BusinessReviews } from "@/components/BusinessReviews";
 
 export default function BusinessDetailScreen() {
   const colors = useColors();
@@ -217,6 +218,8 @@ export default function BusinessDetailScreen() {
             </View>
           )}
         </View>
+
+        <BusinessReviews businessId={businessId} ownerUserId={business.clerkUserId} />
 
         <View style={{ height: Platform.OS === "web" ? 40 : insets.bottom + 32 }} />
       </ScrollView>

@@ -114,6 +114,31 @@ export interface UpdateProductInput {
   materials?: string | null;
 }
 
+export interface Review {
+  id: number;
+  businessId: number;
+  authorName: string;
+  rating: number;
+  comment?: string | null;
+  reply?: string | null;
+  repliedAt?: string | null;
+  createdAt: string;
+  isMine: boolean;
+}
+
+export interface CreateReviewInput {
+  /**
+     * @minimum 1
+     * @maximum 5
+     */
+  rating: number;
+  comment?: string | null;
+}
+
+export interface ReplyReviewInput {
+  reply: string;
+}
+
 export interface UploadUrlInput {
   filename: string;
   contentType: string;

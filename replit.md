@@ -46,6 +46,7 @@ Repository: https://github.com/chyggundu/priced-ug
 - **Clerk proxy**: The API server proxies Clerk auth requests at `/api/__clerk` so the mobile app can authenticate via the same domain.
 - **Object storage**: Provisioned via Replit Object Storage (sidecar-authenticated GCS). `POST /api/storage/upload-url` (auth required) returns a signed PUT URL plus a `publicUrl`; the client PUTs the file, then stores `publicUrl`. Objects live in the private bucket and are served publicly through `GET /api/storage/objects/*`. Env vars (set automatically): `DEFAULT_OBJECT_STORAGE_BUCKET_ID`, `PRIVATE_OBJECT_DIR`, `PUBLIC_OBJECT_SEARCH_PATHS`. Storage client lives in `artifacts/api-server/src/lib/objectStorage.ts` + `objectAcl.ts`.
 - **Public browsing**: The browse screen and business detail pages are fully public — no auth required. Only business management (create/edit) and admin panel require login.
+- **Reviews**: Any signed-in user (except the business owner) can leave one review per business (rating 1–5 + optional comment). The owner can reply once per review; admins can delete any review. Reviewer display name is resolved server-side from Clerk (never trusted from the client), and the public reviews endpoint exposes an `isMine` flag instead of the raw Clerk `userId`. One-review-per-user is enforced by a `unique(businessId, userId)` DB constraint (race-safe: 23505 → 409). Schema in `lib/db/src/schema/reviews.ts`, routes in `artifacts/api-server/src/routes/reviews.ts`, UI in `artifacts/pricedug/components/BusinessReviews.tsx`.
 
 ## Product
 

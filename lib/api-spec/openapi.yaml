@@ -18,6 +18,8 @@ tags:
     description: Product/merchandise operations
   - name: storage
     description: File storage operations
+  - name: reviews
+    description: Business review operations
 paths:
   /healthz:
     get:
@@ -369,6 +371,112 @@ paths:
                 items:
                   $ref: "#/components/schemas/Product"
 
+  /businesses/{businessId}/reviews:
+    get:
+      operationId: getBusinessReviews
+      tags: [reviews]
+      summary: List reviews for a business (public)
+      parameters:
+        - name: businessId
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: List of reviews
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Review"
+    post:
+      operationId: createReview
+      tags: [reviews]
+      summary: Leave a review on a business (authenticated)
+      parameters:
+        - name: businessId
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateReviewInput"
+      responses:
+        "201":
+          description: Created review
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Review"
+        "401":
+          description: Unauthorized
+        "403":
+          description: Forbidden (cannot review own business)
+        "409":
+          description: Already reviewed
+
+  /reviews/{reviewId}/reply:
+    post:
+      operationId: replyToReview
+      tags: [reviews]
+      summary: Reply to a review (business owner only)
+      parameters:
+        - name: reviewId
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ReplyReviewInput"
+      responses:
+        "200":
+          description: Updated review
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Review"
+        "401":
+          description: Unauthorized
+        "403":
+          description: Forbidden
+        "404":
+          description: Not found
+        "409":
+          description: Already replied
+
+  /reviews/{reviewId}:
+    delete:
+      operationId: deleteReview
+      tags: [reviews]
+      summary: Delete a review (admin only)
+      parameters:
+        - name: reviewId
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Deleted
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SuccessResponse"
+        "401":
+          description: Unauthorized
+        "403":
+          description: Forbidden
+
   /storage/upload-url:
     post:
       operationId: getUploadUrl
@@ -670,6 +778,61 @@ components:
         materials:
           type: string
           nullable: true
+
+    Review:
+      type: object
+      properties:
+        id:
+          type: integer
+        businessId:
+          type: integer
+        authorName:
+          type: string
+        rating:
+          type: integer
+        comment:
+          type: string
+          nullable: true
+        reply:
+          type: string
+          nullable: true
+        repliedAt:
+          type: string
+          format: date-time
+          nullable: true
+        createdAt:
+          type: string
+          format: date-time
+        isMine:
+          type: boolean
+      required:
+        - id
+        - businessId
+        - authorName
+        - rating
+        - createdAt
+        - isMine
+
+    CreateReviewInput:
+      type: object
+      properties:
+        rating:
+          type: integer
+          minimum: 1
+          maximum: 5
+        comment:
+          type: string
+          nullable: true
+      required:
+        - rating
+
+    ReplyReviewInput:
+      type: object
+      properties:
+        reply:
+          type: string
+      required:
+        - reply
 
     UploadUrlInput:
       type: object

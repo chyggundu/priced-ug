@@ -343,6 +343,80 @@ export const GetBusinessProductsResponse = zod.array(GetBusinessProductsResponse
 
 
 /**
+ * @summary List reviews for a business (public)
+ */
+export const GetBusinessReviewsParams = zod.object({
+  "businessId": zod.coerce.number()
+})
+
+export const GetBusinessReviewsResponseItem = zod.object({
+  "id": zod.number(),
+  "businessId": zod.number(),
+  "authorName": zod.string(),
+  "rating": zod.number(),
+  "comment": zod.string().nullish(),
+  "reply": zod.string().nullish(),
+  "repliedAt": zod.coerce.date().nullish(),
+  "createdAt": zod.coerce.date(),
+  "isMine": zod.boolean()
+})
+export const GetBusinessReviewsResponse = zod.array(GetBusinessReviewsResponseItem)
+
+
+/**
+ * @summary Leave a review on a business (authenticated)
+ */
+export const CreateReviewParams = zod.object({
+  "businessId": zod.coerce.number()
+})
+
+export const createReviewBodyRatingMax = 5;
+
+
+
+export const CreateReviewBody = zod.object({
+  "rating": zod.number().min(1).max(createReviewBodyRatingMax),
+  "comment": zod.string().nullish()
+})
+
+
+/**
+ * @summary Reply to a review (business owner only)
+ */
+export const ReplyToReviewParams = zod.object({
+  "reviewId": zod.coerce.number()
+})
+
+export const ReplyToReviewBody = zod.object({
+  "reply": zod.string()
+})
+
+export const ReplyToReviewResponse = zod.object({
+  "id": zod.number(),
+  "businessId": zod.number(),
+  "authorName": zod.string(),
+  "rating": zod.number(),
+  "comment": zod.string().nullish(),
+  "reply": zod.string().nullish(),
+  "repliedAt": zod.coerce.date().nullish(),
+  "createdAt": zod.coerce.date(),
+  "isMine": zod.boolean()
+})
+
+
+/**
+ * @summary Delete a review (admin only)
+ */
+export const DeleteReviewParams = zod.object({
+  "reviewId": zod.coerce.number()
+})
+
+export const DeleteReviewResponse = zod.object({
+  "success": zod.boolean()
+})
+
+
+/**
  * @summary Get a presigned upload URL (authenticated)
  */
 export const GetUploadUrlBody = zod.object({
