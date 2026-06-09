@@ -18,12 +18,46 @@ import { Feather } from "@expo/vector-icons";
 import * as SecureStore from "expo-secure-store";
 
 const CREDENTIALS_KEY = "pricedug.savedCredentials";
-const canPersist = Platform.OS !== "web";
+const isWeb = Platform.OS === "web";
+
+async function storageGet(key: string): Promise<string | null> {
+  if (isWeb) {
+    try {
+      return typeof localStorage !== "undefined" ? localStorage.getItem(key) : null;
+    } catch {
+      return null;
+    }
+  }
+  return SecureStore.getItemAsync(key);
+}
+
+async function storageSet(key: string, value: string): Promise<void> {
+  if (isWeb) {
+    try {
+      if (typeof localStorage !== "undefined") localStorage.setItem(key, value);
+    } catch {
+      // ignore
+    }
+    return;
+  }
+  await SecureStore.setItemAsync(key, value);
+}
+
+async function storageDelete(key: string): Promise<void> {
+  if (isWeb) {
+    try {
+      if (typeof localStorage !== "undefined") localStorage.removeItem(key);
+    } catch {
+      // ignore
+    }
+    return;
+  }
+  await SecureStore.deleteItemAsync(key);
+}
 
 async function loadSavedCredentials(): Promise<{ email: string; password: string } | null> {
-  if (!canPersist) return null;
   try {
-    const raw = await SecureStore.getItemAsync(CREDENTIALS_KEY);
+    const raw = await storageGet(CREDENTIALS_KEY);
     if (!raw) return null;
     const parsed = JSON.parse(raw);
     if (typeof parsed?.email === "string" && typeof parsed?.password === "string") {
@@ -36,18 +70,16 @@ async function loadSavedCredentials(): Promise<{ email: string; password: string
 }
 
 async function saveCredentials(email: string, password: string): Promise<void> {
-  if (!canPersist) return;
   try {
-    await SecureStore.setItemAsync(CREDENTIALS_KEY, JSON.stringify({ email, password }));
+    await storageSet(CREDENTIALS_KEY, JSON.stringify({ email, password }));
   } catch {
     // ignore persistence failures
   }
 }
 
 async function clearCredentials(): Promise<void> {
-  if (!canPersist) return;
   try {
-    await SecureStore.deleteItemAsync(CREDENTIALS_KEY);
+    await storageDelete(CREDENTIALS_KEY);
   } catch {
     // ignore
   }
@@ -60,7 +92,7 @@ export default function SignInScreen() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
-  const [rememberMe, setRememberMe] = useState(false);
+  const [rememberMe, setRememberMe] = useState(true);
   const [verifyCode, setVerifyCode] = useState("");
 
   useEffect(() => {
@@ -176,22 +208,20 @@ export default function SignInScreen() {
         </View>
         {errors.fields.password && <Text style={styles.error}>{errors.fields.password.message}</Text>}
 
-        {canPersist && (
-          <Pressable
-            style={styles.rememberRow}
-            onPress={() => setRememberMe((r) => !r)}
-            accessibilityRole="checkbox"
-            accessibilityState={{ checked: rememberMe }}
-            hitSlop={8}
-          >
-            <Feather
-              name={rememberMe ? "check-square" : "square"}
-              size={20}
-              color={rememberMe ? "#E01E37" : "#888888"}
-            />
-            <Text style={styles.rememberText}>Remember me on this device</Text>
-          </Pressable>
-        )}
+        <Pressable
+          style={styles.rememberRow}
+          onPress={() => setRememberMe((r) => !r)}
+          accessibilityRole="checkbox"
+          accessibilityState={{ checked: rememberMe }}
+          hitSlop={8}
+        >
+          <Feather
+            name={rememberMe ? "check-square" : "square"}
+            size={20}
+            color={rememberMe ? "#E01E37" : "#888888"}
+          />
+          <Text style={styles.rememberText}>Remember me on this device</Text>
+        </Pressable>
 
         <Pressable
           style={[styles.button, (!email || !password || fetchStatus === "fetching") && styles.buttonDisabled]}
