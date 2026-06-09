@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import {
   View,
   Text,
@@ -15,6 +15,43 @@ import { Link, useRouter } from "expo-router";
 import { useSignIn } from "@clerk/expo";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Feather } from "@expo/vector-icons";
+import * as SecureStore from "expo-secure-store";
+
+const CREDENTIALS_KEY = "pricedug.savedCredentials";
+const canPersist = Platform.OS !== "web";
+
+async function loadSavedCredentials(): Promise<{ email: string; password: string } | null> {
+  if (!canPersist) return null;
+  try {
+    const raw = await SecureStore.getItemAsync(CREDENTIALS_KEY);
+    if (!raw) return null;
+    const parsed = JSON.parse(raw);
+    if (typeof parsed?.email === "string" && typeof parsed?.password === "string") {
+      return parsed;
+    }
+    return null;
+  } catch {
+    return null;
+  }
+}
+
+async function saveCredentials(email: string, password: string): Promise<void> {
+  if (!canPersist) return;
+  try {
+    await SecureStore.setItemAsync(CREDENTIALS_KEY, JSON.stringify({ email, password }));
+  } catch {
+    // ignore persistence failures
+  }
+}
+
+async function clearCredentials(): Promise<void> {
+  if (!canPersist) return;
+  try {
+    await SecureStore.deleteItemAsync(CREDENTIALS_KEY);
+  } catch {
+    // ignore
+  }
+}
 
 export default function SignInScreen() {
   const { signIn, errors, fetchStatus } = useSignIn();
@@ -23,11 +60,31 @@ export default function SignInScreen() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
+  const [rememberMe, setRememberMe] = useState(false);
   const [verifyCode, setVerifyCode] = useState("");
+
+  useEffect(() => {
+    let active = true;
+    loadSavedCredentials().then((saved) => {
+      if (active && saved) {
+        setEmail(saved.email);
+        setPassword(saved.password);
+        setRememberMe(true);
+      }
+    });
+    return () => {
+      active = false;
+    };
+  }, []);
 
   const handleSubmit = async () => {
     const { error } = await signIn.password({ emailAddress: email, password });
     if (error) return;
+    if (rememberMe) {
+      await saveCredentials(email, password);
+    } else {
+      await clearCredentials();
+    }
     if (signIn.status === "complete") {
       await signIn.finalize({
         navigate: ({ decorateUrl }) => {
@@ -119,6 +176,23 @@ export default function SignInScreen() {
         </View>
         {errors.fields.password && <Text style={styles.error}>{errors.fields.password.message}</Text>}
 
+        {canPersist && (
+          <Pressable
+            style={styles.rememberRow}
+            onPress={() => setRememberMe((r) => !r)}
+            accessibilityRole="checkbox"
+            accessibilityState={{ checked: rememberMe }}
+            hitSlop={8}
+          >
+            <Feather
+              name={rememberMe ? "check-square" : "square"}
+              size={20}
+              color={rememberMe ? "#E01E37" : "#888888"}
+            />
+            <Text style={styles.rememberText}>Remember me on this device</Text>
+          </Pressable>
+        )}
+
         <Pressable
           style={[styles.button, (!email || !password || fetchStatus === "fetching") && styles.buttonDisabled]}
           onPress={handleSubmit}
@@ -208,6 +282,17 @@ const styles = StyleSheet.create({
   eyeButton: {
     paddingHorizontal: 16,
     paddingVertical: 14,
+  },
+  rememberRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    marginTop: 4,
+    marginBottom: 4,
+  },
+  rememberText: {
+    color: "#555555",
+    fontSize: 14,
+    marginLeft: 8,
   },
   button: {
     backgroundColor: "#E01E37",
