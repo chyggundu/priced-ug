@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import {
   View,
   Text,
@@ -14,7 +14,12 @@ import {
 import { useRouter } from "expo-router";
 import { Feather } from "@expo/vector-icons";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import { useGetCategories, useGetBusinesses } from "@workspace/api-client-react";
+import {
+  useGetCategories,
+  useGetBusinesses,
+  useSearchProducts,
+  getSearchProductsQueryKey,
+} from "@workspace/api-client-react";
 import { useColors } from "@/hooks/useColors";
 
 const WHATSAPP_NUMBER = "1234567890"; // Replace with actual WhatsApp number
@@ -29,11 +34,23 @@ export default function BrowseScreen() {
   const [selectedCity, setSelectedCity] = useState<string | null>(null);
   const [sortBy, setSortBy] = useState<"newest" | "priceAsc" | "priceDesc">("newest");
 
+  // Debounce typing into the actual search query so items appear as you type.
+  useEffect(() => {
+    const handle = setTimeout(() => setSearchQuery(searchInput.trim()), 300);
+    return () => clearTimeout(handle);
+  }, [searchInput]);
+
+  const isSearching = searchQuery.length > 0;
+
   const { data: categories = [], isLoading: categoriesLoading } = useGetCategories();
   const { data: businesses = [], isLoading: businessesLoading } = useGetBusinesses({
     ...(selectedCategory ? { categoryId: selectedCategory } : {}),
     ...(searchQuery ? { search: searchQuery } : {}),
   });
+  const { data: searchedProducts = [], isLoading: productsLoading } = useSearchProducts(
+    { q: searchQuery },
+    { query: { enabled: isSearching, queryKey: getSearchProductsQueryKey({ q: searchQuery }) } }
+  );
 
   const cities = Array.from(
     new Set(
@@ -120,6 +137,7 @@ export default function BrowseScreen() {
 
       <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
         {/* Categories */}
+        {!isSearching && (
         <View style={styles.section}>
           <Text style={[styles.sectionTitle, { color: colors.foreground }]}>Categories</Text>
           {categoriesLoading ? (
@@ -158,9 +176,10 @@ export default function BrowseScreen() {
             </ScrollView>
           )}
         </View>
+        )}
 
         {/* Location */}
-        {cities.length > 0 && (
+        {!isSearching && cities.length > 0 && (
           <View style={styles.section}>
             <Text style={[styles.sectionTitle, { color: colors.foreground }]}>Location</Text>
             <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.categoriesScroll}>
@@ -198,6 +217,7 @@ export default function BrowseScreen() {
         )}
 
         {/* Sort */}
+        {!isSearching && (
         <View style={styles.section}>
           <Text style={[styles.sectionTitle, { color: colors.foreground }]}>Sort by</Text>
           <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.categoriesScroll}>
@@ -219,8 +239,76 @@ export default function BrowseScreen() {
             ))}
           </ScrollView>
         </View>
+        )}
+
+        {/* Search results: items */}
+        {isSearching && (
+          <View style={styles.section}>
+            <Text style={[styles.sectionTitle, { color: colors.foreground }]}>
+              Results for "{searchQuery}"
+              {" "}
+              <Text style={{ color: colors.mutedForeground, fontSize: 14, fontWeight: "400" }}>
+                ({searchedProducts.length})
+              </Text>
+            </Text>
+
+            {productsLoading ? (
+              <ActivityIndicator color={colors.primary} style={{ marginVertical: 24 }} />
+            ) : searchedProducts.length === 0 ? (
+              <View style={styles.emptyState}>
+                <Feather name="package" size={40} color={colors.mutedForeground} />
+                <Text style={[styles.emptyText, { color: colors.mutedForeground }]}>
+                  No items found
+                </Text>
+              </View>
+            ) : (
+              <View style={styles.businessGrid}>
+                {searchedProducts.map((product) => (
+                  <Pressable
+                    key={product.id}
+                    style={[styles.businessCard, { backgroundColor: colors.card, borderColor: colors.border }]}
+                    onPress={() => router.push(`/business/${product.businessId}`)}
+                  >
+                    {product.imageUrl ? (
+                      <Image source={{ uri: product.imageUrl }} style={styles.businessImage} />
+                    ) : (
+                      <View style={[styles.businessImagePlaceholder, { backgroundColor: colors.secondary }]}>
+                        <Feather name="package" size={28} color={colors.primary} />
+                      </View>
+                    )}
+                    <View style={styles.businessInfo}>
+                      <Text style={[styles.businessName, { color: colors.foreground }]} numberOfLines={1}>
+                        {product.name}
+                      </Text>
+                      {product.price && (
+                        <Text style={[styles.priceText, { color: colors.primary }]} numberOfLines={1}>
+                          {product.price}
+                        </Text>
+                      )}
+                      <View style={styles.addressRow}>
+                        <Feather name="briefcase" size={11} color={colors.mutedForeground} />
+                        <Text style={[styles.addressText, { color: colors.mutedForeground }]} numberOfLines={1}>
+                          {product.businessName}
+                        </Text>
+                      </View>
+                      {product.businessCity && (
+                        <View style={styles.addressRow}>
+                          <Feather name="map-pin" size={11} color={colors.mutedForeground} />
+                          <Text style={[styles.addressText, { color: colors.mutedForeground }]} numberOfLines={1}>
+                            {product.businessCity}
+                          </Text>
+                        </View>
+                      )}
+                    </View>
+                  </Pressable>
+                ))}
+              </View>
+            )}
+          </View>
+        )}
 
         {/* Businesses */}
+        {!isSearching && (
         <View style={styles.section}>
           <Text style={[styles.sectionTitle, { color: colors.foreground }]}>
             {selectedCategory
@@ -286,6 +374,7 @@ export default function BrowseScreen() {
             </View>
           )}
         </View>
+        )}
 
         <View style={{ height: Platform.OS === "web" ? 100 : insets.bottom + 80 }} />
       </ScrollView>

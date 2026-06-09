@@ -81,6 +81,21 @@ export interface Product {
   createdAt: string;
 }
 
+export interface ProductSearchResult {
+  id: number;
+  businessId: number;
+  name: string;
+  description?: string | null;
+  price?: string | null;
+  imageUrl?: string | null;
+  size?: string | null;
+  materials?: string | null;
+  createdAt: string;
+  businessName: string;
+  businessImageUrl?: string | null;
+  businessCity?: string | null;
+}
+
 export interface CreateProductInput {
   name: string;
   description?: string | null;
@@ -112,5 +127,9 @@ export interface UploadUrlResponse {
 export type GetBusinessesParams = {
 categoryId?: number;
 search?: string;
+};
+
+export type SearchProductsParams = {
+q: string;
 };
 

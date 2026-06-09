@@ -14,6 +14,8 @@ export * from './createProductInput';
 export * from './getBusinessesParams';
 export * from './healthStatus';
 export * from './product';
+export * from './productSearchResult';
+export * from './searchProductsParams';
 export * from './successResponse';
 export * from './updateBusinessInput';
 export * from './updateProductInput';

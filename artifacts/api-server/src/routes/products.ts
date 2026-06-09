@@ -1,10 +1,51 @@
 import { Router } from "express";
 import { db } from "@workspace/db";
 import { productsTable, businessesTable } from "@workspace/db";
-import { eq } from "drizzle-orm";
+import { eq, and, or, ilike } from "drizzle-orm";
 import { requireAuth, optionalAuth } from "../lib/auth";
 
 const router = Router();
+
+router.get("/products/search", async (req, res) => {
+  try {
+    const q = typeof req.query.q === "string" ? req.query.q.trim() : "";
+    if (!q) {
+      res.json([]);
+      return;
+    }
+
+    const pattern = `%${q}%`;
+    const results = await db
+      .select({
+        id: productsTable.id,
+        businessId: productsTable.businessId,
+        name: productsTable.name,
+        description: productsTable.description,
+        price: productsTable.price,
+        imageUrl: productsTable.imageUrl,
+        size: productsTable.size,
+        materials: productsTable.materials,
+        createdAt: productsTable.createdAt,
+        businessName: businessesTable.name,
+        businessImageUrl: businessesTable.imageUrl,
+        businessCity: businessesTable.city,
+      })
+      .from(productsTable)
+      .innerJoin(businessesTable, eq(productsTable.businessId, businessesTable.id))
+      .where(
+        and(
+          eq(businessesTable.isHidden, false),
+          or(ilike(productsTable.name, pattern), ilike(productsTable.description, pattern))
+        )
+      )
+      .orderBy(productsTable.createdAt);
+
+    res.json(results);
+  } catch (err) {
+    req.log.error({ err }, "Failed to search products");
+    res.status(500).json({ error: "Internal server error" });
+  }
+});
 
 router.get("/businesses/:businessId/products", optionalAuth, async (req, res) => {
   try {

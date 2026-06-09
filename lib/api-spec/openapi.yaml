@@ -327,6 +327,27 @@ paths:
         "404":
           description: Not found
 
+  /products/search:
+    get:
+      operationId: searchProducts
+      tags: [products]
+      summary: Search products across visible businesses (public)
+      parameters:
+        - name: q
+          in: query
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Matching products with their business
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/ProductSearchResult"
+
   /businesses/{businessId}/products:
     get:
       operationId: getBusinessProducts
@@ -563,6 +584,48 @@ components:
         - businessId
         - name
         - createdAt
+
+    ProductSearchResult:
+      type: object
+      properties:
+        id:
+          type: integer
+        businessId:
+          type: integer
+        name:
+          type: string
+        description:
+          type: string
+          nullable: true
+        price:
+          type: string
+          nullable: true
+        imageUrl:
+          type: string
+          nullable: true
+        size:
+          type: string
+          nullable: true
+        materials:
+          type: string
+          nullable: true
+        createdAt:
+          type: string
+          format: date-time
+        businessName:
+          type: string
+        businessImageUrl:
+          type: string
+          nullable: true
+        businessCity:
+          type: string
+          nullable: true
+      required:
+        - id
+        - businessId
+        - name
+        - createdAt
+        - businessName
 
     CreateProductInput:
       type: object

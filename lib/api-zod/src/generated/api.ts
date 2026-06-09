@@ -298,6 +298,30 @@ export const DeleteProductResponse = zod.object({
 
 
 /**
+ * @summary Search products across visible businesses (public)
+ */
+export const SearchProductsQueryParams = zod.object({
+  "q": zod.coerce.string()
+})
+
+export const SearchProductsResponseItem = zod.object({
+  "id": zod.number(),
+  "businessId": zod.number(),
+  "name": zod.string(),
+  "description": zod.string().nullish(),
+  "price": zod.string().nullish(),
+  "imageUrl": zod.string().nullish(),
+  "size": zod.string().nullish(),
+  "materials": zod.string().nullish(),
+  "createdAt": zod.coerce.date(),
+  "businessName": zod.string(),
+  "businessImageUrl": zod.string().nullish(),
+  "businessCity": zod.string().nullish()
+})
+export const SearchProductsResponse = zod.array(SearchProductsResponseItem)
+
+
+/**
  * @summary Get products for a business (public)
  */
 export const GetBusinessProductsParams = zod.object({
