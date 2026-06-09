@@ -1,6 +1,6 @@
 import { Router } from "express";
 import { db } from "@workspace/db";
-import { businessesTable, categoriesTable, businessCategoriesTable, productsTable } from "@workspace/db";
+import { businessesTable, categoriesTable, productsTable } from "@workspace/db";
 import { eq, and, or, ilike, inArray } from "drizzle-orm";
 import { requireAuth, requireAdmin, optionalAuth } from "../lib/auth";
 
@@ -13,15 +13,16 @@ async function attachCategories<T extends { id: number }>(
 ): Promise<(T & { categories: BusinessCategory[] })[]> {
   if (businesses.length === 0) return [];
   const ids = businesses.map((b) => b.id);
+  // Categories are derived from the categories of a business's products.
   const rows = await db
-    .select({
-      businessId: businessCategoriesTable.businessId,
+    .selectDistinct({
+      businessId: productsTable.businessId,
       categoryId: categoriesTable.id,
       categoryName: categoriesTable.name,
     })
-    .from(businessCategoriesTable)
-    .innerJoin(categoriesTable, eq(businessCategoriesTable.categoryId, categoriesTable.id))
-    .where(inArray(businessCategoriesTable.businessId, ids));
+    .from(productsTable)
+    .innerJoin(categoriesTable, eq(productsTable.categoryId, categoriesTable.id))
+    .where(inArray(productsTable.businessId, ids));
 
   const byBusiness = new Map<number, BusinessCategory[]>();
   for (const row of rows) {
@@ -38,42 +39,6 @@ async function attachCategoriesOne<T extends { id: number }>(
   if (!business) return null;
   const [withCats] = await attachCategories([business]);
   return withCats ?? null;
-}
-
-function parseCategoryIds(body: Record<string, unknown>): number[] | undefined {
-  if (Array.isArray(body.categoryIds)) {
-    const ids = body.categoryIds
-      .map((v) => (typeof v === "number" ? v : parseInt(String(v), 10)))
-      .filter((n) => Number.isInteger(n));
-    return Array.from(new Set(ids));
-  }
-  // Backward compat: a single categoryId still works.
-  if (body.categoryId !== undefined && body.categoryId !== null) {
-    const single = typeof body.categoryId === "number" ? body.categoryId : parseInt(String(body.categoryId), 10);
-    return Number.isInteger(single) ? [single] : [];
-  }
-  return undefined;
-}
-
-async function validCategoryIds(categoryIds: number[]): Promise<boolean> {
-  if (categoryIds.length === 0) return true;
-  const found = await db
-    .select({ id: categoriesTable.id })
-    .from(categoriesTable)
-    .where(inArray(categoriesTable.id, categoryIds));
-  return found.length === categoryIds.length;
-}
-
-type Tx = Parameters<Parameters<typeof db.transaction>[0]>[0];
-
-async function setBusinessCategories(tx: Tx, businessId: number, categoryIds: number[]): Promise<void> {
-  await tx.delete(businessCategoriesTable).where(eq(businessCategoriesTable.businessId, businessId));
-  if (categoryIds.length > 0) {
-    await tx
-      .insert(businessCategoriesTable)
-      .values(categoryIds.map((categoryId) => ({ businessId, categoryId })))
-      .onConflictDoNothing();
-  }
 }
 
 function validateCoordinates(latitude: unknown, longitude: unknown): string | null {
@@ -103,8 +68,6 @@ async function getBusinessWithCategory(businessId: number) {
       address: businessesTable.address,
       city: businessesTable.city,
       phone: businessesTable.phone,
-      categoryId: businessesTable.categoryId,
-      categoryName: categoriesTable.name,
       imageUrl: businessesTable.imageUrl,
       latitude: businessesTable.latitude,
       longitude: businessesTable.longitude,
@@ -112,7 +75,6 @@ async function getBusinessWithCategory(businessId: number) {
       createdAt: businessesTable.createdAt,
     })
     .from(businessesTable)
-    .leftJoin(categoriesTable, eq(businessesTable.categoryId, categoriesTable.id))
     .where(eq(businessesTable.id, businessId));
   return result[0] ?? null;
 }
@@ -153,23 +115,20 @@ router.get("/businesses", optionalAuth, async (req, res) => {
         address: businessesTable.address,
         city: businessesTable.city,
         phone: businessesTable.phone,
-        categoryId: businessesTable.categoryId,
-        categoryName: categoriesTable.name,
         imageUrl: businessesTable.imageUrl,
         latitude: businessesTable.latitude,
         longitude: businessesTable.longitude,
         isHidden: businessesTable.isHidden,
         createdAt: businessesTable.createdAt,
       })
-      .from(businessesTable)
-      .leftJoin(categoriesTable, eq(businessesTable.categoryId, categoriesTable.id));
+      .from(businessesTable);
 
     const conditions = [eq(businessesTable.isHidden, false)];
     if (categoryId) {
       const inCategory = db
-        .select({ businessId: businessCategoriesTable.businessId })
-        .from(businessCategoriesTable)
-        .where(eq(businessCategoriesTable.categoryId, categoryId));
+        .selectDistinct({ businessId: productsTable.businessId })
+        .from(productsTable)
+        .where(eq(productsTable.categoryId, categoryId));
       conditions.push(inArray(businessesTable.id, inCategory));
     }
     if (search) {
@@ -209,8 +168,6 @@ router.get("/businesses/me", requireAuth, async (req, res) => {
         address: businessesTable.address,
         city: businessesTable.city,
         phone: businessesTable.phone,
-        categoryId: businessesTable.categoryId,
-        categoryName: categoriesTable.name,
         imageUrl: businessesTable.imageUrl,
         latitude: businessesTable.latitude,
         longitude: businessesTable.longitude,
@@ -218,7 +175,6 @@ router.get("/businesses/me", requireAuth, async (req, res) => {
         createdAt: businessesTable.createdAt,
       })
       .from(businessesTable)
-      .leftJoin(categoriesTable, eq(businessesTable.categoryId, categoriesTable.id))
       .where(eq(businessesTable.clerkUserId, req.userId!));
 
     if (!result[0]) {
@@ -245,13 +201,6 @@ router.post("/businesses", requireAuth, async (req, res) => {
       return;
     }
 
-    const categoryIds = parseCategoryIds(req.body) ?? [];
-
-    if (!(await validCategoryIds(categoryIds))) {
-      res.status(400).json({ error: "One or more categoryIds do not exist" });
-      return;
-    }
-
     const existing = await db
       .select({ id: businessesTable.id })
       .from(businessesTable)
@@ -262,25 +211,20 @@ router.post("/businesses", requireAuth, async (req, res) => {
       return;
     }
 
-    const business = await db.transaction(async (tx) => {
-      const [created] = await tx
-        .insert(businessesTable)
-        .values({
-          clerkUserId: req.userId!,
-          name,
-          description: description ?? null,
-          address: address ?? null,
-          city: city ?? null,
-          phone: phone ?? null,
-          categoryId: categoryIds[0] ?? null,
-          imageUrl: imageUrl ?? null,
-          latitude: latitude ?? null,
-          longitude: longitude ?? null,
-        })
-        .returning();
-      await setBusinessCategories(tx, created.id, categoryIds);
-      return created;
-    });
+    const [business] = await db
+      .insert(businessesTable)
+      .values({
+        clerkUserId: req.userId!,
+        name,
+        description: description ?? null,
+        address: address ?? null,
+        city: city ?? null,
+        phone: phone ?? null,
+        imageUrl: imageUrl ?? null,
+        latitude: latitude ?? null,
+        longitude: longitude ?? null,
+      })
+      .returning();
 
     const full = await attachCategoriesOne(await getBusinessWithCategory(business.id));
     res.status(201).json(full);
@@ -300,13 +244,6 @@ router.patch("/businesses/me", requireAuth, async (req, res) => {
       return;
     }
 
-    const categoryIds = parseCategoryIds(req.body);
-
-    if (categoryIds !== undefined && !(await validCategoryIds(categoryIds))) {
-      res.status(400).json({ error: "One or more categoryIds do not exist" });
-      return;
-    }
-
     const existing = await db
       .select({ id: businessesTable.id, isHidden: businessesTable.isHidden })
       .from(businessesTable)
@@ -322,26 +259,19 @@ router.patch("/businesses/me", requireAuth, async (req, res) => {
     }
 
     const businessId = existing[0].id;
-    await db.transaction(async (tx) => {
-      await tx
-        .update(businessesTable)
-        .set({
-          ...(name !== undefined && { name }),
-          ...(description !== undefined && { description }),
-          ...(address !== undefined && { address }),
-          ...(city !== undefined && { city }),
-          ...(phone !== undefined && { phone }),
-          ...(categoryIds !== undefined && { categoryId: categoryIds[0] ?? null }),
-          ...(imageUrl !== undefined && { imageUrl }),
-          ...(latitude !== undefined && { latitude }),
-          ...(longitude !== undefined && { longitude }),
-        })
-        .where(eq(businessesTable.clerkUserId, req.userId!));
-
-      if (categoryIds !== undefined) {
-        await setBusinessCategories(tx, businessId, categoryIds);
-      }
-    });
+    await db
+      .update(businessesTable)
+      .set({
+        ...(name !== undefined && { name }),
+        ...(description !== undefined && { description }),
+        ...(address !== undefined && { address }),
+        ...(city !== undefined && { city }),
+        ...(phone !== undefined && { phone }),
+        ...(imageUrl !== undefined && { imageUrl }),
+        ...(latitude !== undefined && { latitude }),
+        ...(longitude !== undefined && { longitude }),
+      })
+      .where(eq(businessesTable.clerkUserId, req.userId!));
 
     const full = await attachCategoriesOne(await getBusinessWithCategory(businessId));
     res.json(full);
@@ -408,16 +338,13 @@ router.get("/admin/businesses", requireAdmin, async (req, res) => {
         address: businessesTable.address,
         city: businessesTable.city,
         phone: businessesTable.phone,
-        categoryId: businessesTable.categoryId,
-        categoryName: categoriesTable.name,
         imageUrl: businessesTable.imageUrl,
         latitude: businessesTable.latitude,
         longitude: businessesTable.longitude,
         isHidden: businessesTable.isHidden,
         createdAt: businessesTable.createdAt,
       })
-      .from(businessesTable)
-      .leftJoin(categoriesTable, eq(businessesTable.categoryId, categoriesTable.id));
+      .from(businessesTable);
 
     const withMinPrice = await attachMinPrice(businesses);
     const withCats = await attachCategories(withMinPrice);

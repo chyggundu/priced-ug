@@ -177,6 +177,13 @@ export default function BusinessDetailScreen() {
                     <Text style={[styles.productName, { color: colors.foreground }]} numberOfLines={2}>
                       {product.name}
                     </Text>
+                    {product.categoryName && (
+                      <View style={[styles.productCategoryBadge, { backgroundColor: colors.secondary }]}>
+                        <Text style={[styles.productCategoryText, { color: colors.primary }]}>
+                          {product.categoryName}
+                        </Text>
+                      </View>
+                    )}
                     {product.price && (
                       <Text style={[styles.productPrice, { color: colors.primary }]}>
                         UGX {product.price}
@@ -265,6 +272,8 @@ const styles = StyleSheet.create({
   productImagePlaceholder: { width: "100%", height: 160, alignItems: "center", justifyContent: "center" },
   productInfo: { padding: 14 },
   productName: { fontSize: 16, fontWeight: "600" as const, marginBottom: 6 },
+  productCategoryBadge: { alignSelf: "flex-start", paddingHorizontal: 10, paddingVertical: 3, borderRadius: 8, marginBottom: 6 },
+  productCategoryText: { fontSize: 12, fontWeight: "500" as const },
   productPrice: { fontSize: 18, fontWeight: "700" as const, marginBottom: 6 },
   productDescription: { fontSize: 13, lineHeight: 18, marginBottom: 8 },
   tagRow: { flexDirection: "row", flexWrap: "wrap", gap: 6, marginBottom: 10 },

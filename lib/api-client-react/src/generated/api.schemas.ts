@@ -36,8 +36,6 @@ export interface Business {
   address?: string | null;
   city?: string | null;
   phone?: string | null;
-  categoryId?: number | null;
-  categoryName?: string | null;
   categories?: BusinessCategory[];
   imageUrl?: string | null;
   latitude?: number | null;
@@ -53,8 +51,6 @@ export interface CreateBusinessInput {
   address?: string | null;
   city?: string | null;
   phone?: string | null;
-  categoryId?: number | null;
-  categoryIds?: number[];
   imageUrl?: string | null;
   latitude?: number | null;
   longitude?: number | null;
@@ -66,8 +62,6 @@ export interface UpdateBusinessInput {
   address?: string | null;
   city?: string | null;
   phone?: string | null;
-  categoryId?: number | null;
-  categoryIds?: number[];
   imageUrl?: string | null;
   latitude?: number | null;
   longitude?: number | null;
@@ -80,6 +74,8 @@ export interface VisibilityInput {
 export interface Product {
   id: number;
   businessId: number;
+  categoryId?: number | null;
+  categoryName?: string | null;
   name: string;
   description?: string | null;
   price?: string | null;
@@ -99,6 +95,8 @@ export interface ProductSearchResult {
   size?: string | null;
   materials?: string | null;
   createdAt: string;
+  categoryId?: number | null;
+  categoryName?: string | null;
   businessName: string;
   businessImageUrl?: string | null;
   businessCity?: string | null;
@@ -106,6 +104,7 @@ export interface ProductSearchResult {
 
 export interface CreateProductInput {
   name: string;
+  categoryId: number;
   description?: string | null;
   price?: string | null;
   imageUrl?: string | null;
@@ -115,6 +114,7 @@ export interface CreateProductInput {
 
 export interface UpdateProductInput {
   name?: string;
+  categoryId?: number;
   description?: string | null;
   price?: string | null;
   imageUrl?: string | null;
@@ -162,7 +162,8 @@ categoryId?: number;
 search?: string;
 };
 
-export type SearchProductsParams = {
-q: string;
+export type GetProductsParams = {
+q?: string;
+categoryId?: number;
 };
 

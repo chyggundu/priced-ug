@@ -8,6 +8,7 @@
 
 export interface CreateProductInput {
   name: string;
+  categoryId: number;
   description?: string | null;
   price?: string | null;
   imageUrl?: string | null;

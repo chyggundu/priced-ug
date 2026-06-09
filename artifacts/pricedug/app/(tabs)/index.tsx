@@ -7,22 +7,23 @@ import {
   Pressable,
   TextInput,
   ActivityIndicator,
-  FlatList,
   Image,
   Platform,
+  Linking,
 } from "react-native";
 import { useRouter } from "expo-router";
 import { Feather } from "@expo/vector-icons";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import {
-  useGetCategories,
-  useGetBusinesses,
-  useSearchProducts,
-  getSearchProductsQueryKey,
-} from "@workspace/api-client-react";
+import { useGetCategories, useGetProducts } from "@workspace/api-client-react";
 import { useColors } from "@/hooks/useColors";
 
 const WHATSAPP_NUMBER = "1234567890"; // Replace with actual WhatsApp number
+
+function parsePrice(price?: string | null): number | null {
+  if (!price) return null;
+  const numeric = parseInt(price.replace(/[^0-9]/g, ""), 10);
+  return Number.isFinite(numeric) && numeric > 0 ? numeric : null;
+}
 
 export default function BrowseScreen() {
   const colors = useColors();
@@ -40,46 +41,36 @@ export default function BrowseScreen() {
     return () => clearTimeout(handle);
   }, [searchInput]);
 
-  const isSearching = searchQuery.length > 0;
-
   const { data: categories = [], isLoading: categoriesLoading } = useGetCategories();
-  const { data: businesses = [], isLoading: businessesLoading } = useGetBusinesses({
+  const { data: products = [], isLoading: productsLoading } = useGetProducts({
     ...(selectedCategory ? { categoryId: selectedCategory } : {}),
-    ...(searchQuery ? { search: searchQuery } : {}),
+    ...(searchQuery ? { q: searchQuery } : {}),
   });
-  const { data: searchedProducts = [], isLoading: productsLoading } = useSearchProducts(
-    { q: searchQuery },
-    { query: { enabled: isSearching, queryKey: getSearchProductsQueryKey({ q: searchQuery }) } }
-  );
 
   const cities = Array.from(
     new Set(
-      businesses
-        .map((b) => (b.city ?? "").trim())
+      products
+        .map((p) => (p.businessCity ?? "").trim())
         .filter((c) => c.length > 0)
     )
   ).sort((a, b) => a.localeCompare(b));
 
-  const filteredBusinesses = businesses
-    .filter((b) =>
+  const filteredProducts = products
+    .filter((p) =>
       selectedCity && cities.includes(selectedCity)
-        ? (b.city ?? "").trim() === selectedCity
+        ? (p.businessCity ?? "").trim() === selectedCity
         : true
     )
     .sort((a, b) => {
       if (sortBy === "priceAsc" || sortBy === "priceDesc") {
-        const aHas = a.minPrice != null;
-        const bHas = b.minPrice != null;
-        if (!aHas && !bHas) return 0;
-        if (!aHas) return 1;
-        if (!bHas) return -1;
-        return sortBy === "priceAsc"
-          ? (a.minPrice as number) - (b.minPrice as number)
-          : (b.minPrice as number) - (a.minPrice as number);
+        const aPrice = parsePrice(a.price);
+        const bPrice = parsePrice(b.price);
+        if (aPrice == null && bPrice == null) return 0;
+        if (aPrice == null) return 1;
+        if (bPrice == null) return -1;
+        return sortBy === "priceAsc" ? aPrice - bPrice : bPrice - aPrice;
       }
-      return (
-        new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
-      );
+      return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
     });
 
   const sortOptions: { key: typeof sortBy; label: string }[] = [
@@ -88,17 +79,20 @@ export default function BrowseScreen() {
     { key: "priceDesc", label: "Price: High to Low" },
   ];
 
-  const formatPrice = (n: number) => `UGX ${n.toLocaleString()}`;
-
   const openWhatsApp = () => {
     const url = `whatsapp://send?phone=${WHATSAPP_NUMBER}&text=Hi, I found your app Priced Ug and would like to know more.`;
-    const { Linking } = require("react-native");
     Linking.openURL(url).catch(() => {
       Linking.openURL(`https://wa.me/${WHATSAPP_NUMBER}`);
     });
   };
 
   const topPad = Platform.OS === "web" ? 67 : insets.top;
+
+  const resultsTitle = searchQuery
+    ? `Results for "${searchQuery}"`
+    : selectedCategory
+      ? categories.find((c) => c.id === selectedCategory)?.name ?? "Items"
+      : "All Items";
 
   return (
     <View style={[styles.container, { backgroundColor: colors.background }]}>
@@ -126,18 +120,21 @@ export default function BrowseScreen() {
             onSubmitEditing={() => setSearchQuery(searchInput.trim())}
             returnKeyType="search"
           />
-          <Pressable
-            onPress={() => setSearchQuery(searchInput.trim())}
-            style={[styles.goButton, { backgroundColor: colors.primary }]}
-          >
-            <Text style={styles.goButtonText}>Go</Text>
-          </Pressable>
+          {searchInput.length > 0 && (
+            <Pressable
+              onPress={() => {
+                setSearchInput("");
+                setSearchQuery("");
+              }}
+            >
+              <Feather name="x" size={16} color={colors.mutedForeground} />
+            </Pressable>
+          )}
         </View>
       </View>
 
       <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
         {/* Categories */}
-        {!isSearching && (
         <View style={styles.section}>
           <Text style={[styles.sectionTitle, { color: colors.foreground }]}>Categories</Text>
           {categoriesLoading ? (
@@ -176,10 +173,9 @@ export default function BrowseScreen() {
             </ScrollView>
           )}
         </View>
-        )}
 
         {/* Location */}
-        {!isSearching && cities.length > 0 && (
+        {cities.length > 0 && (
           <View style={styles.section}>
             <Text style={[styles.sectionTitle, { color: colors.foreground }]}>Location</Text>
             <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.categoriesScroll}>
@@ -217,7 +213,6 @@ export default function BrowseScreen() {
         )}
 
         {/* Sort */}
-        {!isSearching && (
         <View style={styles.section}>
           <Text style={[styles.sectionTitle, { color: colors.foreground }]}>Sort by</Text>
           <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.categoriesScroll}>
@@ -239,90 +234,20 @@ export default function BrowseScreen() {
             ))}
           </ScrollView>
         </View>
-        )}
 
-        {/* Search results: items */}
-        {isSearching && (
-          <View style={styles.section}>
-            <Text style={[styles.sectionTitle, { color: colors.foreground }]}>
-              Results for "{searchQuery}"
-              {" "}
-              <Text style={{ color: colors.mutedForeground, fontSize: 14, fontWeight: "400" }}>
-                ({searchedProducts.length})
-              </Text>
-            </Text>
-
-            {productsLoading ? (
-              <ActivityIndicator color={colors.primary} style={{ marginVertical: 24 }} />
-            ) : searchedProducts.length === 0 ? (
-              <View style={styles.emptyState}>
-                <Feather name="package" size={40} color={colors.mutedForeground} />
-                <Text style={[styles.emptyText, { color: colors.mutedForeground }]}>
-                  No items found
-                </Text>
-              </View>
-            ) : (
-              <View style={styles.businessGrid}>
-                {searchedProducts.map((product) => (
-                  <Pressable
-                    key={product.id}
-                    style={[styles.businessCard, { backgroundColor: colors.card, borderColor: colors.border }]}
-                    onPress={() => router.push(`/business/${product.businessId}`)}
-                  >
-                    {product.imageUrl ? (
-                      <Image source={{ uri: product.imageUrl }} style={styles.businessImage} />
-                    ) : (
-                      <View style={[styles.businessImagePlaceholder, { backgroundColor: colors.secondary }]}>
-                        <Feather name="package" size={28} color={colors.primary} />
-                      </View>
-                    )}
-                    <View style={styles.businessInfo}>
-                      <Text style={[styles.businessName, { color: colors.foreground }]} numberOfLines={1}>
-                        {product.name}
-                      </Text>
-                      {product.price && (
-                        <Text style={[styles.priceText, { color: colors.primary }]} numberOfLines={1}>
-                          {product.price}
-                        </Text>
-                      )}
-                      <View style={styles.addressRow}>
-                        <Feather name="briefcase" size={11} color={colors.mutedForeground} />
-                        <Text style={[styles.addressText, { color: colors.mutedForeground }]} numberOfLines={1}>
-                          {product.businessName}
-                        </Text>
-                      </View>
-                      {product.businessCity && (
-                        <View style={styles.addressRow}>
-                          <Feather name="map-pin" size={11} color={colors.mutedForeground} />
-                          <Text style={[styles.addressText, { color: colors.mutedForeground }]} numberOfLines={1}>
-                            {product.businessCity}
-                          </Text>
-                        </View>
-                      )}
-                    </View>
-                  </Pressable>
-                ))}
-              </View>
-            )}
-          </View>
-        )}
-
-        {/* Businesses */}
-        {!isSearching && (
+        {/* Items */}
         <View style={styles.section}>
           <Text style={[styles.sectionTitle, { color: colors.foreground }]}>
-            {selectedCategory
-              ? `${categories.find((c) => c.id === selectedCategory)?.name ?? ""}`
-              : "All Items"}
+            {resultsTitle}
             {" "}
             <Text style={{ color: colors.mutedForeground, fontSize: 14, fontWeight: "400" }}>
-              ({filteredBusinesses.length})
+              ({filteredProducts.length})
             </Text>
           </Text>
 
-          {businessesLoading ? (
+          {productsLoading ? (
             <ActivityIndicator color={colors.primary} style={{ marginVertical: 24 }} />
-          ) : filteredBusinesses.length === 0 ? (
+          ) : filteredProducts.length === 0 ? (
             <View style={styles.emptyState}>
               <Feather name="package" size={40} color={colors.mutedForeground} />
               <Text style={[styles.emptyText, { color: colors.mutedForeground }]}>
@@ -331,42 +256,39 @@ export default function BrowseScreen() {
             </View>
           ) : (
             <View style={styles.businessGrid}>
-              {filteredBusinesses.map((business) => (
+              {filteredProducts.map((product) => (
                 <Pressable
-                  key={business.id}
+                  key={product.id}
                   style={[styles.businessCard, { backgroundColor: colors.card, borderColor: colors.border }]}
-                  onPress={() => router.push(`/business/${business.id}`)}
+                  onPress={() => router.push(`/business/${product.businessId}`)}
                 >
-                  {business.imageUrl ? (
-                    <Image source={{ uri: business.imageUrl }} style={styles.businessImage} />
+                  {product.imageUrl ? (
+                    <Image source={{ uri: product.imageUrl }} style={styles.businessImage} />
                   ) : (
                     <View style={[styles.businessImagePlaceholder, { backgroundColor: colors.secondary }]}>
-                      <Feather name="briefcase" size={28} color={colors.primary} />
+                      <Feather name="package" size={28} color={colors.primary} />
                     </View>
                   )}
                   <View style={styles.businessInfo}>
                     <Text style={[styles.businessName, { color: colors.foreground }]} numberOfLines={1}>
-                      {business.name}
+                      {product.name}
                     </Text>
-                    {business.categories && business.categories.length > 0 && (
-                      <View style={styles.categoryRow}>
-                        {business.categories.slice(0, 3).map((cat) => (
-                          <View key={cat.id} style={[styles.categoryBadge, { backgroundColor: colors.secondary }]}>
-                            <Text style={[styles.categoryBadgeText, { color: colors.primary }]}>{cat.name}</Text>
-                          </View>
-                        ))}
-                      </View>
-                    )}
-                    {business.minPrice != null && (
+                    {product.price && (
                       <Text style={[styles.priceText, { color: colors.primary }]} numberOfLines={1}>
-                        From {formatPrice(business.minPrice)}
+                        UGX {product.price}
                       </Text>
                     )}
-                    {(business.city || business.address) && (
+                    <View style={styles.addressRow}>
+                      <Feather name="briefcase" size={11} color={colors.mutedForeground} />
+                      <Text style={[styles.addressText, { color: colors.mutedForeground }]} numberOfLines={1}>
+                        {product.businessName}
+                      </Text>
+                    </View>
+                    {product.businessCity && (
                       <View style={styles.addressRow}>
                         <Feather name="map-pin" size={11} color={colors.mutedForeground} />
                         <Text style={[styles.addressText, { color: colors.mutedForeground }]} numberOfLines={1}>
-                          {business.city || business.address}
+                          {product.businessCity}
                         </Text>
                       </View>
                     )}
@@ -376,7 +298,6 @@ export default function BrowseScreen() {
             </View>
           )}
         </View>
-        )}
 
         <View style={{ height: Platform.OS === "web" ? 100 : insets.bottom + 80 }} />
       </ScrollView>
@@ -423,12 +344,6 @@ const styles = StyleSheet.create({
     gap: 8,
   },
   searchInput: { flex: 1, fontSize: 15 },
-  goButton: {
-    paddingHorizontal: 14,
-    paddingVertical: 6,
-    borderRadius: 8,
-  },
-  goButtonText: { color: "#fff", fontSize: 14, fontWeight: "600" as const },
   content: { flex: 1 },
   section: { paddingHorizontal: 16, paddingTop: 20 },
   sectionTitle: { fontSize: 18, fontWeight: "700" as const, marginBottom: 12 },
@@ -459,14 +374,6 @@ const styles = StyleSheet.create({
   },
   businessInfo: { padding: 10 },
   businessName: { fontSize: 14, fontWeight: "600" as const, marginBottom: 6 },
-  categoryRow: { flexDirection: "row", flexWrap: "wrap", gap: 4, marginBottom: 6 },
-  categoryBadge: {
-    alignSelf: "flex-start",
-    paddingHorizontal: 8,
-    paddingVertical: 2,
-    borderRadius: 8,
-  },
-  categoryBadgeText: { fontSize: 11, fontWeight: "500" as const },
   addressRow: { flexDirection: "row", alignItems: "center", gap: 4 },
   addressText: { fontSize: 11, flex: 1 },
   priceText: { fontSize: 13, fontWeight: "700" as const, marginBottom: 4 },

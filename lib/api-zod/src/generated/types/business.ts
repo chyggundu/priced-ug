@@ -15,8 +15,6 @@ export interface Business {
   address?: string | null;
   city?: string | null;
   phone?: string | null;
-  categoryId?: number | null;
-  categoryName?: string | null;
   categories?: BusinessCategory[];
   imageUrl?: string | null;
   latitude?: number | null;

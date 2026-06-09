@@ -58,8 +58,6 @@ export const GetAdminBusinessesResponseItem = zod.object({
   "address": zod.string().nullish(),
   "city": zod.string().nullish(),
   "phone": zod.string().nullish(),
-  "categoryId": zod.number().nullish(),
-  "categoryName": zod.string().nullish(),
   "categories": zod.array(zod.object({
   "id": zod.number(),
   "name": zod.string()
@@ -90,8 +88,6 @@ export const GetBusinessesResponseItem = zod.object({
   "address": zod.string().nullish(),
   "city": zod.string().nullish(),
   "phone": zod.string().nullish(),
-  "categoryId": zod.number().nullish(),
-  "categoryName": zod.string().nullish(),
   "categories": zod.array(zod.object({
   "id": zod.number(),
   "name": zod.string()
@@ -115,8 +111,6 @@ export const CreateBusinessBody = zod.object({
   "address": zod.string().nullish(),
   "city": zod.string().nullish(),
   "phone": zod.string().nullish(),
-  "categoryId": zod.number().nullish(),
-  "categoryIds": zod.array(zod.number()).optional(),
   "imageUrl": zod.string().nullish(),
   "latitude": zod.number().nullish(),
   "longitude": zod.number().nullish()
@@ -134,8 +128,6 @@ export const GetMyBusinessResponse = zod.object({
   "address": zod.string().nullish(),
   "city": zod.string().nullish(),
   "phone": zod.string().nullish(),
-  "categoryId": zod.number().nullish(),
-  "categoryName": zod.string().nullish(),
   "categories": zod.array(zod.object({
   "id": zod.number(),
   "name": zod.string()
@@ -158,8 +150,6 @@ export const UpdateMyBusinessBody = zod.object({
   "address": zod.string().nullish(),
   "city": zod.string().nullish(),
   "phone": zod.string().nullish(),
-  "categoryId": zod.number().nullish(),
-  "categoryIds": zod.array(zod.number()).optional(),
   "imageUrl": zod.string().nullish(),
   "latitude": zod.number().nullish(),
   "longitude": zod.number().nullish()
@@ -173,8 +163,6 @@ export const UpdateMyBusinessResponse = zod.object({
   "address": zod.string().nullish(),
   "city": zod.string().nullish(),
   "phone": zod.string().nullish(),
-  "categoryId": zod.number().nullish(),
-  "categoryName": zod.string().nullish(),
   "categories": zod.array(zod.object({
   "id": zod.number(),
   "name": zod.string()
@@ -203,8 +191,6 @@ export const GetBusinessResponse = zod.object({
   "address": zod.string().nullish(),
   "city": zod.string().nullish(),
   "phone": zod.string().nullish(),
-  "categoryId": zod.number().nullish(),
-  "categoryName": zod.string().nullish(),
   "categories": zod.array(zod.object({
   "id": zod.number(),
   "name": zod.string()
@@ -237,8 +223,6 @@ export const ToggleBusinessVisibilityResponse = zod.object({
   "address": zod.string().nullish(),
   "city": zod.string().nullish(),
   "phone": zod.string().nullish(),
-  "categoryId": zod.number().nullish(),
-  "categoryName": zod.string().nullish(),
   "categories": zod.array(zod.object({
   "id": zod.number(),
   "name": zod.string()
@@ -258,6 +242,8 @@ export const ToggleBusinessVisibilityResponse = zod.object({
 export const GetMyProductsResponseItem = zod.object({
   "id": zod.number(),
   "businessId": zod.number(),
+  "categoryId": zod.number().nullish(),
+  "categoryName": zod.string().nullish(),
   "name": zod.string(),
   "description": zod.string().nullish(),
   "price": zod.string().nullish(),
@@ -274,6 +260,7 @@ export const GetMyProductsResponse = zod.array(GetMyProductsResponseItem)
  */
 export const CreateProductBody = zod.object({
   "name": zod.string(),
+  "categoryId": zod.number(),
   "description": zod.string().nullish(),
   "price": zod.string().nullish(),
   "imageUrl": zod.string().nullish(),
@@ -291,6 +278,7 @@ export const UpdateProductParams = zod.object({
 
 export const UpdateProductBody = zod.object({
   "name": zod.string().optional(),
+  "categoryId": zod.number().optional(),
   "description": zod.string().nullish(),
   "price": zod.string().nullish(),
   "imageUrl": zod.string().nullish(),
@@ -301,6 +289,8 @@ export const UpdateProductBody = zod.object({
 export const UpdateProductResponse = zod.object({
   "id": zod.number(),
   "businessId": zod.number(),
+  "categoryId": zod.number().nullish(),
+  "categoryName": zod.string().nullish(),
   "name": zod.string(),
   "description": zod.string().nullish(),
   "price": zod.string().nullish(),
@@ -324,13 +314,14 @@ export const DeleteProductResponse = zod.object({
 
 
 /**
- * @summary Search products across visible businesses (public)
+ * @summary List items across visible businesses, filterable by category and search (public)
  */
-export const SearchProductsQueryParams = zod.object({
-  "q": zod.coerce.string()
+export const GetProductsQueryParams = zod.object({
+  "q": zod.coerce.string().optional(),
+  "categoryId": zod.coerce.number().optional()
 })
 
-export const SearchProductsResponseItem = zod.object({
+export const GetProductsResponseItem = zod.object({
   "id": zod.number(),
   "businessId": zod.number(),
   "name": zod.string(),
@@ -340,11 +331,13 @@ export const SearchProductsResponseItem = zod.object({
   "size": zod.string().nullish(),
   "materials": zod.string().nullish(),
   "createdAt": zod.coerce.date(),
+  "categoryId": zod.number().nullish(),
+  "categoryName": zod.string().nullish(),
   "businessName": zod.string(),
   "businessImageUrl": zod.string().nullish(),
   "businessCity": zod.string().nullish()
 })
-export const SearchProductsResponse = zod.array(SearchProductsResponseItem)
+export const GetProductsResponse = zod.array(GetProductsResponseItem)
 
 
 /**
@@ -357,6 +350,8 @@ export const GetBusinessProductsParams = zod.object({
 export const GetBusinessProductsResponseItem = zod.object({
   "id": zod.number(),
   "businessId": zod.number(),
+  "categoryId": zod.number().nullish(),
+  "categoryName": zod.string().nullish(),
   "name": zod.string(),
   "description": zod.string().nullish(),
   "price": zod.string().nullish(),

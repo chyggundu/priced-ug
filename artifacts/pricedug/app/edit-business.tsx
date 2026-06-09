@@ -23,7 +23,6 @@ import {
   useGetMyBusiness,
   useCreateBusiness,
   useUpdateMyBusiness,
-  useGetCategories,
   useGetUploadUrl,
 } from "@workspace/api-client-react";
 import { useColors } from "@/hooks/useColors";
@@ -35,7 +34,6 @@ export default function EditBusinessScreen() {
   const topPad = Platform.OS === "web" ? 67 : insets.top;
 
   const { data: business, isLoading: bizLoading } = useGetMyBusiness();
-  const { data: categories = [] } = useGetCategories();
   const createBusiness = useCreateBusiness();
   const updateBusiness = useUpdateMyBusiness();
   const getUploadUrl = useGetUploadUrl();
@@ -45,7 +43,6 @@ export default function EditBusinessScreen() {
   const [address, setAddress] = useState("");
   const [city, setCity] = useState("");
   const [phone, setPhone] = useState("");
-  const [categoryIds, setCategoryIds] = useState<number[]>([]);
   const [imageUrl, setImageUrl] = useState<string | null>(null);
   const [uploading, setUploading] = useState(false);
   const [saving, setSaving] = useState(false);
@@ -61,7 +58,6 @@ export default function EditBusinessScreen() {
       setAddress(business.address ?? "");
       setCity(business.city ?? "");
       setPhone(business.phone ?? "");
-      setCategoryIds(business.categories?.map((c) => c.id) ?? []);
       setImageUrl(business.imageUrl ?? null);
       setLatitude(business.latitude ?? null);
       setLongitude(business.longitude ?? null);
@@ -135,7 +131,6 @@ export default function EditBusinessScreen() {
         address: address.trim() || null,
         city: city.trim() || null,
         phone: phone.trim() || null,
-        categoryIds,
         imageUrl: imageUrl ?? null,
         latitude,
         longitude,
@@ -218,31 +213,9 @@ export default function EditBusinessScreen() {
             placeholderTextColor={colors.mutedForeground}
           />
 
-          <Text style={[styles.label, { color: colors.foreground }]}>Categories</Text>
           <Text style={[styles.helperText, { color: colors.mutedForeground }]}>
-            Tap to select one or more categories your business belongs to.
+            Your business appears under the categories of the items you list.
           </Text>
-          <View style={styles.categoryWrap}>
-            {categories.map((cat) => {
-              const selected = categoryIds.includes(cat.id);
-              return (
-                <Pressable
-                  key={cat.id}
-                  style={[styles.categoryChip, { backgroundColor: selected ? colors.primary : colors.muted }]}
-                  onPress={() =>
-                    setCategoryIds((prev) =>
-                      prev.includes(cat.id) ? prev.filter((id) => id !== cat.id) : [...prev, cat.id],
-                    )
-                  }
-                >
-                  {selected && <Feather name="check" size={13} color="#fff" style={{ marginRight: 4 }} />}
-                  <Text style={[styles.categoryChipText, { color: selected ? "#fff" : colors.foreground }]}>
-                    {cat.name}
-                  </Text>
-                </Pressable>
-              );
-            })}
-          </View>
 
           <Text style={[styles.label, { color: colors.foreground }]}>Description</Text>
           <TextInput
@@ -399,16 +372,7 @@ const styles = StyleSheet.create({
   label: { fontSize: 14, fontWeight: "600" as const, marginBottom: 6, marginTop: 12 },
   input: { borderRadius: 10, paddingHorizontal: 14, paddingVertical: 13, fontSize: 15 },
   textArea: { height: 100, paddingTop: 13 },
-  helperText: { fontSize: 12, marginBottom: 8 },
-  categoryWrap: { flexDirection: "row", flexWrap: "wrap", gap: 8, marginBottom: 4 },
-  categoryChip: {
-    flexDirection: "row",
-    alignItems: "center",
-    paddingHorizontal: 16,
-    paddingVertical: 8,
-    borderRadius: 20,
-  },
-  categoryChipText: { fontSize: 14, fontWeight: "500" as const },
+  helperText: { fontSize: 12, marginBottom: 8, marginTop: 4 },
   locationBtn: {
     flexDirection: "row",
     alignItems: "center",

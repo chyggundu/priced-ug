@@ -9,6 +9,8 @@
 export interface Product {
   id: number;
   businessId: number;
+  categoryId?: number | null;
+  categoryName?: string | null;
   name: string;
   description?: string | null;
   price?: string | null;

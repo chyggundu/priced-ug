@@ -329,20 +329,23 @@ paths:
         "404":
           description: Not found
 
-  /products/search:
+  /products:
     get:
-      operationId: searchProducts
+      operationId: getProducts
       tags: [products]
-      summary: Search products across visible businesses (public)
+      summary: List items across visible businesses, filterable by category and search (public)
       parameters:
         - name: q
           in: query
-          required: true
           schema:
             type: string
+        - name: categoryId
+          in: query
+          schema:
+            type: integer
       responses:
         "200":
-          description: Matching products with their business
+          description: Items with their business and category
           content:
             application/json:
               schema:
@@ -571,12 +574,6 @@ components:
         phone:
           type: string
           nullable: true
-        categoryId:
-          type: integer
-          nullable: true
-        categoryName:
-          type: string
-          nullable: true
         categories:
           type: array
           items:
@@ -622,13 +619,6 @@ components:
         phone:
           type: string
           nullable: true
-        categoryId:
-          type: integer
-          nullable: true
-        categoryIds:
-          type: array
-          items:
-            type: integer
         imageUrl:
           type: string
           nullable: true
@@ -658,13 +648,6 @@ components:
         phone:
           type: string
           nullable: true
-        categoryId:
-          type: integer
-          nullable: true
-        categoryIds:
-          type: array
-          items:
-            type: integer
         imageUrl:
           type: string
           nullable: true
@@ -690,6 +673,12 @@ components:
           type: integer
         businessId:
           type: integer
+        categoryId:
+          type: integer
+          nullable: true
+        categoryName:
+          type: string
+          nullable: true
         name:
           type: string
         description:
@@ -743,6 +732,12 @@ components:
         createdAt:
           type: string
           format: date-time
+        categoryId:
+          type: integer
+          nullable: true
+        categoryName:
+          type: string
+          nullable: true
         businessName:
           type: string
         businessImageUrl:
@@ -763,6 +758,8 @@ components:
       properties:
         name:
           type: string
+        categoryId:
+          type: integer
         description:
           type: string
           nullable: true
@@ -780,12 +777,15 @@ components:
           nullable: true
       required:
         - name
+        - categoryId
 
     UpdateProductInput:
       type: object
       properties:
         name:
           type: string
+        categoryId:
+          type: integer
         description:
           type: string
           nullable: true

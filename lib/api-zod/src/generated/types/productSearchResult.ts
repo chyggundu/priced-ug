@@ -16,6 +16,8 @@ export interface ProductSearchResult {
   size?: string | null;
   materials?: string | null;
   createdAt: Date;
+  categoryId?: number | null;
+  categoryName?: string | null;
   businessName: string;
   businessImageUrl?: string | null;
   businessCity?: string | null;

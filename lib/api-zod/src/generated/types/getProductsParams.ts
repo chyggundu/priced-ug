@@ -6,6 +6,7 @@
  * OpenAPI spec version: 0.1.0
  */
 
-export type SearchProductsParams = {
-q: string;
+export type GetProductsParams = {
+q?: string;
+categoryId?: number;
 };

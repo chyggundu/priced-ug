@@ -1,38 +1,44 @@
 ---
-name: Business ↔ categories many-to-many
-description: How a business relates to categories and the invariants that writes must preserve
+name: Categories belong to products; business categories are derived
+description: Where category membership lives (per-product) and how a business's category list is computed
 ---
 
-# Business ↔ categories (many-to-many)
+# Categories live on products, not businesses
 
-A business belongs to many categories via the `business_categories` join table
-(FK cascade both sides, unique composite on (businessId, categoryId)).
+Category membership is per **product** (`products.categoryId`, nullable FK).
+A business has NO stored category — its category list is **derived** at read
+time from the distinct categories of its products.
+**Why:** the product is item-centric — browse/search show a grid of items, each
+item appears only under its own category, and a business surfaces under every
+category any of its items belong to.
 
-## Legacy columns kept on purpose
-`businesses.categoryId` / `categoryName` are retained and always set to the
-**first** selected category. API responses still expose them alongside the full
-`categories` array.
-**Why:** backward compatibility for any consumer reading the single-category
-fields; avoids a breaking contract change.
-**How to apply:** on create/update, set `categoryId = categoryIds[0] ?? null`
-in lockstep with replacing join rows.
+## Deriving business categories
+`attachCategories` in `businesses.ts` selects DISTINCT categories by joining
+`products` → `categories` for the given business ids, and attaches a
+`categories: BusinessCategory[]` array. There is no `business_categories` join
+table write path and no `businesses.categoryId` write path anymore.
 
-## Write invariants (create + update)
-1. **Validate first:** reject with 400 if any submitted `categoryId` does not
-   exist (existence check against `categories`), before mutating anything.
-2. **Atomic:** wrap the business row update AND the join-row delete+insert in a
-   single `db.transaction`. The replace is delete-then-insert, so a non-atomic
-   path can leave a business with cleared/partial categories if the insert fails.
-**Why:** a past review flagged that non-transactional delete+insert + unvalidated
-IDs could corrupt category assignments (orphaned/empty join rows + mismatched
-legacy `categoryId`).
+## Legacy columns — present but dead
+`businesses.categoryId` (nullable) and the `business_categories` table still
+exist in the DB but are **never written or read**. The API contract no longer
+exposes business-level `categoryId` / `categoryName` / `categoryIds` (removed
+from `Business`, `CreateBusinessInput`, `UpdateBusinessInput`). Do not
+reintroduce them — the single source of truth is product categories.
 
 ## Contract shape
 `Business.categories` uses a dedicated lightweight `BusinessCategory` schema
 (`id`, `name` only) — NOT the full `Category` schema (which requires `createdAt`).
-**Why:** the server attaches only id+name; referencing `Category` made generated
-zod validators expect `createdAt` and broke strict consumers.
+**Why:** the derived join attaches only id+name; referencing `Category` made
+generated zod validators expect `createdAt` and broke strict consumers.
+
+## Product category write invariants
+`CreateProductInput.categoryId` is **required**; `UpdateProductInput.categoryId`
+is optional. On create/update the server validates the categoryId exists (400 if
+not) before writing.
 
 ## Filtering
-`GET /businesses?categoryId=X` filters by join-table membership (subquery), so a
-business shows under every category it belongs to — not just its legacy one.
+- `GET /products?categoryId=X&q=...` is the item-centric listing (visible
+  businesses only, joins category + business info).
+- `GET /businesses?categoryId=X` filters businesses by membership via a
+  `selectDistinct` subquery over `products` (a business matches if any of its
+  products is in category X).

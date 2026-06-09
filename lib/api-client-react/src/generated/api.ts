@@ -27,12 +27,12 @@ import type {
   CreateProductInput,
   CreateReviewInput,
   GetBusinessesParams,
+  GetProductsParams,
   HealthStatus,
   Product,
   ProductSearchResult,
   ReplyReviewInput,
   Review,
-  SearchProductsParams,
   SuccessResponse,
   UpdateBusinessInput,
   UpdateProductInput,
@@ -1167,7 +1167,7 @@ export const useDeleteProduct = <TError = ErrorType<void>,
       return useMutation(getDeleteProductMutationOptions(options));
     }
 
-export const getSearchProductsUrl = (params: SearchProductsParams,) => {
+export const getGetProductsUrl = (params?: GetProductsParams,) => {
   const normalizedParams = new URLSearchParams();
 
   Object.entries(params || {}).forEach(([key, value]) => {
@@ -1179,15 +1179,15 @@ export const getSearchProductsUrl = (params: SearchProductsParams,) => {
 
   const stringifiedParams = normalizedParams.toString();
 
-  return stringifiedParams.length > 0 ? `/api/products/search?${stringifiedParams}` : `/api/products/search`
+  return stringifiedParams.length > 0 ? `/api/products?${stringifiedParams}` : `/api/products`
 }
 
 /**
- * @summary Search products across visible businesses (public)
+ * @summary List items across visible businesses, filterable by category and search (public)
  */
-export const searchProducts = async (params: SearchProductsParams, options?: RequestInit): Promise<ProductSearchResult[]> => {
+export const getProducts = async (params?: GetProductsParams, options?: RequestInit): Promise<ProductSearchResult[]> => {
 
-  return customFetch<ProductSearchResult[]>(getSearchProductsUrl(params),
+  return customFetch<ProductSearchResult[]>(getGetProductsUrl(params),
   {
     ...options,
     method: 'GET'
@@ -1200,45 +1200,45 @@ export const searchProducts = async (params: SearchProductsParams, options?: Req
 
 
 
-export const getSearchProductsQueryKey = (params?: SearchProductsParams,) => {
+export const getGetProductsQueryKey = (params?: GetProductsParams,) => {
     return [
-    `/api/products/search`, ...(params ? [params] : [])
+    `/api/products`, ...(params ? [params] : [])
     ] as const;
     }
 
 
-export const getSearchProductsQueryOptions = <TData = Awaited<ReturnType<typeof searchProducts>>, TError = ErrorType<unknown>>(params: SearchProductsParams, options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof searchProducts>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+export const getGetProductsQueryOptions = <TData = Awaited<ReturnType<typeof getProducts>>, TError = ErrorType<unknown>>(params?: GetProductsParams, options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof getProducts>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
 ) => {
 
 const {query: queryOptions, request: requestOptions} = options ?? {};
 
-  const queryKey =  queryOptions?.queryKey ?? getSearchProductsQueryKey(params);
+  const queryKey =  queryOptions?.queryKey ?? getGetProductsQueryKey(params);
 
 
 
-    const queryFn: QueryFunction<Awaited<ReturnType<typeof searchProducts>>> = ({ signal }) => searchProducts(params, { signal, ...requestOptions });
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof getProducts>>> = ({ signal }) => getProducts(params, { signal, ...requestOptions });
 
 
 
 
 
-   return  { queryKey, queryFn, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof searchProducts>>, TError, TData> & { queryKey: QueryKey }
+   return  { queryKey, queryFn, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof getProducts>>, TError, TData> & { queryKey: QueryKey }
 }
 
-export type SearchProductsQueryResult = NonNullable<Awaited<ReturnType<typeof searchProducts>>>
-export type SearchProductsQueryError = ErrorType<unknown>
+export type GetProductsQueryResult = NonNullable<Awaited<ReturnType<typeof getProducts>>>
+export type GetProductsQueryError = ErrorType<unknown>
 
 
 /**
- * @summary Search products across visible businesses (public)
+ * @summary List items across visible businesses, filterable by category and search (public)
  */
 
-export function useSearchProducts<TData = Awaited<ReturnType<typeof searchProducts>>, TError = ErrorType<unknown>>(
- params: SearchProductsParams, options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof searchProducts>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+export function useGetProducts<TData = Awaited<ReturnType<typeof getProducts>>, TError = ErrorType<unknown>>(
+ params?: GetProductsParams, options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof getProducts>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
 
  ):  UseQueryResult<TData, TError> & { queryKey: QueryKey } {
 
-  const queryOptions = getSearchProductsQueryOptions(params,options)
+  const queryOptions = getGetProductsQueryOptions(params,options)
 
   const query = useQuery(queryOptions) as  UseQueryResult<TData, TError> & { queryKey: QueryKey };
 

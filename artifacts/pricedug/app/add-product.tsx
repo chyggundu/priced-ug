@@ -16,7 +16,7 @@ import { Feather } from "@expo/vector-icons";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import * as ImagePicker from "expo-image-picker";
 import { uploadImageToSignedUrl } from "@/lib/uploadImage";
-import { useCreateProduct, useGetUploadUrl } from "@workspace/api-client-react";
+import { useCreateProduct, useGetUploadUrl, useGetCategories } from "@workspace/api-client-react";
 import { useColors } from "@/hooks/useColors";
 
 export default function AddProductScreen() {
@@ -27,8 +27,10 @@ export default function AddProductScreen() {
 
   const createProduct = useCreateProduct();
   const getUploadUrl = useGetUploadUrl();
+  const { data: categories = [] } = useGetCategories();
 
   const [name, setName] = useState("");
+  const [categoryId, setCategoryId] = useState<number | null>(null);
   const [description, setDescription] = useState("");
   const [price, setPrice] = useState("");
   const [size, setSize] = useState("");
@@ -69,11 +71,16 @@ export default function AddProductScreen() {
       Alert.alert("Validation", "Product name is required.");
       return;
     }
+    if (categoryId == null) {
+      Alert.alert("Validation", "Please choose a category for this item.");
+      return;
+    }
     setSaving(true);
     try {
       await createProduct.mutateAsync({
         data: {
           name: name.trim(),
+          categoryId,
           description: description.trim() || null,
           price: price.trim() || null,
           size: size.trim() || null,
@@ -138,6 +145,25 @@ export default function AddProductScreen() {
             placeholder="e.g. Men's Cotton Shirt"
             placeholderTextColor={colors.mutedForeground}
           />
+
+          <Text style={[styles.label, { color: colors.foreground }]}>Category *</Text>
+          <View style={styles.categoryWrap}>
+            {categories.map((cat) => {
+              const selected = categoryId === cat.id;
+              return (
+                <Pressable
+                  key={cat.id}
+                  style={[styles.categoryChip, { backgroundColor: selected ? colors.primary : colors.muted }]}
+                  onPress={() => setCategoryId(cat.id)}
+                >
+                  {selected && <Feather name="check" size={13} color="#fff" style={{ marginRight: 4 }} />}
+                  <Text style={[styles.categoryChipText, { color: selected ? "#fff" : colors.foreground }]}>
+                    {cat.name}
+                  </Text>
+                </Pressable>
+              );
+            })}
+          </View>
 
           <Text style={[styles.label, { color: colors.foreground }]}>Price (UGX)</Text>
           <TextInput
@@ -232,6 +258,15 @@ const styles = StyleSheet.create({
   label: { fontSize: 14, fontWeight: "600" as const, marginBottom: 6, marginTop: 12 },
   input: { borderRadius: 10, paddingHorizontal: 14, paddingVertical: 13, fontSize: 15 },
   textArea: { height: 90, paddingTop: 13 },
+  categoryWrap: { flexDirection: "row", flexWrap: "wrap", gap: 8, marginTop: 2 },
+  categoryChip: {
+    flexDirection: "row",
+    alignItems: "center",
+    paddingHorizontal: 16,
+    paddingVertical: 8,
+    borderRadius: 20,
+  },
+  categoryChipText: { fontSize: 14, fontWeight: "500" as const },
   saveBtn: { borderRadius: 10, paddingVertical: 16, alignItems: "center", marginTop: 20 },
   saveBtnText: { color: "#fff", fontSize: 16, fontWeight: "600" as const },
 });
