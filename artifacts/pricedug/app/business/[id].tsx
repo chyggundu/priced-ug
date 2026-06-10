@@ -21,14 +21,22 @@ export default function BusinessDetailScreen() {
   const colors = useColors();
   const router = useRouter();
   const insets = useSafeAreaInsets();
-  const { id } = useLocalSearchParams<{ id: string }>();
+  const { id, highlight } = useLocalSearchParams<{ id: string; highlight?: string }>();
   const businessId = parseInt(id ?? "0");
+  const highlightId = highlight ? parseInt(highlight) : null;
   const topPad = Platform.OS === "web" ? 67 : insets.top;
 
   const { data: business, isLoading: bizLoading } = useGetBusiness(businessId);
   const { data: products = [], isLoading: productsLoading } = useGetBusinessProducts(businessId, {
     query: { enabled: !!business },
   });
+
+  const orderedProducts = React.useMemo(() => {
+    if (highlightId == null) return products;
+    const idx = products.findIndex((p) => p.id === highlightId);
+    if (idx <= 0) return products;
+    return [products[idx], ...products.slice(0, idx), ...products.slice(idx + 1)];
+  }, [products, highlightId]);
 
   const openWhatsApp = (phone: string) => {
     Linking.openURL(`whatsapp://send?phone=${phone.replace(/\D/g, "")}`)
@@ -161,10 +169,14 @@ export default function BusinessDetailScreen() {
             </View>
           ) : (
             <View style={styles.productsGrid}>
-              {products.map((product) => (
+              {orderedProducts.map((product) => (
                 <View
                   key={product.id}
-                  style={[styles.productCard, { backgroundColor: colors.card, borderColor: colors.border }]}
+                  style={[
+                    styles.productCard,
+                    { backgroundColor: colors.card, borderColor: colors.border },
+                    product.id === highlightId && { borderColor: colors.primary, borderWidth: 2 },
+                  ]}
                 >
                   {product.imageUrl ? (
                     <Image source={{ uri: product.imageUrl }} style={styles.productImage} />

@@ -260,7 +260,7 @@ export default function BrowseScreen() {
                 <Pressable
                   key={product.id}
                   style={[styles.businessCard, { backgroundColor: colors.card, borderColor: colors.border }]}
-                  onPress={() => router.push(`/business/${product.businessId}`)}
+                  onPress={() => router.push(`/business/${product.businessId}?highlight=${product.id}`)}
                 >
                   {product.imageUrl ? (
                     <Image source={{ uri: product.imageUrl }} style={styles.businessImage} />
