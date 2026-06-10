@@ -15,7 +15,7 @@ import {
 import { useRouter } from "expo-router";
 import { Feather } from "@expo/vector-icons";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import * as ImagePicker from "expo-image-picker";
+import { pickImageAsset } from "@/lib/imagePicker";
 import * as Location from "expo-location";
 import { uploadImageToSignedUrl } from "@/lib/uploadImage";
 import MapPicker from "@/components/MapPicker";
@@ -65,14 +65,7 @@ export default function EditBusinessScreen() {
   }, [business]);
 
   const pickImage = async () => {
-    const result = await ImagePicker.launchImageLibraryAsync({
-      mediaTypes: "images",
-      quality: 0.8,
-      allowsEditing: true,
-      aspect: [16, 9],
-    });
-    if (result.canceled) return;
-    const asset = result.assets[0];
+    const asset = await pickImageAsset([16, 9]);
     if (!asset) return;
 
     setUploading(true);

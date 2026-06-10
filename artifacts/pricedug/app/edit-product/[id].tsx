@@ -14,7 +14,7 @@ import {
 import { useLocalSearchParams, useRouter } from "expo-router";
 import { Feather } from "@expo/vector-icons";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import * as ImagePicker from "expo-image-picker";
+import { pickImageAsset } from "@/lib/imagePicker";
 import { uploadImageToSignedUrl } from "@/lib/uploadImage";
 import { useUpdateProduct, useGetMyProducts, useGetUploadUrl, useGetCategories } from "@workspace/api-client-react";
 import { useColors } from "@/hooks/useColors";
@@ -57,14 +57,7 @@ export default function EditProductScreen() {
   }, [product]);
 
   const pickImage = async () => {
-    const result = await ImagePicker.launchImageLibraryAsync({
-      mediaTypes: "images",
-      quality: 0.8,
-      allowsEditing: true,
-      aspect: [4, 3],
-    });
-    if (result.canceled) return;
-    const asset = result.assets[0];
+    const asset = await pickImageAsset([4, 3]);
     if (!asset) return;
 
     setUploading(true);

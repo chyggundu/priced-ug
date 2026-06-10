@@ -34,6 +34,13 @@
         {
           "locationWhenInUsePermission": "Allow Priced Ug to use your location to pin your business on the map."
         }
+      ],
+      [
+        "expo-image-picker",
+        {
+          "photosPermission": "Allow Priced Ug to access your photos to upload product and business images.",
+          "cameraPermission": "Allow Priced Ug to use your camera to take product and business photos."
+        }
       ]
     ],
     "experiments": {
