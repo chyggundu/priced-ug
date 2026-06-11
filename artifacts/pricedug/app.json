@@ -16,7 +16,9 @@
     "ios": {
       "supportsTablet": false
     },
-    "android": {},
+    "android": {
+      "package": "com.pricedug.app"
+    },
     "web": {
       "favicon": "./assets/images/favicon.png"
     },
