@@ -14,7 +14,8 @@
       "backgroundColor": "#E01E37"
     },
     "ios": {
-      "supportsTablet": false
+      "supportsTablet": false,
+      "bundleIdentifier": "com.pricedug.app"
     },
     "android": {
       "package": "com.pricedug.app"
