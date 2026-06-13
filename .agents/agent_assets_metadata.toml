@@ -11,3 +11,9 @@ id = "mITrqQ6QBdanvyuNuB6pZ"
 uri = "file://exports/expo-qr.png"
 type = "image"
 title = "Priced Ug — Expo Go QR code"
+
+[[outputs]]
+id = "-AjnENn9jRzr992xD4yqv"
+uri = "file://artifacts/pricedug/assets/store/play-store-icon-512.png"
+type = "image"
+title = "Priced Ug — Play Store Icon (512×512)"
