@@ -1,0 +1,25 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1024" height="500" viewBox="0 0 1024 500">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#E01E37"/>
+      <stop offset="1" stop-color="#A50F22"/>
+    </linearGradient>
+  </defs>
+  <rect width="1024" height="500" fill="url(#bg)"/>
+
+  <!-- icon tile -->
+  <g>
+    <rect x="70" y="100" width="300" height="300" rx="78" ry="78" fill="#ffffff"/>
+    <g transform="translate(220 250) rotate(-45) scale(0.62)">
+      <path d="M-110 150 L-110 -18 Q-110 -28 -103 -35 L0 -150 L103 -35 Q110 -28 110 -18 L110 132 Q110 150 92 150 L-92 150 Q-110 150 -110 132 Z"
+            fill="#E01E37" stroke="#E01E37" stroke-width="22" stroke-linejoin="round"/>
+      <circle cx="0" cy="-55" r="33" fill="#ffffff"/>
+      <path d="M0 -150 C 2 -198, 74 -198, 70 -146" fill="none" stroke="#E01E37" stroke-width="22" stroke-linecap="round"/>
+    </g>
+  </g>
+
+  <!-- text -->
+  <text x="410" y="212" font-family="DejaVu Sans" font-weight="bold" font-size="92" fill="#ffffff">Priced Ug</text>
+  <text x="413" y="276" font-family="DejaVu Sans" font-weight="bold" font-size="34" fill="#ffffff" fill-opacity="0.95">Uganda&apos;s Local Marketplace</text>
+  <text x="413" y="328" font-family="DejaVu Sans" font-size="25" fill="#ffffff" fill-opacity="0.85">Browse &#8226; Compare &#8226; Contact on WhatsApp</text>
+</svg>

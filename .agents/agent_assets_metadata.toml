@@ -17,3 +17,9 @@ id = "-AjnENn9jRzr992xD4yqv"
 uri = "file://artifacts/pricedug/assets/store/play-store-icon-512.png"
 type = "image"
 title = "Priced Ug — Play Store Icon (512×512, squircle)"
+
+[[outputs]]
+id = "jfjw7vYKawsXN5cGYmUQS"
+uri = "file://artifacts/pricedug/assets/store/play-store-feature-graphic-1024x500.png"
+type = "image"
+title = "Priced Ug — Play Store Feature Graphic (1024×500)"
