@@ -47,3 +47,27 @@ id = "Xsq3Zxm9QDtajSwlf4f7Z"
 uri = "file://artifacts/pricedug/assets/store/screenshots/screenshot-4-signin.png"
 type = "image"
 title = "4 — Secure sign in for owners"
+
+[[outputs]]
+id = "F8LSgDSDlQllw6_58VUco"
+uri = "file://artifacts/pricedug/assets/store/screenshots-tablet-7in/screenshot-1-browse.png"
+type = "image"
+title = "Tablet 1 — Browse local products & prices"
+
+[[outputs]]
+id = "rP9lN0z0SA4EXIUnulY4V"
+uri = "file://artifacts/pricedug/assets/store/screenshots-tablet-7in/screenshot-2-business.png"
+type = "image"
+title = "Tablet 2 — Shops, products & WhatsApp contact"
+
+[[outputs]]
+id = "zED1bm7nGwTWjKPXwVGVf"
+uri = "file://artifacts/pricedug/assets/store/screenshots-tablet-7in/screenshot-3-account.png"
+type = "image"
+title = "Tablet 3 — List your business for free"
+
+[[outputs]]
+id = "bFJvBnM0SgQKPwovYIXHB"
+uri = "file://artifacts/pricedug/assets/store/screenshots-tablet-7in/screenshot-4-signin.png"
+type = "image"
+title = "Tablet 4 — Secure sign in for owners"
