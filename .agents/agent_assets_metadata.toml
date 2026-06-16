@@ -23,3 +23,27 @@ id = "jfjw7vYKawsXN5cGYmUQS"
 uri = "file://artifacts/pricedug/assets/store/play-store-feature-graphic-1024x500.png"
 type = "image"
 title = "Priced Ug — Play Store Feature Graphic (1024×500)"
+
+[[outputs]]
+id = "MxyBkeF8xJIL-tqqOLiwK"
+uri = "file://artifacts/pricedug/assets/store/screenshots/screenshot-1-browse.png"
+type = "image"
+title = "1 — Browse local products & prices"
+
+[[outputs]]
+id = "5vTrjQ2eLiAVw4Ryo-qVK"
+uri = "file://artifacts/pricedug/assets/store/screenshots/screenshot-2-business.png"
+type = "image"
+title = "2 — Shops, products & WhatsApp contact"
+
+[[outputs]]
+id = "W4fYPlMyNyGWn7oZ5lEdX"
+uri = "file://artifacts/pricedug/assets/store/screenshots/screenshot-3-account.png"
+type = "image"
+title = "3 — List your business for free"
+
+[[outputs]]
+id = "Xsq3Zxm9QDtajSwlf4f7Z"
+uri = "file://artifacts/pricedug/assets/store/screenshots/screenshot-4-signin.png"
+type = "image"
+title = "4 — Secure sign in for owners"

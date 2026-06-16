@@ -1,1 +1,2 @@
 - [Business ↔ categories many-to-many](business-categories.md) — join table; legacy categoryId = first cat; writes must be validated + transactional; categories uses lightweight BusinessCategory schema (id,name).
+- [ImageMagick compositing colorspace gotcha](imagemagick-compositing.md) — color images desaturate when composited onto an all-white base PNG (saved as Gray); force `png32:` on the base.
