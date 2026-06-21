@@ -27,6 +27,12 @@ import { useAppAuth } from "@/context/AuthContext";
 
 type LookupErrorKind = "notFound" | "forbidden" | "server" | "network" | "unknown";
 
+const RETRYABLE_LOOKUP_ERRORS: ReadonlySet<LookupErrorKind> = new Set([
+  "network",
+  "server",
+  "unknown",
+]);
+
 function classifyLookupError(err: unknown): LookupErrorKind {
   const status =
     err && typeof err === "object" && typeof (err as { status?: unknown }).status === "number"
@@ -300,6 +306,22 @@ export default function AccessCustomerScreen() {
             <Text style={[styles.notFoundText, { color: colors.mutedForeground }]}>
               {LOOKUP_ERROR_CONTENT[lookupError].message}
             </Text>
+            {RETRYABLE_LOOKUP_ERRORS.has(lookupError) && (
+              <Pressable
+                style={[styles.retryBtn, { backgroundColor: colors.primary, opacity: lookup.isPending ? 0.6 : 1 }]}
+                onPress={handleLookup}
+                disabled={lookup.isPending}
+              >
+                {lookup.isPending ? (
+                  <ActivityIndicator color="#fff" />
+                ) : (
+                  <>
+                    <Feather name="refresh-cw" size={16} color="#fff" />
+                    <Text style={styles.retryBtnText}>Try again</Text>
+                  </>
+                )}
+              </Pressable>
+            )}
           </View>
         )}
 
@@ -370,6 +392,17 @@ const styles = StyleSheet.create({
   },
   notFoundTitle: { fontSize: 16, fontWeight: "700" as const, textAlign: "center" },
   notFoundText: { fontSize: 14, textAlign: "center", paddingHorizontal: 24, lineHeight: 20 },
+  retryBtn: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    gap: 8,
+    borderRadius: 10,
+    paddingVertical: 12,
+    paddingHorizontal: 24,
+    marginTop: 6,
+  },
+  retryBtnText: { color: "#fff", fontSize: 15, fontWeight: "600" as const },
   card: { borderRadius: 12, borderWidth: 1, padding: 16, marginBottom: 12 },
   cardName: { fontSize: 17, fontWeight: "700" as const, marginBottom: 10 },
   row: { flexDirection: "row", alignItems: "center", gap: 8, marginBottom: 6 },
