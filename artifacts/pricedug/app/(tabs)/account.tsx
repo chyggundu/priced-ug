@@ -4,7 +4,9 @@ import { useRouter } from "expo-router";
 import { Feather } from "@expo/vector-icons";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useAuth, useUser } from "@clerk/expo";
+import { useGetMyBusiness } from "@workspace/api-client-react";
 import { useColors } from "@/hooks/useColors";
+import { useAppAuth } from "@/context/AuthContext";
 
 const WHATSAPP_NUMBER = "1234567890";
 
@@ -14,7 +16,11 @@ export default function AccountScreen() {
   const insets = useSafeAreaInsets();
   const { isSignedIn, signOut } = useAuth();
   const { user } = useUser();
+  const { isAdmin } = useAppAuth();
   const topPad = Platform.OS === "web" ? 67 : insets.top;
+
+  const { data: business } = useGetMyBusiness({ query: { enabled: !!isSignedIn && !isAdmin, retry: false } });
+  const canAccessCustomers = isAdmin || !!business;
 
   const handleSignOut = () => {
     Alert.alert("Sign Out", "Are you sure you want to sign out?", [
@@ -83,6 +89,25 @@ export default function AccountScreen() {
             <Text style={[styles.menuItemText, { color: colors.foreground }]}>My Business</Text>
             <Feather name="chevron-right" size={16} color={colors.mutedForeground} />
           </Pressable>
+
+          <View style={[styles.menuDivider, { backgroundColor: colors.border }]} />
+
+          <Pressable style={styles.menuItem} onPress={() => router.push("/customer-profile")}>
+            <Feather name="user" size={18} color={colors.primary} />
+            <Text style={[styles.menuItemText, { color: colors.foreground }]}>My Profile</Text>
+            <Feather name="chevron-right" size={16} color={colors.mutedForeground} />
+          </Pressable>
+
+          {canAccessCustomers && (
+            <>
+              <View style={[styles.menuDivider, { backgroundColor: colors.border }]} />
+              <Pressable style={styles.menuItem} onPress={() => router.push("/access-customer")}>
+                <Feather name="search" size={18} color={colors.primary} />
+                <Text style={[styles.menuItemText, { color: colors.foreground }]}>Access Customer</Text>
+                <Feather name="chevron-right" size={16} color={colors.mutedForeground} />
+              </Pressable>
+            </>
+          )}
 
           <View style={[styles.menuDivider, { backgroundColor: colors.border }]} />
 

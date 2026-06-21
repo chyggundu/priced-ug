@@ -48,6 +48,95 @@ export const DeleteCategoryResponse = zod.object({
 
 
 /**
+ * @summary Get my customer profile (authenticated)
+ */
+export const GetMyCustomerProfileResponse = zod.object({
+  "id": zod.number(),
+  "fullName": zod.string(),
+  "phone": zod.string(),
+  "district": zod.string(),
+  "town": zod.string().nullish(),
+  "village": zod.string().nullish(),
+  "street": zod.string().nullish(),
+  "latitude": zod.number().nullish(),
+  "longitude": zod.number().nullish(),
+  "createdAt": zod.coerce.date(),
+  "updatedAt": zod.coerce.date()
+})
+
+
+/**
+ * @summary Create or update my customer profile (authenticated)
+ */
+export const SaveMyCustomerProfileBody = zod.object({
+  "fullName": zod.string(),
+  "phone": zod.string(),
+  "district": zod.string(),
+  "town": zod.string().nullish(),
+  "village": zod.string().nullish(),
+  "street": zod.string().nullish(),
+  "latitude": zod.number().nullish(),
+  "longitude": zod.number().nullish()
+})
+
+export const SaveMyCustomerProfileResponse = zod.object({
+  "id": zod.number(),
+  "fullName": zod.string(),
+  "phone": zod.string(),
+  "district": zod.string(),
+  "town": zod.string().nullish(),
+  "village": zod.string().nullish(),
+  "street": zod.string().nullish(),
+  "latitude": zod.number().nullish(),
+  "longitude": zod.number().nullish(),
+  "createdAt": zod.coerce.date(),
+  "updatedAt": zod.coerce.date()
+})
+
+
+/**
+ * @summary Look up a customer by phone and district (business owner or admin)
+ */
+export const LookupCustomerBody = zod.object({
+  "phone": zod.string(),
+  "district": zod.string()
+})
+
+export const LookupCustomerResponse = zod.object({
+  "id": zod.number(),
+  "fullName": zod.string(),
+  "phone": zod.string(),
+  "district": zod.string(),
+  "town": zod.string().nullish(),
+  "village": zod.string().nullish(),
+  "street": zod.string().nullish(),
+  "latitude": zod.number().nullish(),
+  "longitude": zod.number().nullish(),
+  "createdAt": zod.coerce.date(),
+  "updatedAt": zod.coerce.date()
+})
+
+
+/**
+ * @summary List all customers (admin only)
+ */
+export const GetAdminCustomersResponseItem = zod.object({
+  "id": zod.number(),
+  "fullName": zod.string(),
+  "phone": zod.string(),
+  "district": zod.string(),
+  "town": zod.string().nullish(),
+  "village": zod.string().nullish(),
+  "street": zod.string().nullish(),
+  "latitude": zod.number().nullish(),
+  "longitude": zod.number().nullish(),
+  "createdAt": zod.coerce.date(),
+  "updatedAt": zod.coerce.date()
+})
+export const GetAdminCustomersResponse = zod.array(GetAdminCustomersResponseItem)
+
+
+/**
  * @summary List all businesses including hidden (admin only)
  */
 export const GetAdminBusinessesResponseItem = zod.object({

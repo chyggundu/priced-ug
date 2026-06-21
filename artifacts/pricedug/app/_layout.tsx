@@ -38,6 +38,8 @@ function RootLayoutNav() {
       <Stack.Screen name="edit-business" options={{ headerShown: false }} />
       <Stack.Screen name="add-product" options={{ headerShown: false }} />
       <Stack.Screen name="edit-product/[id]" options={{ headerShown: false }} />
+      <Stack.Screen name="customer-profile" options={{ headerShown: false }} />
+      <Stack.Screen name="access-customer" options={{ headerShown: false }} />
     </Stack>
   );
 }

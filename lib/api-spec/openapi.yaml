@@ -20,6 +20,8 @@ tags:
     description: File storage operations
   - name: reviews
     description: Business review operations
+  - name: customers
+    description: Customer profile operations
 paths:
   /healthz:
     get:
@@ -88,6 +90,90 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/SuccessResponse"
+        "401":
+          description: Unauthorized
+        "403":
+          description: Forbidden
+
+  /customers/me:
+    get:
+      operationId: getMyCustomerProfile
+      tags: [customers]
+      summary: Get my customer profile (authenticated)
+      responses:
+        "200":
+          description: My customer profile
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Customer"
+        "401":
+          description: Unauthorized
+        "404":
+          description: No customer profile found
+    put:
+      operationId: saveMyCustomerProfile
+      tags: [customers]
+      summary: Create or update my customer profile (authenticated)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CustomerProfileInput"
+      responses:
+        "200":
+          description: Saved customer profile
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Customer"
+        "400":
+          description: Invalid input
+        "401":
+          description: Unauthorized
+
+  /customers/lookup:
+    post:
+      operationId: lookupCustomer
+      tags: [customers]
+      summary: Look up a customer by phone and district (business owner or admin)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CustomerLookupInput"
+      responses:
+        "200":
+          description: Matching customer
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Customer"
+        "400":
+          description: Invalid input
+        "401":
+          description: Unauthorized
+        "403":
+          description: Forbidden
+        "404":
+          description: No matching customer
+
+  /admin/customers:
+    get:
+      operationId: getAdminCustomers
+      tags: [customers]
+      summary: List all customers (admin only)
+      responses:
+        "200":
+          description: List of all customers
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Customer"
         "401":
           description: Unauthorized
         "403":
@@ -856,6 +942,86 @@ components:
           type: string
       required:
         - reply
+
+    Customer:
+      type: object
+      properties:
+        id:
+          type: integer
+        fullName:
+          type: string
+        phone:
+          type: string
+        district:
+          type: string
+        town:
+          type: string
+          nullable: true
+        village:
+          type: string
+          nullable: true
+        street:
+          type: string
+          nullable: true
+        latitude:
+          type: number
+          nullable: true
+        longitude:
+          type: number
+          nullable: true
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+      required:
+        - id
+        - fullName
+        - phone
+        - district
+        - createdAt
+        - updatedAt
+
+    CustomerProfileInput:
+      type: object
+      properties:
+        fullName:
+          type: string
+        phone:
+          type: string
+        district:
+          type: string
+        town:
+          type: string
+          nullable: true
+        village:
+          type: string
+          nullable: true
+        street:
+          type: string
+          nullable: true
+        latitude:
+          type: number
+          nullable: true
+        longitude:
+          type: number
+          nullable: true
+      required:
+        - fullName
+        - phone
+        - district
+
+    CustomerLookupInput:
+      type: object
+      properties:
+        phone:
+          type: string
+        district:
+          type: string
+      required:
+        - phone
+        - district
 
     UploadUrlInput:
       type: object

@@ -147,6 +147,36 @@ export interface ReplyReviewInput {
   reply: string;
 }
 
+export interface Customer {
+  id: number;
+  fullName: string;
+  phone: string;
+  district: string;
+  town?: string | null;
+  village?: string | null;
+  street?: string | null;
+  latitude?: number | null;
+  longitude?: number | null;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface CustomerProfileInput {
+  fullName: string;
+  phone: string;
+  district: string;
+  town?: string | null;
+  village?: string | null;
+  street?: string | null;
+  latitude?: number | null;
+  longitude?: number | null;
+}
+
+export interface CustomerLookupInput {
+  phone: string;
+  district: string;
+}
+
 export interface UploadUrlInput {
   filename: string;
   contentType: string;
