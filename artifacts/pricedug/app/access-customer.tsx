@@ -24,6 +24,52 @@ import ReadOnlyMap from "@/components/ReadOnlyMap";
 import { useColors } from "@/hooks/useColors";
 import { useAppAuth } from "@/context/AuthContext";
 
+type LookupErrorKind = "notFound" | "forbidden" | "server" | "network" | "unknown";
+
+function classifyLookupError(err: unknown): LookupErrorKind {
+  const status =
+    err && typeof err === "object" && typeof (err as { status?: unknown }).status === "number"
+      ? (err as { status: number }).status
+      : undefined;
+
+  if (status === undefined) return "network";
+  if (status === 404) return "notFound";
+  if (status === 401 || status === 403) return "forbidden";
+  if (status >= 500) return "server";
+  return "unknown";
+}
+
+const LOOKUP_ERROR_CONTENT: Record<
+  LookupErrorKind,
+  { icon: keyof typeof Feather.glyphMap; title: string; message: string }
+> = {
+  notFound: {
+    icon: "user-x",
+    title: "No customer found",
+    message: "No customer matches that phone number and district. Double-check the details and try again.",
+  },
+  forbidden: {
+    icon: "lock",
+    title: "Access not allowed",
+    message: "You don't have permission to look up this customer. Make sure your business page is active.",
+  },
+  server: {
+    icon: "alert-triangle",
+    title: "Something went wrong",
+    message: "Our server ran into a problem. Please try again in a moment.",
+  },
+  network: {
+    icon: "wifi-off",
+    title: "No internet connection",
+    message: "We couldn't reach the server. Check your connection and try again.",
+  },
+  unknown: {
+    icon: "alert-circle",
+    title: "Lookup failed",
+    message: "Something unexpected happened. Please try again.",
+  },
+};
+
 function CustomerCard({ customer }: { customer: Customer }) {
   const colors = useColors();
   const hasPin = customer.latitude != null && customer.longitude != null;
@@ -89,21 +135,21 @@ export default function AccessCustomerScreen() {
   const [phone, setPhone] = useState("");
   const [district, setDistrict] = useState("");
   const [result, setResult] = useState<Customer | null>(null);
-  const [notFound, setNotFound] = useState(false);
+  const [lookupError, setLookupError] = useState<LookupErrorKind | null>(null);
 
   const canAccess = isAdmin || !!business;
 
   const handleLookup = async () => {
     if (!phone.trim() || !district.trim()) return;
     setResult(null);
-    setNotFound(false);
+    setLookupError(null);
     try {
       const customer = await lookup.mutateAsync({
         data: { phone: phone.trim(), district: district.trim() },
       });
       setResult(customer);
-    } catch {
-      setNotFound(true);
+    } catch (err) {
+      setLookupError(classifyLookupError(err));
     }
   };
 
@@ -190,11 +236,18 @@ export default function AccessCustomerScreen() {
           </Pressable>
         </View>
 
-        {notFound && (
+        {lookupError && (
           <View style={[styles.notFound, { borderColor: colors.border }]}>
-            <Feather name="user-x" size={28} color={colors.mutedForeground} />
+            <Feather
+              name={LOOKUP_ERROR_CONTENT[lookupError].icon}
+              size={28}
+              color={colors.mutedForeground}
+            />
+            <Text style={[styles.notFoundTitle, { color: colors.foreground }]}>
+              {LOOKUP_ERROR_CONTENT[lookupError].title}
+            </Text>
             <Text style={[styles.notFoundText, { color: colors.mutedForeground }]}>
-              No customer found with that phone number and district.
+              {LOOKUP_ERROR_CONTENT[lookupError].message}
             </Text>
           </View>
         )}
@@ -264,7 +317,8 @@ const styles = StyleSheet.create({
     borderStyle: "dashed",
     borderRadius: 12,
   },
-  notFoundText: { fontSize: 14, textAlign: "center", paddingHorizontal: 24 },
+  notFoundTitle: { fontSize: 16, fontWeight: "700" as const, textAlign: "center" },
+  notFoundText: { fontSize: 14, textAlign: "center", paddingHorizontal: 24, lineHeight: 20 },
   card: { borderRadius: 12, borderWidth: 1, padding: 16, marginBottom: 12 },
   cardName: { fontSize: 17, fontWeight: "700" as const, marginBottom: 10 },
   row: { flexDirection: "row", alignItems: "center", gap: 8, marginBottom: 6 },
