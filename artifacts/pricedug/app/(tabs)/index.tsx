@@ -14,6 +14,7 @@ import {
 import { useRouter } from "expo-router";
 import { Feather } from "@expo/vector-icons";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
+import { useAuth } from "@clerk/expo";
 import { useGetCategories, useGetProducts } from "@workspace/api-client-react";
 import { useColors } from "@/hooks/useColors";
 
@@ -29,6 +30,7 @@ export default function BrowseScreen() {
   const colors = useColors();
   const router = useRouter();
   const insets = useSafeAreaInsets();
+  const { isSignedIn } = useAuth();
   const [selectedCategory, setSelectedCategory] = useState<number | null>(null);
   const [searchQuery, setSearchQuery] = useState("");
   const [searchInput, setSearchInput] = useState("");
@@ -134,6 +136,27 @@ export default function BrowseScreen() {
       </View>
 
       <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
+        {/* Customer Sign Up prompt (signed-out visitors only) */}
+        {!isSignedIn && (
+          <View style={styles.section}>
+            <Pressable
+              style={[styles.signupBanner, { backgroundColor: colors.primary }]}
+              onPress={() => router.push("/(auth)/sign-up")}
+            >
+              <View style={styles.signupIcon}>
+                <Feather name="user-plus" size={20} color="#fff" />
+              </View>
+              <View style={styles.signupTextWrap}>
+                <Text style={styles.signupTitle}>Customer Sign Up</Text>
+                <Text style={styles.signupSubtitle}>
+                  Create a free account to save your details and order faster.
+                </Text>
+              </View>
+              <Feather name="chevron-right" size={20} color="#fff" />
+            </Pressable>
+          </View>
+        )}
+
         {/* Categories */}
         <View style={styles.section}>
           <Text style={[styles.sectionTitle, { color: colors.foreground }]}>Categories</Text>
@@ -348,6 +371,25 @@ const styles = StyleSheet.create({
   section: { paddingHorizontal: 16, paddingTop: 20 },
   sectionTitle: { fontSize: 18, fontWeight: "700" as const, marginBottom: 12 },
   categoriesScroll: { marginBottom: 4 },
+  signupBanner: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 12,
+    borderRadius: 12,
+    paddingHorizontal: 14,
+    paddingVertical: 14,
+  },
+  signupIcon: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: "rgba(255,255,255,0.2)",
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  signupTextWrap: { flex: 1 },
+  signupTitle: { fontSize: 16, fontWeight: "700" as const, color: "#fff" },
+  signupSubtitle: { fontSize: 12, color: "rgba(255,255,255,0.9)", marginTop: 2, lineHeight: 16 },
   categoryChip: {
     paddingHorizontal: 16,
     paddingVertical: 8,
