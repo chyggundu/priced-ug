@@ -14,6 +14,7 @@ import { useRouter } from "expo-router";
 import { Feather } from "@expo/vector-icons";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useAuth } from "@clerk/expo";
+import * as Clipboard from "expo-clipboard";
 import {
   useGetMyBusiness,
   useLookupCustomer,
@@ -73,12 +74,40 @@ const LOOKUP_ERROR_CONTENT: Record<
 function CustomerCard({ customer }: { customer: Customer }) {
   const colors = useColors();
   const hasPin = customer.latitude != null && customer.longitude != null;
+  const [copied, setCopied] = useState(false);
+
+  const addressLine = [customer.street, customer.village, customer.town, customer.district]
+    .filter(Boolean)
+    .join(", ");
+  const mapsLink = hasPin
+    ? `https://www.google.com/maps/search/?api=1&query=${customer.latitude},${customer.longitude}`
+    : null;
+
+  const buildLocationText = () => {
+    const parts = [`${customer.fullName}'s location`];
+    if (addressLine) parts.push(addressLine);
+    if (mapsLink) parts.push(mapsLink);
+    return parts.join("\n");
+  };
 
   const openWhatsApp = () => {
     const num = customer.phone.replace(/[^0-9]/g, "");
     Linking.openURL(`whatsapp://send?phone=${num}`).catch(() =>
       Linking.openURL(`https://wa.me/${num}`)
     );
+  };
+
+  const shareLocationOnWhatsApp = () => {
+    const text = encodeURIComponent(buildLocationText());
+    Linking.openURL(`whatsapp://send?text=${text}`).catch(() =>
+      Linking.openURL(`https://wa.me/?text=${text}`)
+    );
+  };
+
+  const copyLocation = async () => {
+    await Clipboard.setStringAsync(buildLocationText());
+    setCopied(true);
+    setTimeout(() => setCopied(false), 1800);
   };
 
   return (
@@ -112,6 +141,28 @@ function CustomerCard({ customer }: { customer: Customer }) {
         <Feather name="message-circle" size={16} color="#fff" />
         <Text style={styles.waBtnText}>Message on WhatsApp</Text>
       </Pressable>
+
+      {addressLine || mapsLink ? (
+        <>
+          <Pressable
+            style={[styles.waBtn, { backgroundColor: "#128C7E", marginTop: 10 }]}
+            onPress={shareLocationOnWhatsApp}
+          >
+            <Feather name="share-2" size={16} color="#fff" />
+            <Text style={styles.waBtnText}>Share location on WhatsApp</Text>
+          </Pressable>
+
+          <Pressable
+            style={[styles.copyBtn, { borderColor: colors.border }]}
+            onPress={copyLocation}
+          >
+            <Feather name={copied ? "check" : "copy"} size={16} color={colors.primary} />
+            <Text style={[styles.copyBtnText, { color: colors.primary }]}>
+              {copied ? "Location copied" : "Copy location"}
+            </Text>
+          </Pressable>
+        </>
+      ) : null}
     </View>
   );
 }
@@ -333,6 +384,17 @@ const styles = StyleSheet.create({
     marginTop: 14,
   },
   waBtnText: { color: "#fff", fontSize: 15, fontWeight: "600" as const },
+  copyBtn: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    gap: 8,
+    borderRadius: 10,
+    borderWidth: 1,
+    paddingVertical: 12,
+    marginTop: 10,
+  },
+  copyBtnText: { fontSize: 15, fontWeight: "600" as const },
   adminSection: { paddingHorizontal: 16, marginTop: 24 },
   sectionTitle: { fontSize: 18, fontWeight: "700" as const, marginBottom: 12 },
   emptyText: { fontSize: 14, marginVertical: 16 },
