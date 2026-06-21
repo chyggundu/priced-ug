@@ -1,3 +1,4 @@
 - [Business ↔ categories many-to-many](business-categories.md) — join table; legacy categoryId = first cat; writes must be validated + transactional; categories uses lightweight BusinessCategory schema (id,name).
 - [Typecheck baseline & expo router types](typecheck-baseline.md) — `pnpm run typecheck` is red at baseline (queryKey/req.params/Feather icon); expo-router route types regenerate only when the expo workflow runs.
 - [ImageMagick compositing colorspace gotcha](imagemagick-compositing.md) — color images desaturate when composited onto an all-white base PNG (saved as Gray); force `png32:` on the base.
+- [API server testing setup](api-server-testing.md) — vitest + supertest + pglite (in-memory PG); mock @clerk/express getAuth & @workspace/db; needs drizzle-zod+zod as api-server devDeps for vitest resolution.
