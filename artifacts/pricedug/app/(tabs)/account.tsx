@@ -8,7 +8,7 @@ import { useGetMyBusiness } from "@workspace/api-client-react";
 import { useColors } from "@/hooks/useColors";
 import { useAppAuth } from "@/context/AuthContext";
 
-const WHATSAPP_NUMBER = "1234567890";
+const WHATSAPP_NUMBER = "18186603495";
 const PRIVACY_POLICY_URL = "https://www.privacypolicies.com/live/946d3c97-3ea2-45a7-8fa8-f6573aa0a411";
 
 export default function AccountScreen() {

@@ -18,7 +18,7 @@ import { useAuth } from "@clerk/expo";
 import { useGetCategories, useGetProducts } from "@workspace/api-client-react";
 import { useColors } from "@/hooks/useColors";
 
-const WHATSAPP_NUMBER = "1234567890"; // Replace with actual WhatsApp number
+const WHATSAPP_NUMBER = "18186603495";
 
 function parsePrice(price?: string | null): number | null {
   if (!price) return null;
