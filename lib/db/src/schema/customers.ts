@@ -11,6 +11,7 @@ export const customersTable = pgTable("customers", {
   town: text("town"),
   village: text("village"),
   street: text("street"),
+  addressPhotoUrl: text("address_photo_url"),
   latitude: doublePrecision("latitude"),
   longitude: doublePrecision("longitude"),
   createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),

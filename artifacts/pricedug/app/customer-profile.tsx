@@ -11,6 +11,7 @@ import {
   Platform,
   Modal,
 } from "react-native";
+import { Image } from "expo-image";
 import { useRouter } from "expo-router";
 import { Feather } from "@expo/vector-icons";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
@@ -20,7 +21,10 @@ import MapPicker from "@/components/MapPicker";
 import {
   useGetMyCustomerProfile,
   useSaveMyCustomerProfile,
+  useGetUploadUrl,
 } from "@workspace/api-client-react";
+import { pickImageAsset } from "@/lib/imagePicker";
+import { uploadImageToSignedUrl } from "@/lib/uploadImage";
 import { useColors } from "@/hooks/useColors";
 
 export default function CustomerProfileScreen() {
@@ -34,6 +38,7 @@ export default function CustomerProfileScreen() {
     query: { enabled: !!isSignedIn, retry: false },
   });
   const saveProfile = useSaveMyCustomerProfile();
+  const getUploadUrl = useGetUploadUrl();
 
   const [fullName, setFullName] = useState("");
   const [phone, setPhone] = useState("");
@@ -41,6 +46,9 @@ export default function CustomerProfileScreen() {
   const [town, setTown] = useState("");
   const [village, setVillage] = useState("");
   const [street, setStreet] = useState("");
+  const [addressPhotoUrl, setAddressPhotoUrl] = useState<string | null>(null);
+  const [uploadingPhoto, setUploadingPhoto] = useState(false);
+  const [showPhoto, setShowPhoto] = useState(false);
   const [latitude, setLatitude] = useState<number | null>(null);
   const [longitude, setLongitude] = useState<number | null>(null);
   const [locating, setLocating] = useState(false);
@@ -55,10 +63,30 @@ export default function CustomerProfileScreen() {
       setTown(profile.town ?? "");
       setVillage(profile.village ?? "");
       setStreet(profile.street ?? "");
+      setAddressPhotoUrl(profile.addressPhotoUrl ?? null);
       setLatitude(profile.latitude ?? null);
       setLongitude(profile.longitude ?? null);
     }
   }, [profile]);
+
+  const pickAddressPhoto = async () => {
+    const asset = await pickImageAsset([4, 3]);
+    if (!asset) return;
+    setUploadingPhoto(true);
+    try {
+      const filename = asset.uri.split("/").pop() ?? "address.jpg";
+      const contentType = "image/jpeg";
+      const { uploadUrl, publicUrl } = await getUploadUrl.mutateAsync({
+        data: { filename, contentType },
+      });
+      await uploadImageToSignedUrl(uploadUrl, asset.uri, contentType);
+      setAddressPhotoUrl(publicUrl);
+    } catch {
+      Alert.alert("Upload failed", "Could not upload the address photo. Please try again.");
+    } finally {
+      setUploadingPhoto(false);
+    }
+  };
 
   const pinLocation = async () => {
     setLocating(true);
@@ -93,6 +121,7 @@ export default function CustomerProfileScreen() {
           town: town.trim() || null,
           village: village.trim() || null,
           street: street.trim() || null,
+          addressPhotoUrl: addressPhotoUrl ?? null,
           latitude,
           longitude,
         },
@@ -133,11 +162,11 @@ export default function CustomerProfileScreen() {
           <Feather name="x" size={22} color={colors.foreground} />
         </Pressable>
         <Text style={[styles.headerTitle, { color: colors.foreground }]}>My Profile</Text>
-        <Pressable onPress={handleSave} disabled={saving}>
+        <Pressable onPress={handleSave} disabled={saving || uploadingPhoto}>
           {saving ? (
             <ActivityIndicator size="small" color={colors.primary} />
           ) : (
-            <Text style={[styles.saveText, { color: colors.primary }]}>Save</Text>
+            <Text style={[styles.saveText, { color: colors.primary, opacity: uploadingPhoto ? 0.5 : 1 }]}>Save</Text>
           )}
         </Pressable>
       </View>
@@ -203,6 +232,45 @@ export default function CustomerProfileScreen() {
             placeholderTextColor={colors.mutedForeground}
           />
 
+          <Text style={[styles.label, { color: colors.foreground }]}>Address Photo (optional)</Text>
+          <Text style={[styles.fieldHint, { color: colors.mutedForeground }]}>
+            Add a picture of your house, gate, or landmark to help with delivery.
+          </Text>
+          <View style={styles.photoRow}>
+            {addressPhotoUrl ? (
+              <Pressable onPress={() => setShowPhoto(true)} style={styles.thumbWrap}>
+                <Image source={{ uri: addressPhotoUrl }} style={styles.thumb} contentFit="cover" />
+                <View style={styles.thumbBadge}>
+                  <Feather name="maximize-2" size={12} color="#fff" />
+                </View>
+              </Pressable>
+            ) : (
+              <Pressable
+                onPress={pickAddressPhoto}
+                disabled={uploadingPhoto}
+                style={[styles.thumbWrap, styles.thumbPlaceholder, { backgroundColor: colors.muted, borderColor: colors.border }]}
+              >
+                {uploadingPhoto ? (
+                  <ActivityIndicator size="small" color={colors.primary} />
+                ) : (
+                  <Feather name="camera" size={22} color={colors.primary} />
+                )}
+              </Pressable>
+            )}
+            {addressPhotoUrl && (
+              <View style={styles.photoActions}>
+                <Pressable onPress={pickAddressPhoto} disabled={uploadingPhoto}>
+                  <Text style={[styles.photoAction, { color: colors.primary }]}>
+                    {uploadingPhoto ? "Uploading..." : "Change photo"}
+                  </Text>
+                </Pressable>
+                <Pressable onPress={() => setAddressPhotoUrl(null)} disabled={uploadingPhoto}>
+                  <Text style={[styles.photoAction, { color: colors.mutedForeground }]}>Remove</Text>
+                </Pressable>
+              </View>
+            )}
+          </View>
+
           <Text style={[styles.label, { color: colors.foreground }]}>Map Location (optional)</Text>
           <Pressable
             style={[styles.locationBtn, { backgroundColor: colors.muted, borderColor: colors.border }]}
@@ -244,16 +312,31 @@ export default function CustomerProfileScreen() {
           )}
 
           <Pressable
-            style={[styles.saveBtn, { backgroundColor: colors.primary, opacity: saving ? 0.6 : 1, marginTop: 24 }]}
+            style={[styles.saveBtn, { backgroundColor: colors.primary, opacity: saving || uploadingPhoto ? 0.6 : 1, marginTop: 24 }]}
             onPress={handleSave}
-            disabled={saving}
+            disabled={saving || uploadingPhoto}
           >
-            {saving ? <ActivityIndicator color="#fff" /> : <Text style={styles.saveBtnText}>Save Profile</Text>}
+            {saving ? (
+              <ActivityIndicator color="#fff" />
+            ) : (
+              <Text style={styles.saveBtnText}>{uploadingPhoto ? "Uploading photo..." : "Save Profile"}</Text>
+            )}
           </Pressable>
         </View>
 
         <View style={{ height: Platform.OS === "web" ? 40 : insets.bottom + 32 }} />
       </ScrollView>
+
+      {showPhoto && addressPhotoUrl && (
+        <Modal visible transparent animationType="fade" onRequestClose={() => setShowPhoto(false)}>
+          <Pressable style={styles.photoModalBackdrop} onPress={() => setShowPhoto(false)}>
+            <Image source={{ uri: addressPhotoUrl }} style={styles.photoFull} contentFit="contain" />
+            <Pressable style={styles.photoCloseBtn} onPress={() => setShowPhoto(false)}>
+              <Feather name="x" size={26} color="#fff" />
+            </Pressable>
+          </Pressable>
+        </Modal>
+      )}
 
       {showMap && (
         <Modal visible animationType="slide" onRequestClose={() => setShowMap(false)}>
@@ -302,6 +385,42 @@ const styles = StyleSheet.create({
     paddingVertical: 13,
   },
   locationBtnText: { fontSize: 15, fontWeight: "500" as const },
+  fieldHint: { fontSize: 12, lineHeight: 17, marginBottom: 8 },
+  photoRow: { flexDirection: "row", alignItems: "center", gap: 14 },
+  thumbWrap: { width: 64, height: 64, borderRadius: 10, overflow: "hidden", position: "relative" },
+  thumb: { width: "100%", height: "100%" },
+  thumbPlaceholder: { alignItems: "center", justifyContent: "center", borderWidth: 1 },
+  thumbBadge: {
+    position: "absolute",
+    right: 4,
+    bottom: 4,
+    width: 20,
+    height: 20,
+    borderRadius: 10,
+    backgroundColor: "rgba(0,0,0,0.55)",
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  photoActions: { gap: 10 },
+  photoAction: { fontSize: 14, fontWeight: "600" as const },
+  photoModalBackdrop: {
+    flex: 1,
+    backgroundColor: "rgba(0,0,0,0.92)",
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  photoFull: { width: "92%", height: "80%" },
+  photoCloseBtn: {
+    position: "absolute",
+    top: 48,
+    right: 20,
+    width: 44,
+    height: 44,
+    borderRadius: 22,
+    backgroundColor: "rgba(255,255,255,0.18)",
+    alignItems: "center",
+    justifyContent: "center",
+  },
   locationInfo: { flexDirection: "row", alignItems: "center", justifyContent: "space-between", marginTop: 8 },
   locationCoords: { fontSize: 13 },
   locationClear: { fontSize: 13, fontWeight: "600" as const },

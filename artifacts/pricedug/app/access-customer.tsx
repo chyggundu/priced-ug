@@ -9,7 +9,9 @@ import {
   ActivityIndicator,
   Platform,
   Linking,
+  Modal,
 } from "react-native";
+import { Image } from "expo-image";
 import { useRouter } from "expo-router";
 import { Feather } from "@expo/vector-icons";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
@@ -81,6 +83,7 @@ function CustomerCard({ customer }: { customer: Customer }) {
   const colors = useColors();
   const hasPin = customer.latitude != null && customer.longitude != null;
   const [copied, setCopied] = useState(false);
+  const [showPhoto, setShowPhoto] = useState(false);
 
   const addressLine = [customer.street, customer.village, customer.town, customer.district]
     .filter(Boolean)
@@ -137,10 +140,35 @@ function CustomerCard({ customer }: { customer: Customer }) {
         </View>
       ) : null}
 
+      {customer.addressPhotoUrl ? (
+        <View style={styles.photoRow}>
+          <Pressable onPress={() => setShowPhoto(true)} style={styles.thumbWrap}>
+            <Image source={{ uri: customer.addressPhotoUrl }} style={styles.thumb} contentFit="cover" />
+            <View style={styles.thumbBadge}>
+              <Feather name="maximize-2" size={12} color="#fff" />
+            </View>
+          </Pressable>
+          <Text style={[styles.photoHint, { color: colors.mutedForeground }]}>
+            Address photo — tap to enlarge
+          </Text>
+        </View>
+      ) : null}
+
       {hasPin && (
         <View style={{ marginTop: 12 }}>
           <ReadOnlyMap latitude={customer.latitude!} longitude={customer.longitude!} height={180} />
         </View>
+      )}
+
+      {showPhoto && customer.addressPhotoUrl && (
+        <Modal visible transparent animationType="fade" onRequestClose={() => setShowPhoto(false)}>
+          <Pressable style={styles.photoModalBackdrop} onPress={() => setShowPhoto(false)}>
+            <Image source={{ uri: customer.addressPhotoUrl }} style={styles.photoFull} contentFit="contain" />
+            <Pressable style={styles.photoCloseBtn} onPress={() => setShowPhoto(false)}>
+              <Feather name="x" size={26} color="#fff" />
+            </Pressable>
+          </Pressable>
+        </Modal>
       )}
 
       <Pressable style={[styles.waBtn, { backgroundColor: "#25D366" }]} onPress={openWhatsApp}>
@@ -407,6 +435,39 @@ const styles = StyleSheet.create({
   cardName: { fontSize: 17, fontWeight: "700" as const, marginBottom: 10 },
   row: { flexDirection: "row", alignItems: "center", gap: 8, marginBottom: 6 },
   rowText: { fontSize: 14, flex: 1 },
+  photoRow: { flexDirection: "row", alignItems: "center", gap: 12, marginTop: 12 },
+  thumbWrap: { width: 64, height: 64, borderRadius: 10, overflow: "hidden", position: "relative" },
+  thumb: { width: "100%", height: "100%" },
+  thumbBadge: {
+    position: "absolute",
+    right: 4,
+    bottom: 4,
+    width: 20,
+    height: 20,
+    borderRadius: 10,
+    backgroundColor: "rgba(0,0,0,0.55)",
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  photoHint: { fontSize: 13, flex: 1 },
+  photoModalBackdrop: {
+    flex: 1,
+    backgroundColor: "rgba(0,0,0,0.92)",
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  photoFull: { width: "92%", height: "80%" },
+  photoCloseBtn: {
+    position: "absolute",
+    top: 48,
+    right: 20,
+    width: 44,
+    height: 44,
+    borderRadius: 22,
+    backgroundColor: "rgba(255,255,255,0.18)",
+    alignItems: "center",
+    justifyContent: "center",
+  },
   waBtn: {
     flexDirection: "row",
     alignItems: "center",

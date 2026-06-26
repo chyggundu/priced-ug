@@ -155,6 +155,7 @@ export interface Customer {
   town?: string | null;
   village?: string | null;
   street?: string | null;
+  addressPhotoUrl?: string | null;
   latitude?: number | null;
   longitude?: number | null;
   createdAt: string;
@@ -168,6 +169,7 @@ export interface CustomerProfileInput {
   town?: string | null;
   village?: string | null;
   street?: string | null;
+  addressPhotoUrl?: string | null;
   latitude?: number | null;
   longitude?: number | null;
 }

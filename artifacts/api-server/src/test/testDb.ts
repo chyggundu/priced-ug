@@ -33,6 +33,7 @@ export async function setupSchema() {
       town text,
       village text,
       street text,
+      address_photo_url text,
       latitude double precision,
       longitude double precision,
       created_at timestamptz NOT NULL DEFAULT now(),

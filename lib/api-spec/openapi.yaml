@@ -963,6 +963,9 @@ components:
         street:
           type: string
           nullable: true
+        addressPhotoUrl:
+          type: string
+          nullable: true
         latitude:
           type: number
           nullable: true
@@ -999,6 +1002,9 @@ components:
           type: string
           nullable: true
         street:
+          type: string
+          nullable: true
+        addressPhotoUrl:
           type: string
           nullable: true
         latitude:

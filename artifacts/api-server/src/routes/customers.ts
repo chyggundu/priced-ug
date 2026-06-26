@@ -15,6 +15,7 @@ const customerColumns = {
   town: customersTable.town,
   village: customersTable.village,
   street: customersTable.street,
+  addressPhotoUrl: customersTable.addressPhotoUrl,
   latitude: customersTable.latitude,
   longitude: customersTable.longitude,
   createdAt: customersTable.createdAt,
@@ -46,7 +47,7 @@ router.put("/customers/me", requireAuth, async (req, res) => {
       res.status(400).json({ error: "Invalid input", details: parsed.error.issues });
       return;
     }
-    const { fullName, phone, district, town, village, street, latitude, longitude } = parsed.data;
+    const { fullName, phone, district, town, village, street, addressPhotoUrl, latitude, longitude } = parsed.data;
 
     const values = {
       fullName: fullName.trim(),
@@ -55,6 +56,7 @@ router.put("/customers/me", requireAuth, async (req, res) => {
       town: town?.trim() || null,
       village: village?.trim() || null,
       street: street?.trim() || null,
+      addressPhotoUrl: addressPhotoUrl?.trim() || null,
       latitude: latitude ?? null,
       longitude: longitude ?? null,
     };
