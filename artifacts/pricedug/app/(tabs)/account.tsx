@@ -9,6 +9,7 @@ import { useColors } from "@/hooks/useColors";
 import { useAppAuth } from "@/context/AuthContext";
 
 const WHATSAPP_NUMBER = "1234567890";
+const PRIVACY_POLICY_URL = "https://www.privacypolicies.com/live/946d3c97-3ea2-45a7-8fa8-f6573aa0a411";
 
 export default function AccountScreen() {
   const colors = useColors();
@@ -35,6 +36,11 @@ export default function AccountScreen() {
       .catch(() => Linking.openURL(`https://wa.me/${WHATSAPP_NUMBER}`));
   };
 
+  const openPrivacyPolicy = () => {
+    const { Linking } = require("react-native");
+    Linking.openURL(PRIVACY_POLICY_URL);
+  };
+
   if (!isSignedIn) {
     return (
       <View style={[styles.container, styles.center, { backgroundColor: colors.background, paddingTop: topPad }]}>
@@ -54,6 +60,11 @@ export default function AccountScreen() {
         <Pressable style={styles.contactRow} onPress={openWhatsApp}>
           <Feather name="message-circle" size={20} color="#25D366" />
           <Text style={[styles.contactText, { color: colors.foreground }]}>Contact us on WhatsApp</Text>
+          <Feather name="chevron-right" size={16} color={colors.mutedForeground} />
+        </Pressable>
+        <Pressable style={[styles.contactRow, { marginTop: 16 }]} onPress={openPrivacyPolicy}>
+          <Feather name="shield" size={20} color={colors.mutedForeground} />
+          <Text style={[styles.contactText, { color: colors.foreground }]}>Privacy Policy</Text>
           <Feather name="chevron-right" size={16} color={colors.mutedForeground} />
         </Pressable>
       </View>
@@ -114,6 +125,14 @@ export default function AccountScreen() {
           <Pressable style={styles.menuItem} onPress={openWhatsApp}>
             <Feather name="message-circle" size={18} color="#25D366" />
             <Text style={[styles.menuItemText, { color: colors.foreground }]}>Contact Support on WhatsApp</Text>
+            <Feather name="chevron-right" size={16} color={colors.mutedForeground} />
+          </Pressable>
+
+          <View style={[styles.menuDivider, { backgroundColor: colors.border }]} />
+
+          <Pressable style={styles.menuItem} onPress={openPrivacyPolicy}>
+            <Feather name="shield" size={18} color={colors.primary} />
+            <Text style={[styles.menuItemText, { color: colors.foreground }]}>Privacy Policy</Text>
             <Feather name="chevron-right" size={16} color={colors.mutedForeground} />
           </Pressable>
         </View>
