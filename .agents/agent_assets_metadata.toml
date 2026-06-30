@@ -95,3 +95,9 @@ id = "n_Wf2c5fjNPtMGIEm9ZaA"
 uri = "file://artifacts/pricedug/assets/store/screenshots-tablet-10in/screenshot-4-signin.png"
 type = "image"
 title = "10\" Tablet 4 — Secure sign in for owners"
+
+[[outputs]]
+id = "znAwTxRISRBMf3hZmzCXW"
+uri = "file://.local/exports/pricedug-qr.png"
+type = "image"
+title = "Priced Ug — App QR Code"
