@@ -17,6 +17,7 @@ import { tokenCache } from "@clerk/expo/token-cache";
 import { setBaseUrl } from "@workspace/api-client-react";
 
 import { ErrorBoundary } from "@/components/ErrorBoundary";
+import { ConsentGate } from "@/components/ConsentGate";
 import { AuthProvider } from "@/context/AuthContext";
 
 SplashScreen.preventAutoHideAsync();
@@ -40,6 +41,7 @@ function RootLayoutNav() {
       <Stack.Screen name="edit-product/[id]" options={{ headerShown: false }} />
       <Stack.Screen name="customer-profile" options={{ headerShown: false }} />
       <Stack.Screen name="access-customer" options={{ headerShown: false }} />
+      <Stack.Screen name="legal" options={{ headerShown: false }} />
     </Stack>
   );
 }
@@ -69,7 +71,9 @@ export default function RootLayout() {
               <AuthProvider>
                 <GestureHandlerRootView>
                   <KeyboardProvider>
-                    <RootLayoutNav />
+                    <ConsentGate>
+                      <RootLayoutNav />
+                    </ConsentGate>
                   </KeyboardProvider>
                 </GestureHandlerRootView>
               </AuthProvider>

@@ -67,6 +67,11 @@ export default function AccountScreen() {
           <Text style={[styles.contactText, { color: colors.foreground }]}>Privacy Policy</Text>
           <Feather name="chevron-right" size={16} color={colors.mutedForeground} />
         </Pressable>
+        <Pressable style={[styles.contactRow, { marginTop: 16 }]} onPress={() => router.push("/legal")}>
+          <Feather name="file-text" size={20} color={colors.mutedForeground} />
+          <Text style={[styles.contactText, { color: colors.foreground }]}>User Agreement & Waiver</Text>
+          <Feather name="chevron-right" size={16} color={colors.mutedForeground} />
+        </Pressable>
       </View>
     );
   }
@@ -133,6 +138,14 @@ export default function AccountScreen() {
           <Pressable style={styles.menuItem} onPress={openPrivacyPolicy}>
             <Feather name="shield" size={18} color={colors.primary} />
             <Text style={[styles.menuItemText, { color: colors.foreground }]}>Privacy Policy</Text>
+            <Feather name="chevron-right" size={16} color={colors.mutedForeground} />
+          </Pressable>
+
+          <View style={[styles.menuDivider, { backgroundColor: colors.border }]} />
+
+          <Pressable style={styles.menuItem} onPress={() => router.push("/legal")}>
+            <Feather name="file-text" size={18} color={colors.primary} />
+            <Text style={[styles.menuItemText, { color: colors.foreground }]}>User Agreement & Waiver</Text>
             <Feather name="chevron-right" size={16} color={colors.mutedForeground} />
           </Pressable>
         </View>
