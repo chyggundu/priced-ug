@@ -30,8 +30,8 @@ export const LEGAL_AGREEMENT_SECTIONS: LegalSection[] = [
     heading: "2. Nature of the Service",
     body:
       "The App is a directory and marketplace platform that lets businesses list products and lets the public " +
-      "browse and contact those businesses. The Owner is NOT a party to any transaction, sale, delivery, or " +
-      "communication between users and businesses. The Owner does not manufacture, sell, inspect, deliver, or " +
+      "browse and contact those businesses. The Owner is NOT a party to any transaction, sale, or " +
+      "communication between users and businesses. The Owner does not manufacture, sell, inspect, or " +
       "guarantee any product, price, or service listed. Any dealing you have with a business is solely between " +
       "you and that business, at your own risk.",
   },
@@ -39,8 +39,8 @@ export const LEGAL_AGREEMENT_SECTIONS: LegalSection[] = [
     heading: "3. Assumption of Risk",
     body:
       "You understand and voluntarily accept all risks arising from your use of the App and from any interaction, " +
-      "purchase, payment, meeting, or delivery involving a business or other user. This includes, without " +
-      "limitation, the risk of inaccurate listings, defective or unsafe products, fraud, non-delivery, financial " +
+      "purchase, payment, or meeting involving a business or other user. This includes, without " +
+      "limitation, the risk of inaccurate listings, defective or unsafe products, fraud, financial " +
       "loss, personal injury, or property damage. You use the App and deal with businesses entirely at your own risk.",
   },
   {
