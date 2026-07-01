@@ -1466,6 +1466,76 @@ export const useDeleteProduct = <TError = ErrorType<void>,
       return useMutation(getDeleteProductMutationOptions(options));
     }
 
+export const getAdminDeleteProductUrl = (productId: number,) => {
+
+
+
+
+  return `/api/admin/products/${productId}`
+}
+
+/**
+ * @summary Delete any product from any business (admin only)
+ */
+export const adminDeleteProduct = async (productId: number, options?: RequestInit): Promise<SuccessResponse> => {
+
+  return customFetch<SuccessResponse>(getAdminDeleteProductUrl(productId),
+  {
+    ...options,
+    method: 'DELETE'
+
+
+  }
+);}
+
+
+
+
+export const getAdminDeleteProductMutationOptions = <TError = ErrorType<void>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof adminDeleteProduct>>, TError,{productId: number}, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof adminDeleteProduct>>, TError,{productId: number}, TContext> => {
+
+const mutationKey = ['adminDeleteProduct'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof adminDeleteProduct>>, {productId: number}> = (props) => {
+          const {productId} = props ?? {};
+
+          return  adminDeleteProduct(productId,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type AdminDeleteProductMutationResult = NonNullable<Awaited<ReturnType<typeof adminDeleteProduct>>>
+
+    export type AdminDeleteProductMutationError = ErrorType<void>
+
+    /**
+ * @summary Delete any product from any business (admin only)
+ */
+export const useAdminDeleteProduct = <TError = ErrorType<void>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof adminDeleteProduct>>, TError,{productId: number}, TContext>, request?: SecondParameter<typeof customFetch>}
+ ): UseMutationResult<
+        Awaited<ReturnType<typeof adminDeleteProduct>>,
+        TError,
+        {productId: number},
+        TContext
+      > => {
+      return useMutation(getAdminDeleteProductMutationOptions(options));
+    }
+
 export const getGetProductsUrl = (params?: GetProductsParams,) => {
   const normalizedParams = new URLSearchParams();
 

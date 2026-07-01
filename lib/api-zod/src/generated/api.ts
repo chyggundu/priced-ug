@@ -408,6 +408,18 @@ export const DeleteProductResponse = zod.object({
 
 
 /**
+ * @summary Delete any product from any business (admin only)
+ */
+export const AdminDeleteProductParams = zod.object({
+  "productId": zod.coerce.number()
+})
+
+export const AdminDeleteProductResponse = zod.object({
+  "success": zod.boolean()
+})
+
+
+/**
  * @summary List items across visible businesses, filterable by category and search (public)
  */
 export const GetProductsQueryParams = zod.object({

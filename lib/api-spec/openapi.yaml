@@ -415,6 +415,31 @@ paths:
         "404":
           description: Not found
 
+  /admin/products/{productId}:
+    delete:
+      operationId: adminDeleteProduct
+      tags: [products]
+      summary: Delete any product from any business (admin only)
+      parameters:
+        - name: productId
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Deleted
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SuccessResponse"
+        "401":
+          description: Unauthorized
+        "403":
+          description: Forbidden
+        "404":
+          description: Not found
+
   /products:
     get:
       operationId: getProducts

@@ -2,7 +2,7 @@ import { Router } from "express";
 import { db } from "@workspace/db";
 import { productsTable, businessesTable, categoriesTable } from "@workspace/db";
 import { eq, and, or, ilike, desc, type SQL } from "drizzle-orm";
-import { requireAuth, optionalAuth } from "../lib/auth";
+import { requireAuth, requireAdmin, optionalAuth } from "../lib/auth";
 
 const router = Router();
 
@@ -283,6 +283,28 @@ router.delete("/businesses/me/products/:productId", requireAuth, async (req, res
     res.json({ success: true });
   } catch (err) {
     req.log.error({ err }, "Failed to delete product");
+    res.status(500).json({ error: "Internal server error" });
+  }
+});
+
+router.delete("/admin/products/:productId", requireAdmin, async (req, res) => {
+  try {
+    const productId = parseInt(req.params.productId);
+
+    const existing = await db
+      .select({ id: productsTable.id })
+      .from(productsTable)
+      .where(eq(productsTable.id, productId));
+
+    if (!existing[0]) {
+      res.status(404).json({ error: "Product not found" });
+      return;
+    }
+
+    await db.delete(productsTable).where(eq(productsTable.id, productId));
+    res.json({ success: true });
+  } catch (err) {
+    req.log.error({ err }, "Failed to admin-delete product");
     res.status(500).json({ error: "Internal server error" });
   }
 });

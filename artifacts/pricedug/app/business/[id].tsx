@@ -9,12 +9,19 @@ import {
   ActivityIndicator,
   Platform,
   Linking,
+  Alert,
 } from "react-native";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import { Feather } from "@expo/vector-icons";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import { useGetBusiness, useGetBusinessProducts } from "@workspace/api-client-react";
+import {
+  useGetBusiness,
+  useGetBusinessProducts,
+  useAdminDeleteProduct,
+  useDeleteProduct,
+} from "@workspace/api-client-react";
 import { useColors } from "@/hooks/useColors";
+import { useAppAuth } from "@/context/AuthContext";
 import { BusinessReviews } from "@/components/BusinessReviews";
 
 export default function BusinessDetailScreen() {
@@ -26,10 +33,46 @@ export default function BusinessDetailScreen() {
   const highlightId = highlight ? parseInt(highlight) : null;
   const topPad = Platform.OS === "web" ? 67 : insets.top;
 
+  const { isAdmin, userId } = useAppAuth();
+
   const { data: business, isLoading: bizLoading } = useGetBusiness(businessId);
-  const { data: products = [], isLoading: productsLoading } = useGetBusinessProducts(businessId, {
-    query: { enabled: !!business },
-  });
+  const { data: products = [], isLoading: productsLoading, refetch: refetchProducts } =
+    useGetBusinessProducts(businessId, {
+      query: { enabled: !!business },
+    });
+
+  const isOwner = !!userId && business?.clerkUserId === userId;
+  const canDelete = isAdmin || isOwner;
+
+  const adminDeleteProduct = useAdminDeleteProduct();
+  const ownerDeleteProduct = useDeleteProduct();
+  const isDeleting = adminDeleteProduct.isPending || ownerDeleteProduct.isPending;
+
+  const handleDeleteProduct = (productId: number, productName: string) => {
+    Alert.alert(
+      "Delete Product",
+      `Are you sure you want to delete "${productName}"? This cannot be undone.`,
+      [
+        { text: "Cancel", style: "cancel" },
+        {
+          text: "Delete",
+          style: "destructive",
+          onPress: async () => {
+            try {
+              if (isAdmin) {
+                await adminDeleteProduct.mutateAsync({ productId });
+              } else {
+                await ownerDeleteProduct.mutateAsync({ productId });
+              }
+              refetchProducts();
+            } catch {
+              Alert.alert("Delete failed", "Could not delete this product. Please try again.");
+            }
+          },
+        },
+      ]
+    );
+  };
 
   const orderedProducts = React.useMemo(() => {
     if (highlightId == null) return products;
@@ -185,6 +228,16 @@ export default function BusinessDetailScreen() {
                       <Feather name="image" size={24} color={colors.primary} />
                     </View>
                   )}
+                  {canDelete && (
+                    <Pressable
+                      style={styles.deleteBtn}
+                      onPress={() => handleDeleteProduct(product.id, product.name)}
+                      disabled={isDeleting}
+                      hitSlop={8}
+                    >
+                      <Feather name="trash-2" size={16} color="#fff" />
+                    </Pressable>
+                  )}
                   <View style={styles.productInfo}>
                     <Text style={[styles.productName, { color: colors.foreground }]} numberOfLines={2}>
                       {product.name}
@@ -279,7 +332,19 @@ const styles = StyleSheet.create({
   emptyProducts: { alignItems: "center", paddingVertical: 40, gap: 8 },
   emptyText: { fontSize: 15 },
   productsGrid: { gap: 14 },
-  productCard: { borderRadius: 12, borderWidth: 1, overflow: "hidden" },
+  productCard: { borderRadius: 12, borderWidth: 1, overflow: "hidden", position: "relative" },
+  deleteBtn: {
+    position: "absolute",
+    top: 10,
+    right: 10,
+    zIndex: 2,
+    width: 34,
+    height: 34,
+    borderRadius: 17,
+    backgroundColor: "rgba(224,30,55,0.92)",
+    alignItems: "center",
+    justifyContent: "center",
+  },
   productImage: { width: "100%", height: 200, resizeMode: "cover" },
   productImagePlaceholder: { width: "100%", height: 160, alignItems: "center", justifyContent: "center" },
   productInfo: { padding: 14 },
