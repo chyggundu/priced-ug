@@ -32,7 +32,7 @@ export function ConsentGate({ children }: { children: React.ReactNode }) {
       try {
         const accepted = await AsyncStorage.getItem(LEGAL_ACCEPTED_STORAGE_KEY);
         if (!active) return;
-        setStatus(accepted === LEGAL_AGREEMENT_VERSION ? "accepted" : "needed");
+        setStatus(accepted != null ? "accepted" : "needed");
       } catch {
         if (active) setStatus("needed");
       }
