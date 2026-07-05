@@ -60,7 +60,7 @@ Repository: https://github.com/chyggundu/priced-ug
 
 - Red (#E01E37) and white color scheme
 - WhatsApp contact button throughout
-- Products can have: name, description, price (UGX), photo, size, materials
+- Products can have: name, description, price (UGX), photo, size, materials, and a "Delivered through Priced Ug" flag (owner-set checkbox; shows a badge to buyers)
 - Categories are admin-managed
 
 ## Gotchas

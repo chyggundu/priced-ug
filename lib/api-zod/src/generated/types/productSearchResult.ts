@@ -15,6 +15,7 @@ export interface ProductSearchResult {
   imageUrl?: string | null;
   size?: string | null;
   materials?: string | null;
+  deliveredByPricedUg: boolean;
   createdAt: Date;
   categoryId?: number | null;
   categoryName?: string | null;

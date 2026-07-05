@@ -807,6 +807,8 @@ components:
         materials:
           type: string
           nullable: true
+        deliveredByPricedUg:
+          type: boolean
         createdAt:
           type: string
           format: date-time
@@ -815,6 +817,7 @@ components:
         - businessId
         - name
         - createdAt
+        - deliveredByPricedUg
 
     ProductSearchResult:
       type: object
@@ -840,6 +843,8 @@ components:
         materials:
           type: string
           nullable: true
+        deliveredByPricedUg:
+          type: boolean
         createdAt:
           type: string
           format: date-time
@@ -863,6 +868,7 @@ components:
         - name
         - createdAt
         - businessName
+        - deliveredByPricedUg
 
     CreateProductInput:
       type: object
@@ -886,6 +892,8 @@ components:
         materials:
           type: string
           nullable: true
+        deliveredByPricedUg:
+          type: boolean
       required:
         - name
         - categoryId
@@ -912,6 +920,8 @@ components:
         materials:
           type: string
           nullable: true
+        deliveredByPricedUg:
+          type: boolean
 
     Review:
       type: object

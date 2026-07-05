@@ -40,6 +40,7 @@ export default function EditProductScreen() {
   const [price, setPrice] = useState("");
   const [size, setSize] = useState("");
   const [materials, setMaterials] = useState("");
+  const [deliveredByPricedUg, setDeliveredByPricedUg] = useState(false);
   const [imageUrl, setImageUrl] = useState<string | null>(null);
   const [uploading, setUploading] = useState(false);
   const [saving, setSaving] = useState(false);
@@ -52,6 +53,7 @@ export default function EditProductScreen() {
       setPrice(product.price ?? "");
       setSize(product.size ?? "");
       setMaterials(product.materials ?? "");
+      setDeliveredByPricedUg(product.deliveredByPricedUg ?? false);
       setImageUrl(product.imageUrl ?? null);
     }
   }, [product]);
@@ -97,6 +99,7 @@ export default function EditProductScreen() {
           size: size.trim() || null,
           materials: materials.trim() || null,
           imageUrl: imageUrl ?? null,
+          deliveredByPricedUg,
         },
       });
       router.replace("/(tabs)/my-business");
@@ -224,6 +227,29 @@ export default function EditProductScreen() {
           />
 
           <Pressable
+            style={[styles.deliveryToggle, { backgroundColor: colors.muted }]}
+            onPress={() => setDeliveredByPricedUg((v) => !v)}
+          >
+            <View
+              style={[
+                styles.deliveryCheckbox,
+                {
+                  borderColor: deliveredByPricedUg ? colors.primary : colors.border,
+                  backgroundColor: deliveredByPricedUg ? colors.primary : "transparent",
+                },
+              ]}
+            >
+              {deliveredByPricedUg && <Feather name="check" size={14} color="#fff" />}
+            </View>
+            <View style={{ flex: 1 }}>
+              <Text style={[styles.deliveryTitle, { color: colors.foreground }]}>Delivered through Priced Ug</Text>
+              <Text style={[styles.deliverySubtitle, { color: colors.mutedForeground }]}>
+                Tick if this item can be delivered via Priced Ug
+              </Text>
+            </View>
+          </Pressable>
+
+          <Pressable
             style={[styles.saveBtn, { backgroundColor: colors.primary, opacity: saving || uploading ? 0.6 : 1 }]}
             onPress={handleSave}
             disabled={saving || uploading}
@@ -252,6 +278,24 @@ const styles = StyleSheet.create({
   headerTitle: { flex: 1, fontSize: 17, fontWeight: "600" as const, textAlign: "center" },
   saveText: { fontSize: 16, fontWeight: "600" as const },
   content: { flex: 1 },
+  deliveryToggle: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 12,
+    borderRadius: 10,
+    padding: 14,
+    marginTop: 20,
+  },
+  deliveryCheckbox: {
+    width: 24,
+    height: 24,
+    borderRadius: 6,
+    borderWidth: 2,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  deliveryTitle: { fontSize: 15, fontWeight: "600" as const },
+  deliverySubtitle: { fontSize: 12, marginTop: 2 },
   imagePicker: { position: "relative" },
   productImage: { width: "100%", height: 240, resizeMode: "cover" },
   imagePlaceholder: { width: "100%", height: 200, alignItems: "center", justifyContent: "center", gap: 10 },

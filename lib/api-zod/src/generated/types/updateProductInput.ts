@@ -14,4 +14,5 @@ export interface UpdateProductInput {
   imageUrl?: string | null;
   size?: string | null;
   materials?: string | null;
+  deliveredByPricedUg?: boolean;
 }

@@ -344,6 +344,7 @@ export const GetMyProductsResponseItem = zod.object({
   "imageUrl": zod.string().nullish(),
   "size": zod.string().nullish(),
   "materials": zod.string().nullish(),
+  "deliveredByPricedUg": zod.boolean(),
   "createdAt": zod.coerce.date()
 })
 export const GetMyProductsResponse = zod.array(GetMyProductsResponseItem)
@@ -359,7 +360,8 @@ export const CreateProductBody = zod.object({
   "price": zod.string().nullish(),
   "imageUrl": zod.string().nullish(),
   "size": zod.string().nullish(),
-  "materials": zod.string().nullish()
+  "materials": zod.string().nullish(),
+  "deliveredByPricedUg": zod.boolean().optional()
 })
 
 
@@ -377,7 +379,8 @@ export const UpdateProductBody = zod.object({
   "price": zod.string().nullish(),
   "imageUrl": zod.string().nullish(),
   "size": zod.string().nullish(),
-  "materials": zod.string().nullish()
+  "materials": zod.string().nullish(),
+  "deliveredByPricedUg": zod.boolean().optional()
 })
 
 export const UpdateProductResponse = zod.object({
@@ -391,6 +394,7 @@ export const UpdateProductResponse = zod.object({
   "imageUrl": zod.string().nullish(),
   "size": zod.string().nullish(),
   "materials": zod.string().nullish(),
+  "deliveredByPricedUg": zod.boolean(),
   "createdAt": zod.coerce.date()
 })
 
@@ -436,6 +440,7 @@ export const GetProductsResponseItem = zod.object({
   "imageUrl": zod.string().nullish(),
   "size": zod.string().nullish(),
   "materials": zod.string().nullish(),
+  "deliveredByPricedUg": zod.boolean(),
   "createdAt": zod.coerce.date(),
   "categoryId": zod.number().nullish(),
   "categoryName": zod.string().nullish(),
@@ -464,6 +469,7 @@ export const GetBusinessProductsResponseItem = zod.object({
   "imageUrl": zod.string().nullish(),
   "size": zod.string().nullish(),
   "materials": zod.string().nullish(),
+  "deliveredByPricedUg": zod.boolean(),
   "createdAt": zod.coerce.date()
 })
 export const GetBusinessProductsResponse = zod.array(GetBusinessProductsResponseItem)

@@ -40,6 +40,7 @@ router.get("/products", async (req, res) => {
         imageUrl: productsTable.imageUrl,
         size: productsTable.size,
         materials: productsTable.materials,
+        deliveredByPricedUg: productsTable.deliveredByPricedUg,
         createdAt: productsTable.createdAt,
         businessName: businessesTable.name,
         businessImageUrl: businessesTable.imageUrl,
@@ -89,6 +90,7 @@ router.get("/businesses/:businessId/products", optionalAuth, async (req, res) =>
         imageUrl: productsTable.imageUrl,
         size: productsTable.size,
         materials: productsTable.materials,
+        deliveredByPricedUg: productsTable.deliveredByPricedUg,
         createdAt: productsTable.createdAt,
       })
       .from(productsTable)
@@ -142,7 +144,7 @@ router.post("/businesses/me/products", requireAuth, async (req, res) => {
       return;
     }
 
-    const { name, categoryId, description, price, imageUrl, size, materials } = req.body;
+    const { name, categoryId, description, price, imageUrl, size, materials, deliveredByPricedUg } = req.body;
     if (!name) {
       res.status(400).json({ error: "Name is required" });
       return;
@@ -173,6 +175,7 @@ router.post("/businesses/me/products", requireAuth, async (req, res) => {
         imageUrl: imageUrl ?? null,
         size: size ?? null,
         materials: materials ?? null,
+        deliveredByPricedUg: deliveredByPricedUg ?? false,
       })
       .returning();
 
@@ -211,7 +214,7 @@ router.patch("/businesses/me/products/:productId", requireAuth, async (req, res)
       return;
     }
 
-    const { name, categoryId, description, price, imageUrl, size, materials } = req.body;
+    const { name, categoryId, description, price, imageUrl, size, materials, deliveredByPricedUg } = req.body;
 
     let parsedCategoryId: number | undefined;
     if (categoryId !== undefined && categoryId !== null) {
@@ -240,6 +243,7 @@ router.patch("/businesses/me/products/:productId", requireAuth, async (req, res)
         ...(imageUrl !== undefined && { imageUrl }),
         ...(size !== undefined && { size }),
         ...(materials !== undefined && { materials }),
+        ...(deliveredByPricedUg !== undefined && { deliveredByPricedUg }),
       })
       .where(eq(productsTable.id, productId))
       .returning();

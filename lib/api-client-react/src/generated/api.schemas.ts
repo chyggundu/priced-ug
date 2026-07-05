@@ -82,6 +82,7 @@ export interface Product {
   imageUrl?: string | null;
   size?: string | null;
   materials?: string | null;
+  deliveredByPricedUg: boolean;
   createdAt: string;
 }
 
@@ -94,6 +95,7 @@ export interface ProductSearchResult {
   imageUrl?: string | null;
   size?: string | null;
   materials?: string | null;
+  deliveredByPricedUg: boolean;
   createdAt: string;
   categoryId?: number | null;
   categoryName?: string | null;
@@ -110,6 +112,7 @@ export interface CreateProductInput {
   imageUrl?: string | null;
   size?: string | null;
   materials?: string | null;
+  deliveredByPricedUg?: boolean;
 }
 
 export interface UpdateProductInput {
@@ -120,6 +123,7 @@ export interface UpdateProductInput {
   imageUrl?: string | null;
   size?: string | null;
   materials?: string | null;
+  deliveredByPricedUg?: boolean;
 }
 
 export interface Review {

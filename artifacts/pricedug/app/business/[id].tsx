@@ -254,6 +254,14 @@ export default function BusinessDetailScreen() {
                         UGX {product.price}
                       </Text>
                     )}
+                    {product.deliveredByPricedUg && (
+                      <View style={[styles.deliveryBadge, { backgroundColor: colors.secondary }]}>
+                        <Feather name="truck" size={12} color={colors.primary} />
+                        <Text style={[styles.deliveryBadgeText, { color: colors.primary }]}>
+                          Delivered via Priced Ug
+                        </Text>
+                      </View>
+                    )}
                     {product.description && (
                       <Text style={[styles.productDescription, { color: colors.mutedForeground }]} numberOfLines={2}>
                         {product.description}
@@ -351,6 +359,17 @@ const styles = StyleSheet.create({
   productName: { fontSize: 16, fontWeight: "600" as const, marginBottom: 6 },
   productCategoryBadge: { alignSelf: "flex-start", paddingHorizontal: 10, paddingVertical: 3, borderRadius: 8, marginBottom: 6 },
   productCategoryText: { fontSize: 12, fontWeight: "500" as const },
+  deliveryBadge: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 4,
+    alignSelf: "flex-start",
+    paddingHorizontal: 8,
+    paddingVertical: 3,
+    borderRadius: 8,
+    marginBottom: 6,
+  },
+  deliveryBadgeText: { fontSize: 11, fontWeight: "600" as const },
   productPrice: { fontSize: 18, fontWeight: "700" as const, marginBottom: 6 },
   productDescription: { fontSize: 13, lineHeight: 18, marginBottom: 8 },
   tagRow: { flexDirection: "row", flexWrap: "wrap", gap: 6, marginBottom: 10 },
