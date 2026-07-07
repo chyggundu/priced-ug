@@ -242,13 +242,20 @@ export default function BusinessDetailScreen() {
                     <Text style={[styles.productName, { color: colors.foreground }]} numberOfLines={2}>
                       {product.name}
                     </Text>
-                    {product.categoryName && (
-                      <View style={[styles.productCategoryBadge, { backgroundColor: colors.secondary }]}>
-                        <Text style={[styles.productCategoryText, { color: colors.primary }]}>
-                          {product.categoryName}
-                        </Text>
-                      </View>
-                    )}
+                    <View style={styles.badgeRow}>
+                      {product.categoryName && (
+                        <View style={[styles.productCategoryBadge, { backgroundColor: colors.secondary }]}>
+                          <Text style={[styles.productCategoryText, { color: colors.primary }]}>
+                            {product.categoryName}
+                          </Text>
+                        </View>
+                      )}
+                      {product.condition && (
+                        <View style={[styles.conditionBadge, { backgroundColor: colors.primary }]}>
+                          <Text style={styles.conditionBadgeText}>{product.condition}</Text>
+                        </View>
+                      )}
+                    </View>
                     {product.price && (
                       <Text style={[styles.productPrice, { color: colors.primary }]}>
                         UGX {product.price}
@@ -267,12 +274,19 @@ export default function BusinessDetailScreen() {
                         {product.description}
                       </Text>
                     )}
-                    {(product.size || product.materials) && (
+                    {(product.size || product.materials || product.color) && (
                       <View style={styles.tagRow}>
                         {product.size && (
                           <View style={[styles.tag, { backgroundColor: colors.muted }]}>
                             <Text style={[styles.tagText, { color: colors.mutedForeground }]}>
                               Size: {product.size}
+                            </Text>
+                          </View>
+                        )}
+                        {product.color && (
+                          <View style={[styles.tag, { backgroundColor: colors.muted }]}>
+                            <Text style={[styles.tagText, { color: colors.mutedForeground }]}>
+                              Color: {product.color}
                             </Text>
                           </View>
                         )}
@@ -357,8 +371,11 @@ const styles = StyleSheet.create({
   productImagePlaceholder: { width: "100%", height: 160, alignItems: "center", justifyContent: "center" },
   productInfo: { padding: 14 },
   productName: { fontSize: 16, fontWeight: "600" as const, marginBottom: 6 },
-  productCategoryBadge: { alignSelf: "flex-start", paddingHorizontal: 10, paddingVertical: 3, borderRadius: 8, marginBottom: 6 },
+  badgeRow: { flexDirection: "row", flexWrap: "wrap", alignItems: "center", gap: 6, marginBottom: 6 },
+  productCategoryBadge: { alignSelf: "flex-start", paddingHorizontal: 10, paddingVertical: 3, borderRadius: 8 },
   productCategoryText: { fontSize: 12, fontWeight: "500" as const },
+  conditionBadge: { alignSelf: "flex-start", paddingHorizontal: 10, paddingVertical: 3, borderRadius: 8 },
+  conditionBadgeText: { fontSize: 12, fontWeight: "600" as const, color: "#fff" },
   deliveryBadge: {
     flexDirection: "row",
     alignItems: "center",

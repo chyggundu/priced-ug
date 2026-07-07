@@ -19,6 +19,8 @@ import { uploadImageToSignedUrl } from "@/lib/uploadImage";
 import { useUpdateProduct, useGetMyProducts, useGetUploadUrl, useGetCategories } from "@workspace/api-client-react";
 import { useColors } from "@/hooks/useColors";
 
+const CONDITION_OPTIONS = ["New", "Slightly Used", "Used"] as const;
+
 export default function EditProductScreen() {
   const colors = useColors();
   const router = useRouter();
@@ -40,6 +42,8 @@ export default function EditProductScreen() {
   const [price, setPrice] = useState("");
   const [size, setSize] = useState("");
   const [materials, setMaterials] = useState("");
+  const [color, setColor] = useState("");
+  const [condition, setCondition] = useState<string | null>(null);
   const [deliveredByPricedUg, setDeliveredByPricedUg] = useState(false);
   const [imageUrl, setImageUrl] = useState<string | null>(null);
   const [uploading, setUploading] = useState(false);
@@ -53,6 +57,8 @@ export default function EditProductScreen() {
       setPrice(product.price ?? "");
       setSize(product.size ?? "");
       setMaterials(product.materials ?? "");
+      setColor(product.color ?? "");
+      setCondition(product.condition ?? null);
       setDeliveredByPricedUg(product.deliveredByPricedUg ?? false);
       setImageUrl(product.imageUrl ?? null);
     }
@@ -98,6 +104,8 @@ export default function EditProductScreen() {
           price: price.trim() || null,
           size: size.trim() || null,
           materials: materials.trim() || null,
+          color: color.trim() || null,
+          condition: condition || null,
           imageUrl: imageUrl ?? null,
           deliveredByPricedUg,
         },
@@ -226,6 +234,34 @@ export default function EditProductScreen() {
             placeholderTextColor={colors.mutedForeground}
           />
 
+          <Text style={[styles.label, { color: colors.foreground }]}>Color</Text>
+          <TextInput
+            style={[styles.input, { backgroundColor: colors.muted, color: colors.foreground }]}
+            value={color}
+            onChangeText={setColor}
+            placeholder="e.g. Black, Navy Blue, Red"
+            placeholderTextColor={colors.mutedForeground}
+          />
+
+          <Text style={[styles.label, { color: colors.foreground }]}>Condition</Text>
+          <View style={styles.conditionWrap}>
+            {CONDITION_OPTIONS.map((opt) => {
+              const selected = condition === opt;
+              return (
+                <Pressable
+                  key={opt}
+                  style={[styles.categoryChip, { backgroundColor: selected ? colors.primary : colors.muted }]}
+                  onPress={() => setCondition(selected ? null : opt)}
+                >
+                  {selected && <Feather name="check" size={13} color="#fff" style={{ marginRight: 4 }} />}
+                  <Text style={[styles.categoryChipText, { color: selected ? "#fff" : colors.foreground }]}>
+                    {opt}
+                  </Text>
+                </Pressable>
+              );
+            })}
+          </View>
+
           <Pressable
             style={[styles.deliveryToggle, { backgroundColor: colors.muted }]}
             onPress={() => setDeliveredByPricedUg((v) => !v)}
@@ -318,6 +354,7 @@ const styles = StyleSheet.create({
   input: { borderRadius: 10, paddingHorizontal: 14, paddingVertical: 13, fontSize: 15 },
   textArea: { height: 90, paddingTop: 13 },
   categoryWrap: { flexDirection: "row", flexWrap: "wrap", gap: 8, marginTop: 2 },
+  conditionWrap: { flexDirection: "row", flexWrap: "wrap", gap: 8, marginTop: 2 },
   categoryChip: {
     flexDirection: "row",
     alignItems: "center",

@@ -14,5 +14,7 @@ export interface CreateProductInput {
   imageUrl?: string | null;
   size?: string | null;
   materials?: string | null;
+  color?: string | null;
+  condition?: string | null;
   deliveredByPricedUg?: boolean;
 }

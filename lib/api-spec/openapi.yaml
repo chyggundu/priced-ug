@@ -807,6 +807,12 @@ components:
         materials:
           type: string
           nullable: true
+        color:
+          type: string
+          nullable: true
+        condition:
+          type: string
+          nullable: true
         deliveredByPricedUg:
           type: boolean
         createdAt:
@@ -841,6 +847,12 @@ components:
           type: string
           nullable: true
         materials:
+          type: string
+          nullable: true
+        color:
+          type: string
+          nullable: true
+        condition:
           type: string
           nullable: true
         deliveredByPricedUg:
@@ -892,6 +904,12 @@ components:
         materials:
           type: string
           nullable: true
+        color:
+          type: string
+          nullable: true
+        condition:
+          type: string
+          nullable: true
         deliveredByPricedUg:
           type: boolean
       required:
@@ -918,6 +936,12 @@ components:
           type: string
           nullable: true
         materials:
+          type: string
+          nullable: true
+        color:
+          type: string
+          nullable: true
+        condition:
           type: string
           nullable: true
         deliveredByPricedUg:
