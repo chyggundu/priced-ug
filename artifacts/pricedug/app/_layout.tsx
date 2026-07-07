@@ -23,7 +23,8 @@ import { AuthProvider } from "@/context/AuthContext";
 SplashScreen.preventAutoHideAsync();
 
 const domain = process.env.EXPO_PUBLIC_DOMAIN;
-if (domain) setBaseUrl(`https://${domain}`);
+if (domain)
+  setBaseUrl(/^https?:\/\//.test(domain) ? domain : `https://${domain}`);
 
 const publishableKey = process.env.EXPO_PUBLIC_CLERK_PUBLISHABLE_KEY ?? "";
 const proxyUrl = process.env.EXPO_PUBLIC_CLERK_PROXY_URL || undefined;

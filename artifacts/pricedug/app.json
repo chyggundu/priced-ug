@@ -15,7 +15,12 @@
     },
     "ios": {
       "supportsTablet": false,
-      "bundleIdentifier": "com.pricedug.app"
+      "bundleIdentifier": "com.pricedug.app",
+      "infoPlist": {
+        "NSLocationWhenInUseUsageDescription": "Allow Priced Ug to use your location to pin your business on the map.",
+        "NSPhotoLibraryUsageDescription": "Allow Priced Ug to access your photos to upload product and business images.",
+        "NSCameraUsageDescription": "Allow Priced Ug to use your camera to take product and business photos."
+      }
     },
     "android": {
       "package": "com.pricedug.app"
