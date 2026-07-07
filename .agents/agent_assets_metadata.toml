@@ -101,3 +101,9 @@ id = "znAwTxRISRBMf3hZmzCXW"
 uri = "file://.local/exports/pricedug-qr.png"
 type = "image"
 title = "Priced Ug — App QR Code"
+
+[[outputs]]
+id = "FptYhIYuu9gt9FA0DmLSI"
+uri = "file://pricedug-env.zip"
+type = "unspecified"
+title = "Priced Ug — .env files"
