@@ -61,9 +61,12 @@ router.get("/products", async (req, res) => {
   }
 });
 
-router.get("/businesses/:businessId/products", optionalAuth, async (req, res) => {
+router.get("/businesses/:businessId/products", optionalAuth, async (req, res, next) => {
   try {
     const businessId = parseInt(req.params.businessId);
+    // "me" (and any non-numeric id) belongs to the /businesses/me/products
+    // route declared below — let it fall through instead of querying id = NaN.
+    if (Number.isNaN(businessId)) return next();
     const biz = await db
       .select({ isHidden: businessesTable.isHidden })
       .from(businessesTable)
