@@ -14,7 +14,7 @@ import { KeyboardProvider } from "react-native-keyboard-controller";
 import { SafeAreaProvider } from "react-native-safe-area-context";
 import { ClerkProvider, ClerkLoaded } from "@clerk/expo";
 import { tokenCache } from "@clerk/expo/token-cache";
-import { setBaseUrl } from "@workspace/api-client-react";
+import { initSupabase } from "@workspace/api-client-react";
 
 import { ErrorBoundary } from "@/components/ErrorBoundary";
 import { ConsentGate } from "@/components/ConsentGate";
@@ -22,9 +22,9 @@ import { AuthProvider } from "@/context/AuthContext";
 
 SplashScreen.preventAutoHideAsync();
 
-const domain = process.env.EXPO_PUBLIC_DOMAIN;
-if (domain)
-  setBaseUrl(/^https?:\/\//.test(domain) ? domain : `https://${domain}`);
+const supabaseUrl = process.env.EXPO_PUBLIC_SUPABASE_URL;
+const supabaseAnonKey = process.env.EXPO_PUBLIC_SUPABASE_ANON_KEY;
+if (supabaseUrl && supabaseAnonKey) initSupabase(supabaseUrl, supabaseAnonKey);
 
 const publishableKey = process.env.EXPO_PUBLIC_CLERK_PUBLISHABLE_KEY ?? "";
 const proxyUrl = process.env.EXPO_PUBLIC_CLERK_PROXY_URL || undefined;

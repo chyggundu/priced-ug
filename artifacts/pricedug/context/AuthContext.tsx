@@ -1,6 +1,6 @@
 import React, { createContext, useContext, useEffect, useState } from "react";
 import { useAuth } from "@clerk/expo";
-import { setAuthTokenGetter } from "@workspace/api-client-react";
+import { setAuthTokenGetter, setCurrentUserId } from "@workspace/api-client-react";
 
 interface AuthContextValue {
   isAdmin: boolean;
@@ -15,8 +15,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const { isSignedIn, userId, getToken } = useAuth();
 
   useEffect(() => {
-    setAuthTokenGetter(() => getToken());
+    setAuthTokenGetter(() => getToken({ template: "supabase" }));
   }, [getToken]);
+
+  useEffect(() => {
+    setCurrentUserId(userId ?? null);
+  }, [userId]);
 
   const isAdmin = !!userId && !!ADMIN_USER_ID && userId === ADMIN_USER_ID;
 

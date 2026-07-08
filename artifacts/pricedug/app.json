@@ -11,11 +11,11 @@
     "splash": {
       "image": "./assets/images/icon.png",
       "resizeMode": "contain",
-      "backgroundColor": "#E01E37"
+      "backgroundColor": "#FFFFFF"
     },
     "ios": {
       "supportsTablet": false,
-      "bundleIdentifier": "com.pricedug.app",
+      "bundleIdentifier": "com.pricedug.mobile",
       "infoPlist": {
         "NSLocationWhenInUseUsageDescription": "Allow Priced Ug to use your location to pin your business on the map.",
         "NSPhotoLibraryUsageDescription": "Allow Priced Ug to access your photos to upload product and business images.",
@@ -23,7 +23,7 @@
       }
     },
     "android": {
-      "package": "com.pricedug.app"
+      "package": "com.pricedug.mobile"
     },
     "web": {
       "favicon": "./assets/images/favicon.png"
@@ -37,6 +37,15 @@
       ],
       "expo-font",
       "expo-web-browser",
+      [
+        "expo-splash-screen",
+        {
+          "image": "./assets/images/icon.png",
+          "imageWidth": 140,
+          "resizeMode": "contain",
+          "backgroundColor": "#FFFFFF"
+        }
+      ],
       [
         "expo-location",
         {
