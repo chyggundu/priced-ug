@@ -163,6 +163,7 @@ const mapProduct = (r: any): Product => ({
   color: r.color ?? null,
   condition: r.condition ?? null,
   deliveredByPricedUg: r.delivered_by_priced_ug,
+  deliveredByBusiness: r.delivered_by_business ?? false,
   createdAt: r.created_at,
 });
 
@@ -453,6 +454,7 @@ function productPayload(data: CreateProductInput | UpdateProductInput) {
     ["price", "price"], ["imageUrl", "image_url"], ["size", "size"],
     ["materials", "materials"], ["color", "color"], ["condition", "condition"],
     ["deliveredByPricedUg", "delivered_by_priced_ug"],
+    ["deliveredByBusiness", "delivered_by_business"],
   ] as const) {
     if (src[k] !== undefined) out[dbk] = src[k];
   }

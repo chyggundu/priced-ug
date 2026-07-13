@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useState } from "react";
 import {
   View,
   Text,
@@ -10,6 +10,7 @@ import {
   Platform,
   Linking,
   Alert,
+  Modal,
 } from "react-native";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import { Feather } from "@expo/vector-icons";
@@ -34,6 +35,7 @@ export default function BusinessDetailScreen() {
   const topPad = Platform.OS === "web" ? 67 : insets.top;
 
   const { isAdmin, userId } = useAppAuth();
+  const [viewerUrl, setViewerUrl] = useState<string | null>(null);
 
   const { data: business, isLoading: bizLoading } = useGetBusiness(businessId);
   const { data: products = [], isLoading: productsLoading, refetch: refetchProducts } =
@@ -222,7 +224,9 @@ export default function BusinessDetailScreen() {
                   ]}
                 >
                   {product.imageUrl ? (
-                    <Image source={{ uri: product.imageUrl }} style={styles.productImage} />
+                    <Pressable onPress={() => setViewerUrl(product.imageUrl!)}>
+                      <Image source={{ uri: product.imageUrl }} style={styles.productImage} />
+                    </Pressable>
                   ) : (
                     <View style={[styles.productImagePlaceholder, { backgroundColor: colors.secondary }]}>
                       <Feather name="image" size={24} color={colors.primary} />
@@ -266,6 +270,14 @@ export default function BusinessDetailScreen() {
                         <Feather name="truck" size={12} color={colors.primary} />
                         <Text style={[styles.deliveryBadgeText, { color: colors.primary }]}>
                           Delivered via Priced Ug
+                        </Text>
+                      </View>
+                    )}
+                    {product.deliveredByBusiness && (
+                      <View style={[styles.deliveryBadge, { backgroundColor: colors.secondary }]}>
+                        <Feather name="truck" size={12} color={colors.primary} />
+                        <Text style={[styles.deliveryBadgeText, { color: colors.primary }]}>
+                          Delivered by Business
                         </Text>
                       </View>
                     )}
@@ -319,6 +331,26 @@ export default function BusinessDetailScreen() {
 
         <View style={{ height: Platform.OS === "web" ? 40 : insets.bottom + 32 }} />
       </ScrollView>
+
+      <Modal
+        visible={!!viewerUrl}
+        transparent
+        animationType="fade"
+        onRequestClose={() => setViewerUrl(null)}
+      >
+        <Pressable style={styles.viewerOverlay} onPress={() => setViewerUrl(null)}>
+          {viewerUrl && (
+            <Image source={{ uri: viewerUrl }} style={styles.viewerImage} resizeMode="contain" />
+          )}
+          <Pressable
+            style={[styles.viewerClose, { top: topPad + 16 }]}
+            onPress={() => setViewerUrl(null)}
+            hitSlop={12}
+          >
+            <Feather name="x" size={26} color="#fff" />
+          </Pressable>
+        </Pressable>
+      </Modal>
     </View>
   );
 }
@@ -387,6 +419,23 @@ const styles = StyleSheet.create({
     marginBottom: 6,
   },
   deliveryBadgeText: { fontSize: 11, fontWeight: "600" as const },
+  viewerOverlay: {
+    flex: 1,
+    backgroundColor: "rgba(0,0,0,0.95)",
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  viewerImage: { width: "100%", height: "85%" },
+  viewerClose: {
+    position: "absolute",
+    right: 20,
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: "rgba(255,255,255,0.15)",
+    alignItems: "center",
+    justifyContent: "center",
+  },
   productPrice: { fontSize: 18, fontWeight: "700" as const, marginBottom: 6 },
   productDescription: { fontSize: 13, lineHeight: 18, marginBottom: 8 },
   tagRow: { flexDirection: "row", flexWrap: "wrap", gap: 6, marginBottom: 10 },

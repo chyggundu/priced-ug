@@ -45,6 +45,7 @@ export default function EditProductScreen() {
   const [color, setColor] = useState("");
   const [condition, setCondition] = useState<string | null>(null);
   const [deliveredByPricedUg, setDeliveredByPricedUg] = useState(false);
+  const [deliveredByBusiness, setDeliveredByBusiness] = useState(false);
   const [imageUrl, setImageUrl] = useState<string | null>(null);
   const [uploading, setUploading] = useState(false);
   const [saving, setSaving] = useState(false);
@@ -60,6 +61,7 @@ export default function EditProductScreen() {
       setColor(product.color ?? "");
       setCondition(product.condition ?? null);
       setDeliveredByPricedUg(product.deliveredByPricedUg ?? false);
+      setDeliveredByBusiness(product.deliveredByBusiness ?? false);
       setImageUrl(product.imageUrl ?? null);
     }
   }, [product]);
@@ -108,6 +110,7 @@ export default function EditProductScreen() {
           condition: condition || null,
           imageUrl: imageUrl ?? null,
           deliveredByPricedUg,
+          deliveredByBusiness,
         },
       });
       router.replace("/(tabs)/my-business");
@@ -281,6 +284,29 @@ export default function EditProductScreen() {
               <Text style={[styles.deliveryTitle, { color: colors.foreground }]}>Delivered through Priced Ug</Text>
               <Text style={[styles.deliverySubtitle, { color: colors.mutedForeground }]}>
                 Tick if this item can be delivered via Priced Ug
+              </Text>
+            </View>
+          </Pressable>
+
+          <Pressable
+            style={[styles.deliveryToggle, { backgroundColor: colors.muted }]}
+            onPress={() => setDeliveredByBusiness((v) => !v)}
+          >
+            <View
+              style={[
+                styles.deliveryCheckbox,
+                {
+                  borderColor: deliveredByBusiness ? colors.primary : colors.border,
+                  backgroundColor: deliveredByBusiness ? colors.primary : "transparent",
+                },
+              ]}
+            >
+              {deliveredByBusiness && <Feather name="check" size={14} color="#fff" />}
+            </View>
+            <View style={{ flex: 1 }}>
+              <Text style={[styles.deliveryTitle, { color: colors.foreground }]}>Delivered by Business</Text>
+              <Text style={[styles.deliverySubtitle, { color: colors.mutedForeground }]}>
+                Tick if your business delivers this item
               </Text>
             </View>
           </Pressable>

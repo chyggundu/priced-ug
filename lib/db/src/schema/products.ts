@@ -15,6 +15,7 @@ export const productsTable = pgTable("products", {
   color: text("color"),
   condition: text("condition"),
   deliveredByPricedUg: boolean("delivered_by_priced_ug").notNull().default(false),
+  deliveredByBusiness: boolean("delivered_by_business").notNull().default(false),
   createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
   updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow().$onUpdate(() => new Date()),
 });

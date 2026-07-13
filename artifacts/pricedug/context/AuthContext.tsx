@@ -1,5 +1,5 @@
-import React, { createContext, useContext, useEffect, useState } from "react";
-import { useAuth } from "@clerk/expo";
+import React, { createContext, useContext, useEffect } from "react";
+import { useAuth, useUser } from "@clerk/expo";
 import { setAuthTokenGetter, setCurrentUserId } from "@workspace/api-client-react";
 
 interface AuthContextValue {
@@ -9,10 +9,14 @@ interface AuthContextValue {
 
 const AuthContext = createContext<AuthContextValue>({ isAdmin: false, userId: null });
 
-const ADMIN_USER_ID = process.env.EXPO_PUBLIC_ADMIN_USER_ID ?? "";
+// Admin is determined by verified email so it stays stable across the dev and
+// production Clerk instances (Clerk user IDs differ between them). Keep this in
+// sync with the Supabase `is_admin()` DB function.
+const ADMIN_EMAIL = (process.env.EXPO_PUBLIC_ADMIN_EMAIL ?? "priceduganda@gmail.com").toLowerCase();
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
-  const { isSignedIn, userId, getToken } = useAuth();
+  const { userId, getToken } = useAuth();
+  const { user } = useUser();
 
   useEffect(() => {
     setAuthTokenGetter(() => getToken({ template: "supabase" }));
@@ -22,7 +26,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     setCurrentUserId(userId ?? null);
   }, [userId]);
 
-  const isAdmin = !!userId && !!ADMIN_USER_ID && userId === ADMIN_USER_ID;
+  const adminEmailVerified = (user?.emailAddresses ?? []).some(
+    (e) => e.emailAddress.toLowerCase() === ADMIN_EMAIL && e.verification?.status === "verified",
+  );
+  const isAdmin = !!userId && adminEmailVerified;
 
   return (
     <AuthContext.Provider value={{ isAdmin, userId: userId ?? null }}>
