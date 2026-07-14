@@ -2,7 +2,7 @@
   "expo": {
     "name": "Priced Ug",
     "slug": "pricedug",
-    "version": "1.0.1",
+    "version": "1.0.2",
     "orientation": "portrait",
     "icon": "./assets/images/icon.png",
     "scheme": "pricedug",
@@ -16,6 +16,7 @@
     "ios": {
       "supportsTablet": false,
       "bundleIdentifier": "com.pricedug.mobile",
+      "buildNumber": "2",
       "infoPlist": {
         "NSLocationWhenInUseUsageDescription": "Allow Priced Ug to use your location to pin your business on the map.",
         "NSPhotoLibraryUsageDescription": "Allow Priced Ug to access your photos to upload product and business images.",
@@ -23,7 +24,8 @@
       }
     },
     "android": {
-      "package": "com.pricedug.mobile"
+      "package": "com.pricedug.mobile",
+      "versionCode": 2
     },
     "web": {
       "favicon": "./assets/images/favicon.png"
