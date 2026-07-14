@@ -86,7 +86,7 @@ async function clearCredentials(): Promise<void> {
 }
 
 export default function SignInScreen() {
-  const { signIn, errors, fetchStatus } = useSignIn();
+  const { signIn, fetchStatus } = useSignIn();
   const router = useRouter();
   const insets = useSafeAreaInsets();
   const [email, setEmail] = useState("");
@@ -94,6 +94,9 @@ export default function SignInScreen() {
   const [showPassword, setShowPassword] = useState(false);
   const [rememberMe, setRememberMe] = useState(true);
   const [verifyCode, setVerifyCode] = useState("");
+  // "form" = email/password entry, "code" = email verification code (2FA / device trust).
+  const [step, setStep] = useState<"form" | "code">("form");
+  const [generalError, setGeneralError] = useState<string | null>(null);
 
   useEffect(() => {
     let active = true;
@@ -109,56 +112,117 @@ export default function SignInScreen() {
     };
   }, []);
 
-  const handleSubmit = async () => {
-    const { error } = await signIn.password({ emailAddress: email, password });
-    if (error) return;
-    if (rememberMe) {
-      await saveCredentials(email, password);
-    } else {
-      await clearCredentials();
+  const finalizeAndNavigate = async () => {
+    await signIn.finalize({
+      navigate: ({ decorateUrl }) => {
+        const url = decorateUrl("/");
+        if (url.startsWith("http")) return;
+        router.replace("/(tabs)");
+      },
+    });
+  };
+
+  const sendMfaCode = async () => {
+    const { error } = await signIn.mfa.sendEmailCode();
+    if (error) {
+      setGeneralError(
+        error.message ?? "Couldn't send the verification code. Tap Resend to try again.",
+      );
+      return false;
     }
-    if (signIn.status === "complete") {
-      await signIn.finalize({
-        navigate: ({ decorateUrl }) => {
-          const url = decorateUrl("/");
-          if (url.startsWith("http")) return;
-          router.replace("/(tabs)");
-        },
-      });
+    return true;
+  };
+
+  const handleSubmit = async () => {
+    setGeneralError(null);
+    try {
+      const { error } = await signIn.password({ emailAddress: email, password });
+      if (error) {
+        // Single error source so the button never silently does nothing and we never
+        // show a duplicate message alongside Clerk's field errors.
+        setGeneralError(error.longMessage ?? error.message ?? "Sign in failed. Please try again.");
+        return;
+      }
+      if (rememberMe) {
+        await saveCredentials(email, password);
+      } else {
+        await clearCredentials();
+      }
+      if (signIn.status === "complete") {
+        await finalizeAndNavigate();
+      } else if (
+        signIn.status === "needs_second_factor" ||
+        signIn.status === "needs_client_trust"
+      ) {
+        await sendMfaCode();
+        setStep("code");
+      } else {
+        setGeneralError(
+          `Additional verification is required (${signIn.status ?? "unknown"}). Please contact support.`,
+        );
+      }
+    } catch (e: any) {
+      setGeneralError(e?.message ?? "Something went wrong. Please try again.");
     }
   };
 
   const handleVerify = async () => {
-    await signIn.mfa.verifyEmailCode({ code: verifyCode });
-    if (signIn.status === "complete") {
-      await signIn.finalize({
-        navigate: ({ decorateUrl }) => {
-          const url = decorateUrl("/");
-          if (url.startsWith("http")) return;
-          router.replace("/(tabs)");
-        },
-      });
+    setGeneralError(null);
+    try {
+      const { error } = await signIn.mfa.verifyEmailCode({ code: verifyCode });
+      if (error) {
+        setGeneralError(error.longMessage ?? error.message ?? "That code didn't work. Please try again.");
+        return;
+      }
+      if (signIn.status === "complete") {
+        await finalizeAndNavigate();
+      }
+    } catch (e: any) {
+      setGeneralError(e?.message ?? "Something went wrong. Please try again.");
     }
   };
 
-  if (signIn.status === "needs_client_trust") {
+  if (step === "code") {
     return (
       <View style={[styles.container, { paddingTop: insets.top + 20, paddingBottom: insets.bottom + 20 }]}>
         <Text style={styles.title}>Verify your account</Text>
+        <Text style={styles.tagline}>
+          Enter the 6-digit code we sent to {email || "your email"}.
+        </Text>
         <TextInput
-          style={styles.input}
+          style={[styles.input, { marginTop: 16 }]}
           value={verifyCode}
           onChangeText={setVerifyCode}
           placeholder="Verification code"
           placeholderTextColor="#999"
           keyboardType="numeric"
+          autoFocus
         />
-        {errors.fields.code && <Text style={styles.error}>{errors.fields.code.message}</Text>}
-        <Pressable style={[styles.button, fetchStatus === "fetching" && styles.buttonDisabled]} onPress={handleVerify} disabled={fetchStatus === "fetching"}>
+        {generalError && <Text style={styles.error}>{generalError}</Text>}
+        <Pressable
+          style={[styles.button, (!verifyCode || fetchStatus === "fetching") && styles.buttonDisabled]}
+          onPress={handleVerify}
+          disabled={!verifyCode || fetchStatus === "fetching"}
+        >
           {fetchStatus === "fetching" ? <ActivityIndicator color="#fff" /> : <Text style={styles.buttonText}>Verify</Text>}
         </Pressable>
-        <Pressable onPress={() => signIn.mfa.sendEmailCode()}>
+        <Pressable
+          style={styles.forgotLink}
+          onPress={async () => {
+            setGeneralError(null);
+            await sendMfaCode();
+          }}
+        >
           <Text style={styles.link}>Resend code</Text>
+        </Pressable>
+        <Pressable
+          onPress={() => {
+            setStep("form");
+            setVerifyCode("");
+            setGeneralError(null);
+          }}
+        >
+          <Text style={[styles.link, { textAlign: "center" }]}>Back to sign in</Text>
         </Pressable>
       </View>
     );
@@ -186,7 +250,6 @@ export default function SignInScreen() {
           autoCapitalize="none"
           keyboardType="email-address"
         />
-        {errors.fields.identifier && <Text style={styles.error}>{errors.fields.identifier.message}</Text>}
 
         <View style={styles.passwordWrapper}>
           <TextInput
@@ -206,7 +269,6 @@ export default function SignInScreen() {
             <Feather name={showPassword ? "eye-off" : "eye"} size={20} color="#888888" />
           </Pressable>
         </View>
-        {errors.fields.password && <Text style={styles.error}>{errors.fields.password.message}</Text>}
 
         <Pressable
           style={styles.rememberRow}
@@ -222,6 +284,8 @@ export default function SignInScreen() {
           />
           <Text style={styles.rememberText}>Remember me on this device</Text>
         </Pressable>
+
+        {generalError && <Text style={styles.error}>{generalError}</Text>}
 
         <Pressable
           style={[styles.button, (!email || !password || fetchStatus === "fetching") && styles.buttonDisabled]}

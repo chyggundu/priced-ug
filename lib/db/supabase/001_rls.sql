@@ -14,7 +14,7 @@ $$;
 
 create or replace function public.is_admin() returns boolean
   language sql stable set search_path = public, pg_temp as $$
-  select public.clerk_uid() = 'user_3EZTcB0vgoAPoDtigaVu3JqvSVH'
+  select public.clerk_uid() = 'user_3GTqqkx6qzJWYFboh3VZp1yy7MZ'
 $$;
 
 create or replace function public.clerk_display_name() returns text
