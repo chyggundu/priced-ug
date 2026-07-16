@@ -639,6 +639,25 @@ export function useGetAdminCustomers(options?: QueryOpts<Customer[]>) {
 }
 
 // ===========================================================================
+// ACCOUNT DELETION (Apple Guideline 5.1.1(v))
+// ===========================================================================
+// Permanently deletes ALL data keyed to the signed-in user: their business,
+// its products, reviews they authored, and their customer profile. The Clerk
+// account itself is deleted client-side via user.delete() after this resolves.
+export function useDeleteMyAccount(options?: MutOpts<SuccessResponse, void>) {
+  return useApiMutation<SuccessResponse, void>(
+    async () => {
+      requireUserId();
+      const { error } = await sb().rpc("delete_my_account");
+      if (error) raise(error);
+      return { success: true };
+    },
+    (qc) => qc.clear(),
+    options,
+  );
+}
+
+// ===========================================================================
 // STORAGE — signed upload URL (same {uploadUrl, publicUrl} shape as before)
 // ===========================================================================
 export function useGetUploadUrl(options?: MutOpts<UploadUrlResponse, { data: UploadUrlInput }>) {

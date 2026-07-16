@@ -4,7 +4,7 @@ import { useRouter } from "expo-router";
 import { Feather } from "@expo/vector-icons";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useAuth, useUser } from "@clerk/expo";
-import { useGetMyBusiness } from "@workspace/api-client-react";
+import { useGetMyBusiness, useDeleteMyAccount } from "@workspace/api-client-react";
 import { useColors } from "@/hooks/useColors";
 import { useAppAuth } from "@/context/AuthContext";
 
@@ -23,11 +23,39 @@ export default function AccountScreen() {
   const { data: business } = useGetMyBusiness({ query: { enabled: !!isSignedIn && !isAdmin, retry: false } });
   const canAccessCustomers = isAdmin || !!business;
 
+  const { mutateAsync: deleteAccountData, isPending: isDeleting } = useDeleteMyAccount();
+
   const handleSignOut = () => {
     Alert.alert("Sign Out", "Are you sure you want to sign out?", [
       { text: "Cancel", style: "cancel" },
       { text: "Sign Out", style: "destructive", onPress: () => signOut() },
     ]);
+  };
+
+  const handleDeleteAccount = () => {
+    Alert.alert(
+      "Delete Account",
+      "This permanently deletes your account and all your data — your business page, products, reviews, and saved profile. This cannot be undone.",
+      [
+        { text: "Cancel", style: "cancel" },
+        {
+          text: "Delete Account",
+          style: "destructive",
+          onPress: async () => {
+            try {
+              // 1. Remove all Supabase data while the Clerk token is still valid.
+              await deleteAccountData();
+              // 2. Delete the Clerk account itself; this also ends the session.
+              await user?.delete();
+              // Session ends -> screen re-renders to the signed-out state.
+            } catch (e: unknown) {
+              const message = e instanceof Error ? e.message : "Please try again or contact support.";
+              Alert.alert("Couldn't delete account", message);
+            }
+          },
+        },
+      ],
+    );
   };
 
   const openWhatsApp = () => {
@@ -153,6 +181,17 @@ export default function AccountScreen() {
         <Pressable style={[styles.signOutBtn, { borderColor: colors.destructive }]} onPress={handleSignOut}>
           <Feather name="log-out" size={18} color={colors.destructive} />
           <Text style={[styles.signOutText, { color: colors.destructive }]}>Sign Out</Text>
+        </Pressable>
+
+        <Pressable
+          style={[styles.signOutBtn, { borderColor: colors.destructive, opacity: isDeleting ? 0.6 : 1 }]}
+          onPress={handleDeleteAccount}
+          disabled={isDeleting}
+        >
+          <Feather name="trash-2" size={18} color={colors.destructive} />
+          <Text style={[styles.signOutText, { color: colors.destructive }]}>
+            {isDeleting ? "Deleting Account…" : "Delete Account"}
+          </Text>
         </Pressable>
 
         <View style={{ height: Platform.OS === "web" ? 100 : insets.bottom + 80 }} />
