@@ -1,0 +1,122 @@
+@import "tailwindcss";
+
+/*
+ * Palette mirrors the mobile app (artifacts/pricedug/constants/colors.ts) so the
+ * site and the app read as one product. The app is light-only, and so is this.
+ */
+@theme {
+  --font-sans: var(--font-inter), ui-sans-serif, system-ui, -apple-system,
+    "Segoe UI", Roboto, sans-serif;
+
+  --color-brand-50: #fff5f6;
+  --color-brand-100: #ffeef0;
+  --color-brand-200: #ffd3d9;
+  --color-brand-400: #f0455c;
+  --color-brand-500: #e01e37;
+  --color-brand-600: #cc0020;
+  --color-brand-700: #a30019;
+
+  --color-ink-900: #1a1a1a;
+  --color-ink-600: #545454;
+  --color-ink-400: #888888;
+  --color-line: #ebebeb;
+
+  --radius-card: 16px;
+}
+
+html {
+  scroll-behavior: smooth;
+  /* Offset anchored sections so the sticky nav does not cover their headings. */
+  scroll-padding-top: 5rem;
+}
+
+body {
+  background: #ffffff;
+  color: var(--color-ink-900);
+  -webkit-font-smoothing: antialiased;
+}
+
+/* ---------------------------------------------------------------- motion --
+ * Two mechanisms:
+ *   .animate-*  — run on load, for above-the-fold content (no observer needed)
+ *   .reveal     — driven by components/Reveal.tsx once scrolled into view
+ * Every one of them is switched off under prefers-reduced-motion, at the bottom.
+ */
+
+@keyframes fade-up {
+  from {
+    opacity: 0;
+    transform: translateY(16px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+@keyframes float {
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-14px);
+  }
+}
+
+/* Slow drift for the decorative hero blobs. */
+@keyframes drift {
+  0%,
+  100% {
+    transform: translate(0, 0) scale(1);
+  }
+  33% {
+    transform: translate(4%, -5%) scale(1.08);
+  }
+  66% {
+    transform: translate(-4%, 4%) scale(0.94);
+  }
+}
+
+.animate-fade-up {
+  animation: fade-up 0.85s cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+.animate-float {
+  animation: float 7s ease-in-out infinite;
+}
+
+.animate-drift {
+  animation: drift 24s ease-in-out infinite;
+}
+
+.reveal {
+  opacity: 0;
+  transform: translateY(18px);
+  transition:
+    opacity 0.7s cubic-bezier(0.16, 1, 0.3, 1),
+    transform 0.7s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.reveal[data-shown="true"] {
+  opacity: 1;
+  transform: none;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html {
+    scroll-behavior: auto;
+  }
+
+  .animate-fade-up,
+  .animate-float,
+  .animate-drift {
+    animation: none !important;
+  }
+
+  .reveal {
+    opacity: 1 !important;
+    transform: none !important;
+    transition: none !important;
+  }
+}

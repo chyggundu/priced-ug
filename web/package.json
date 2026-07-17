@@ -1,0 +1,25 @@
+{
+  "name": "pricedug-web",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Marketing website for the Priced Ug mobile app",
+  "scripts": {
+    "dev": "next dev",
+    "build": "next build",
+    "preview": "npx --yes serve@latest out",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "next": "16.2.10",
+    "react": "^19.2.0",
+    "react-dom": "^19.2.0"
+  },
+  "devDependencies": {
+    "@tailwindcss/postcss": "^4.1.14",
+    "@types/node": "^24.10.1",
+    "@types/react": "^19.2.0",
+    "@types/react-dom": "^19.2.0",
+    "tailwindcss": "^4.1.14",
+    "typescript": "^5.9.3"
+  }
+}
