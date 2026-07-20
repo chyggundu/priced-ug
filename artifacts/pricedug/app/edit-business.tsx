@@ -17,7 +17,7 @@ import { Feather } from "@expo/vector-icons";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { pickImageAsset } from "@/lib/imagePicker";
 import * as Location from "expo-location";
-import { uploadImageToSignedUrl } from "@/lib/uploadImage";
+import { uploadImageToSignedUrl, uploadErrorMessage } from "@/lib/uploadImage";
 import MapPicker from "@/components/MapPicker";
 import {
   useGetMyBusiness,
@@ -81,7 +81,7 @@ export default function EditBusinessScreen() {
 
       setImageUrl(publicUrl);
     } catch (err) {
-      Alert.alert("Upload failed", "Could not upload image. Please try again.");
+      Alert.alert("Upload failed", uploadErrorMessage(err));
     } finally {
       setUploading(false);
     }

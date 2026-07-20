@@ -19,7 +19,24 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const { user } = useUser();
 
   useEffect(() => {
-    setAuthTokenGetter(() => getToken({ template: "supabase" }));
+    // Supabase's current Clerk integration takes the plain session token; the
+    // older one took a "supabase" JWT template. Try the template, fall back to
+    // the session token, and never reject — supabase-js aborts a request
+    // outright (no HTTP call at all) if this callback throws, which surfaces as
+    // unrelated-looking failures like "Upload failed" or "Business not found".
+    setAuthTokenGetter(async () => {
+      try {
+        const templated = await getToken({ template: "supabase" });
+        if (templated) return templated;
+      } catch {
+        // Template not configured on this Clerk instance — fall through.
+      }
+      try {
+        return await getToken();
+      } catch {
+        return null;
+      }
+    });
   }, [getToken]);
 
   useEffect(() => {

@@ -666,7 +666,12 @@ export function useGetUploadUrl(options?: MutOpts<UploadUrlResponse, { data: Upl
       const ext = (data.filename.split(".").pop() || "jpg").toLowerCase().replace(/[^a-z0-9]/g, "") || "jpg";
       const path = `${uuid()}.${ext}`;
       const { data: signed, error } = await sb().storage.from(BUCKET).createSignedUploadUrl(path);
-      if (error) raise({ code: "42501", message: error.message });
+      // Storage errors carry an HTTP status; keep it instead of assuming RLS,
+      // so a 401 (bad/absent token) isn't reported as a permission problem.
+      if (error) {
+        const status = (error as { status?: number }).status ?? 403;
+        throw new ApiError(status, error.message, error);
+      }
       // Build the PUT target deterministically (token carries auth).
       const uploadUrl = `${_supabaseUrl}/storage/v1/object/upload/sign/${BUCKET}/${path}?token=${signed!.token}`;
       const publicUrl = sb().storage.from(BUCKET).getPublicUrl(path).data.publicUrl;

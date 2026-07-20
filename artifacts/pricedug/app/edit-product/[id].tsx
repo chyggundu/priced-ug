@@ -15,7 +15,7 @@ import { useLocalSearchParams, useRouter } from "expo-router";
 import { Feather } from "@expo/vector-icons";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { pickImageAsset } from "@/lib/imagePicker";
-import { uploadImageToSignedUrl } from "@/lib/uploadImage";
+import { uploadImageToSignedUrl, uploadErrorMessage } from "@/lib/uploadImage";
 import { useUpdateProduct, useGetMyProducts, useGetUploadUrl, useGetCategories } from "@workspace/api-client-react";
 import { useColors } from "@/hooks/useColors";
 
@@ -79,8 +79,8 @@ export default function EditProductScreen() {
       });
       await uploadImageToSignedUrl(uploadUrl, asset.uri, contentType);
       setImageUrl(publicUrl);
-    } catch {
-      Alert.alert("Upload failed", "Could not upload image. Please try again.");
+    } catch (err) {
+      Alert.alert("Upload failed", uploadErrorMessage(err));
     } finally {
       setUploading(false);
     }

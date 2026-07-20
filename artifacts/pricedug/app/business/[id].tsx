@@ -37,7 +37,8 @@ export default function BusinessDetailScreen() {
   const { isAdmin, userId } = useAppAuth();
   const [viewerUrl, setViewerUrl] = useState<string | null>(null);
 
-  const { data: business, isLoading: bizLoading } = useGetBusiness(businessId);
+  const { data: business, isLoading: bizLoading, error: bizError, refetch: refetchBusiness } =
+    useGetBusiness(businessId, { query: { enabled: Number.isFinite(businessId) && businessId > 0 } });
   const { data: products = [], isLoading: productsLoading, refetch: refetchProducts } =
     useGetBusinessProducts(businessId, {
       query: { enabled: !!business },
@@ -105,12 +106,24 @@ export default function BusinessDetailScreen() {
   }
 
   if (!business) {
+    // A 404 means the business really is gone; anything else (network, auth)
+    // is a load failure the user can retry — don't claim it doesn't exist.
+    const isMissing = !bizError || bizError.status === 404;
     return (
       <View style={[styles.container, styles.center, { backgroundColor: colors.background }]}>
         <Feather name="alert-circle" size={40} color={colors.mutedForeground} />
-        <Text style={[styles.centerText, { color: colors.mutedForeground }]}>Business not found</Text>
-        <Pressable onPress={() => router.back()}>
-          <Text style={[styles.backLink, { color: colors.primary }]}>Go back</Text>
+        <Text style={[styles.centerText, { color: colors.mutedForeground }]}>
+          {isMissing ? "Business not found" : "Couldn't load this business"}
+        </Text>
+        {!isMissing && (
+          <Text style={[styles.centerText, { color: colors.mutedForeground, fontSize: 13 }]}>
+            {bizError.message}
+          </Text>
+        )}
+        <Pressable onPress={() => (isMissing ? router.back() : refetchBusiness())}>
+          <Text style={[styles.backLink, { color: colors.primary }]}>
+            {isMissing ? "Go back" : "Try again"}
+          </Text>
         </Pressable>
       </View>
     );

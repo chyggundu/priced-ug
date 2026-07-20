@@ -2,7 +2,7 @@
 -- Priced Ug — Supabase direct-access security layer
 -- Replaces the Express API server: RLS + views + RPCs enforce everything the
 -- server used to. Auth = Clerk JWT (third-party auth); user id = jwt 'sub'
--- (matches clerk_user_id / reviews.user_id). Admin = fixed Clerk id.
+-- (matches clerk_user_id / reviews.user_id). Admin = jwt 'email' claim.
 -- Idempotent: safe to re-run.
 -- ============================================================================
 
@@ -12,9 +12,25 @@ create or replace function public.clerk_uid() returns text
   select nullif(auth.jwt() ->> 'sub', '')
 $$;
 
+create or replace function public.clerk_email() returns text
+  language sql stable set search_path = public, pg_temp as $$
+  select lower(nullif(auth.jwt() ->> 'email', ''))
+$$;
+
+-- Admin is keyed on the Clerk email claim, never a Clerk user id: ids are
+-- per-instance, so switching instances silently turns every admin check off.
+-- Keep this list in sync with ADMIN_EMAIL in
+-- artifacts/pricedug/context/AuthContext.tsx.
+-- The email path requires the Clerk "supabase" JWT template to emit an `email`
+-- claim. The uid array below is a transitional fallback so admin still works
+-- before that claim is added — drop it once the email path is verified.
 create or replace function public.is_admin() returns boolean
   language sql stable set search_path = public, pg_temp as $$
-  select public.clerk_uid() = 'user_3GTqqkx6qzJWYFboh3VZp1yy7MZ'
+  select coalesce(
+    public.clerk_email() = any (array['priceduganda@gmail.com'])
+    or public.clerk_uid() = any (array['user_3GlJiyIyEFE4HpmJr2j69dsReBd']),
+    false
+  )
 $$;
 
 create or replace function public.clerk_display_name() returns text

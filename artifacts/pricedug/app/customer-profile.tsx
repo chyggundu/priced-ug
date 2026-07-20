@@ -24,7 +24,7 @@ import {
   useGetUploadUrl,
 } from "@workspace/api-client-react";
 import { pickImageAsset } from "@/lib/imagePicker";
-import { uploadImageToSignedUrl } from "@/lib/uploadImage";
+import { uploadImageToSignedUrl, uploadErrorMessage } from "@/lib/uploadImage";
 import { useColors } from "@/hooks/useColors";
 
 export default function CustomerProfileScreen() {
@@ -81,8 +81,8 @@ export default function CustomerProfileScreen() {
       });
       await uploadImageToSignedUrl(uploadUrl, asset.uri, contentType);
       setAddressPhotoUrl(publicUrl);
-    } catch {
-      Alert.alert("Upload failed", "Could not upload the address photo. Please try again.");
+    } catch (err) {
+      Alert.alert("Upload failed", uploadErrorMessage(err, "Could not upload the address photo."));
     } finally {
       setUploadingPhoto(false);
     }
