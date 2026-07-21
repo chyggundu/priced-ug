@@ -40,6 +40,8 @@ export interface Business {
   imageUrl?: string | null;
   latitude?: number | null;
   longitude?: number | null;
+  openingTime?: string | null;
+  closingTime?: string | null;
   minPrice?: number | null;
   isHidden: boolean;
   createdAt: string;
@@ -54,6 +56,8 @@ export interface CreateBusinessInput {
   imageUrl?: string | null;
   latitude?: number | null;
   longitude?: number | null;
+  openingTime?: string | null;
+  closingTime?: string | null;
 }
 
 export interface UpdateBusinessInput {
@@ -65,6 +69,8 @@ export interface UpdateBusinessInput {
   imageUrl?: string | null;
   latitude?: number | null;
   longitude?: number | null;
+  openingTime?: string | null;
+  closingTime?: string | null;
 }
 
 export interface VisibilityInput {
@@ -80,6 +86,7 @@ export interface Product {
   description?: string | null;
   price?: string | null;
   imageUrl?: string | null;
+  imageUrls?: string[];
   size?: string | null;
   materials?: string | null;
   color?: string | null;
@@ -96,6 +103,7 @@ export interface ProductSearchResult {
   description?: string | null;
   price?: string | null;
   imageUrl?: string | null;
+  imageUrls?: string[];
   size?: string | null;
   materials?: string | null;
   color?: string | null;
@@ -116,6 +124,7 @@ export interface CreateProductInput {
   description?: string | null;
   price?: string | null;
   imageUrl?: string | null;
+  imageUrls?: string[];
   size?: string | null;
   materials?: string | null;
   color?: string | null;
@@ -130,12 +139,18 @@ export interface UpdateProductInput {
   description?: string | null;
   price?: string | null;
   imageUrl?: string | null;
+  imageUrls?: string[];
   size?: string | null;
   materials?: string | null;
   color?: string | null;
   condition?: string | null;
   deliveredByPricedUg?: boolean;
   deliveredByBusiness?: boolean;
+}
+
+export interface Favorites {
+  businesses: Business[];
+  products: ProductSearchResult[];
 }
 
 export interface Review {

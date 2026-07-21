@@ -29,6 +29,7 @@ import type {
   CreateReviewInput,
   ReplyReviewInput,
   Customer,
+  Favorites,
   CustomerProfileInput,
   CustomerLookupInput,
   CreateCategoryInput,
@@ -144,6 +145,8 @@ const mapBusiness = (r: any): Business => ({
   imageUrl: r.image_url ?? null,
   latitude: r.latitude ?? null,
   longitude: r.longitude ?? null,
+  openingTime: r.opening_time ?? null,
+  closingTime: r.closing_time ?? null,
   minPrice: r.min_price ?? null,
   isHidden: r.is_hidden,
   createdAt: r.created_at,
@@ -158,6 +161,7 @@ const mapProduct = (r: any): Product => ({
   description: r.description ?? null,
   price: r.price ?? null,
   imageUrl: r.image_url ?? null,
+  imageUrls: (r.image_urls ?? []) as string[],
   size: r.size ?? null,
   materials: r.materials ?? null,
   color: r.color ?? null,
@@ -345,6 +349,7 @@ function businessInsertPayload(data: CreateBusinessInput | UpdateBusinessInput) 
     ["name", "name"], ["description", "description"], ["address", "address"],
     ["city", "city"], ["phone", "phone"], ["imageUrl", "image_url"],
     ["latitude", "latitude"], ["longitude", "longitude"],
+    ["openingTime", "opening_time"], ["closingTime", "closing_time"],
   ] as const) {
     if (src[k] !== undefined) out[dbk] = src[k];
   }
@@ -409,6 +414,24 @@ export function useToggleBusinessVisibility(options?: MutOpts<Business, { id: nu
   );
 }
 
+// Admin: delete a business and all of its dependent rows via SECURITY DEFINER
+// RPC (children have no cascading FK to businesses, so a plain delete would
+// orphan products/reviews). The RPC re-checks is_admin() server-side.
+export function useAdminDeleteBusiness(options?: MutOpts<SuccessResponse, { id: number }>) {
+  return useApiMutation<SuccessResponse, { id: number }>(
+    async ({ id }) => {
+      const { error } = await sb().rpc("admin_delete_business", { business_id: id });
+      if (error) raise(error);
+      return { success: true };
+    },
+    (qc) => {
+      qc.invalidateQueries({ queryKey: ["adminBusinesses"] });
+      qc.invalidateQueries({ queryKey: ["businesses"] });
+    },
+    options,
+  );
+}
+
 // ===========================================================================
 // PRODUCTS
 // ===========================================================================
@@ -451,7 +474,7 @@ function productPayload(data: CreateProductInput | UpdateProductInput) {
   const src = data as Record<string, unknown>;
   for (const [k, dbk] of [
     ["name", "name"], ["categoryId", "category_id"], ["description", "description"],
-    ["price", "price"], ["imageUrl", "image_url"], ["size", "size"],
+    ["price", "price"], ["imageUrl", "image_url"], ["imageUrls", "image_urls"], ["size", "size"],
     ["materials", "materials"], ["color", "color"], ["condition", "condition"],
     ["deliveredByPricedUg", "delivered_by_priced_ug"],
     ["deliveredByBusiness", "delivered_by_business"],
@@ -636,6 +659,110 @@ export function useGetAdminCustomers(options?: QueryOpts<Customer[]>) {
     if (error) raise(error);
     return (data ?? []).map(mapCustomer);
   }, options);
+}
+
+// Admin: delete a customer delivery profile (plain row delete; RLS admin policy
+// authorizes it — mirrors useAdminDeleteProduct).
+export function useAdminDeleteCustomer(options?: MutOpts<SuccessResponse, { id: number }>) {
+  return useApiMutation<SuccessResponse, { id: number }>(
+    async ({ id }) => {
+      const { error } = await sb().from("customers").delete().eq("id", id);
+      if (error) raise(error);
+      return { success: true };
+    },
+    (qc) => qc.invalidateQueries({ queryKey: ["adminCustomers"] }),
+    options,
+  );
+}
+
+// ===========================================================================
+// FAVORITES
+// ===========================================================================
+// One `favorites` row per (user, business) or (user, product). Reads are
+// scoped to the signed-in user by RLS. useGetFavorites resolves the saved ids
+// into full Business / ProductSearchResult objects so screens render directly.
+export function getGetFavoritesQueryKey(): QueryKey {
+  return ["favorites"];
+}
+
+export function useGetFavorites(options?: QueryOpts<Favorites>) {
+  return useApiQuery<Favorites>(getGetFavoritesQueryKey(), async () => {
+    const { data: rows, error } = await sb()
+      .from("favorites").select("business_id, product_id");
+    if (error) raise(error);
+    const businessIds = (rows ?? []).map((r: any) => r.business_id).filter((v: number | null) => v != null);
+    const productIds = (rows ?? []).map((r: any) => r.product_id).filter((v: number | null) => v != null);
+
+    let businesses: Business[] = [];
+    if (businessIds.length > 0) {
+      const { data, error: e } = await sb().from("businesses_view").select("*").in("id", businessIds);
+      if (e) raise(e);
+      businesses = (data ?? []).map(mapBusiness);
+    }
+
+    let products: ProductSearchResult[] = [];
+    if (productIds.length > 0) {
+      const { data, error: e } = await sb().from("products_search_view").select("*").in("id", productIds);
+      if (e) raise(e);
+      products = (data ?? []).map(mapProductSearch);
+    }
+
+    return { businesses, products };
+  }, options);
+}
+
+export function useAddFavoriteBusiness(options?: MutOpts<SuccessResponse, { businessId: number }>) {
+  return useApiMutation<SuccessResponse, { businessId: number }>(
+    async ({ businessId }) => {
+      const uid = requireUserId();
+      const { error } = await sb().from("favorites").insert({ clerk_user_id: uid, business_id: businessId });
+      if (error && error.code !== "23505") raise(error); // ignore "already favorited"
+      return { success: true };
+    },
+    (qc) => qc.invalidateQueries({ queryKey: getGetFavoritesQueryKey() }),
+    options,
+  );
+}
+
+export function useRemoveFavoriteBusiness(options?: MutOpts<SuccessResponse, { businessId: number }>) {
+  return useApiMutation<SuccessResponse, { businessId: number }>(
+    async ({ businessId }) => {
+      const uid = requireUserId();
+      const { error } = await sb().from("favorites").delete()
+        .eq("clerk_user_id", uid).eq("business_id", businessId);
+      if (error) raise(error);
+      return { success: true };
+    },
+    (qc) => qc.invalidateQueries({ queryKey: getGetFavoritesQueryKey() }),
+    options,
+  );
+}
+
+export function useAddFavoriteProduct(options?: MutOpts<SuccessResponse, { productId: number }>) {
+  return useApiMutation<SuccessResponse, { productId: number }>(
+    async ({ productId }) => {
+      const uid = requireUserId();
+      const { error } = await sb().from("favorites").insert({ clerk_user_id: uid, product_id: productId });
+      if (error && error.code !== "23505") raise(error);
+      return { success: true };
+    },
+    (qc) => qc.invalidateQueries({ queryKey: getGetFavoritesQueryKey() }),
+    options,
+  );
+}
+
+export function useRemoveFavoriteProduct(options?: MutOpts<SuccessResponse, { productId: number }>) {
+  return useApiMutation<SuccessResponse, { productId: number }>(
+    async ({ productId }) => {
+      const uid = requireUserId();
+      const { error } = await sb().from("favorites").delete()
+        .eq("clerk_user_id", uid).eq("product_id", productId);
+      if (error) raise(error);
+      return { success: true };
+    },
+    (qc) => qc.invalidateQueries({ queryKey: getGetFavoritesQueryKey() }),
+    options,
+  );
 }
 
 // ===========================================================================

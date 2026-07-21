@@ -46,7 +46,7 @@ export default function EditProductScreen() {
   const [condition, setCondition] = useState<string | null>(null);
   const [deliveredByPricedUg, setDeliveredByPricedUg] = useState(false);
   const [deliveredByBusiness, setDeliveredByBusiness] = useState(false);
-  const [imageUrl, setImageUrl] = useState<string | null>(null);
+  const [imageUrls, setImageUrls] = useState<string[]>([]);
   const [uploading, setUploading] = useState(false);
   const [saving, setSaving] = useState(false);
 
@@ -62,11 +62,21 @@ export default function EditProductScreen() {
       setCondition(product.condition ?? null);
       setDeliveredByPricedUg(product.deliveredByPricedUg ?? false);
       setDeliveredByBusiness(product.deliveredByBusiness ?? false);
-      setImageUrl(product.imageUrl ?? null);
+      setImageUrls(
+        product.imageUrls && product.imageUrls.length > 0
+          ? product.imageUrls
+          : product.imageUrl
+            ? [product.imageUrl]
+            : []
+      );
     }
   }, [product]);
 
   const pickImage = async () => {
+    if (imageUrls.length >= 7) {
+      Alert.alert("Photo limit", "You can add up to 7 photos per item.");
+      return;
+    }
     const asset = await pickImageAsset([4, 3]);
     if (!asset) return;
 
@@ -78,12 +88,16 @@ export default function EditProductScreen() {
         data: { filename, contentType },
       });
       await uploadImageToSignedUrl(uploadUrl, asset.uri, contentType);
-      setImageUrl(publicUrl);
+      setImageUrls((prev) => (prev.length < 7 ? [...prev, publicUrl] : prev));
     } catch (err) {
       Alert.alert("Upload failed", uploadErrorMessage(err));
     } finally {
       setUploading(false);
     }
+  };
+
+  const removePhoto = (url: string) => {
+    setImageUrls((prev) => prev.filter((u) => u !== url));
   };
 
   const handleSave = async () => {
@@ -108,7 +122,8 @@ export default function EditProductScreen() {
           materials: materials.trim() || null,
           color: color.trim() || null,
           condition: condition || null,
-          imageUrl: imageUrl ?? null,
+          imageUrl: imageUrls[0] ?? null,
+          imageUrls,
           deliveredByPricedUg,
           deliveredByBusiness,
         },
@@ -146,28 +161,56 @@ export default function EditProductScreen() {
       </View>
 
       <ScrollView style={styles.content} keyboardShouldPersistTaps="handled" showsVerticalScrollIndicator={false}>
-        <Pressable onPress={pickImage} style={styles.imagePicker}>
-          {imageUrl ? (
-            <Image source={{ uri: imageUrl }} style={styles.productImage} />
-          ) : (
+        {imageUrls.length === 0 ? (
+          <Pressable onPress={pickImage} style={styles.imagePicker}>
             <View style={[styles.imagePlaceholder, { backgroundColor: colors.secondary }]}>
               {uploading ? (
                 <ActivityIndicator color={colors.primary} />
               ) : (
                 <>
                   <Feather name="camera" size={32} color={colors.primary} />
-                  <Text style={[styles.imagePlaceholderText, { color: colors.primary }]}>Add product photo</Text>
+                  <Text style={[styles.imagePlaceholderText, { color: colors.primary }]}>
+                    Add product photos (up to 7)
+                  </Text>
                 </>
               )}
             </View>
-          )}
-          {imageUrl && !uploading && (
-            <View style={styles.changeImageOverlay}>
-              <Feather name="camera" size={16} color="#fff" />
-              <Text style={styles.changeImageText}>Change</Text>
+          </Pressable>
+        ) : (
+          <View>
+            <Image source={{ uri: imageUrls[0] }} style={styles.productImage} />
+            <View style={styles.photoRow}>
+              {imageUrls.map((url) => (
+                <View key={url} style={styles.photoThumbWrap}>
+                  <Image source={{ uri: url }} style={styles.photoThumb} />
+                  <Pressable
+                    style={styles.photoRemove}
+                    onPress={() => removePhoto(url)}
+                    hitSlop={8}
+                  >
+                    <Feather name="x" size={14} color="#fff" />
+                  </Pressable>
+                </View>
+              ))}
+              {imageUrls.length < 7 && (
+                <Pressable
+                  style={[styles.photoAdd, { backgroundColor: colors.secondary }]}
+                  onPress={pickImage}
+                  disabled={uploading}
+                >
+                  {uploading ? (
+                    <ActivityIndicator size="small" color={colors.primary} />
+                  ) : (
+                    <Feather name="plus" size={22} color={colors.primary} />
+                  )}
+                </Pressable>
+              )}
             </View>
-          )}
-        </Pressable>
+            <Text style={[styles.photoHint, { color: colors.mutedForeground }]}>
+              {imageUrls.length}/7 photos · first photo is the main one
+            </Text>
+          </View>
+        )}
 
         <View style={styles.form}>
           <Text style={[styles.label, { color: colors.foreground }]}>Product Name *</Text>
@@ -360,6 +403,34 @@ const styles = StyleSheet.create({
   deliverySubtitle: { fontSize: 12, marginTop: 2 },
   imagePicker: { position: "relative" },
   productImage: { width: "100%", height: 240, resizeMode: "cover" },
+  photoRow: {
+    flexDirection: "row",
+    flexWrap: "wrap",
+    gap: 10,
+    paddingHorizontal: 16,
+    paddingTop: 12,
+  },
+  photoThumbWrap: { position: "relative" },
+  photoThumb: { width: 64, height: 64, borderRadius: 8 },
+  photoRemove: {
+    position: "absolute",
+    top: -6,
+    right: -6,
+    width: 20,
+    height: 20,
+    borderRadius: 10,
+    backgroundColor: "rgba(0,0,0,0.7)",
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  photoAdd: {
+    width: 64,
+    height: 64,
+    borderRadius: 8,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  photoHint: { fontSize: 12, paddingHorizontal: 16, paddingTop: 8 },
   imagePlaceholder: { width: "100%", height: 200, alignItems: "center", justifyContent: "center", gap: 10 },
   imagePlaceholderText: { fontSize: 14, fontWeight: "500" as const },
   changeImageOverlay: {

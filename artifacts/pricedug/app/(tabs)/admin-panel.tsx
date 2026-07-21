@@ -18,6 +18,7 @@ import {
   useCreateCategory,
   useDeleteCategory,
   useToggleBusinessVisibility,
+  useAdminDeleteBusiness,
 } from "@workspace/api-client-react";
 import { useColors } from "@/hooks/useColors";
 import { useAppAuth } from "@/context/AuthContext";
@@ -37,6 +38,7 @@ export default function AdminPanelScreen() {
   const createCategory = useCreateCategory();
   const deleteCategory = useDeleteCategory();
   const toggleVisibility = useToggleBusinessVisibility();
+  const deleteBusiness = useAdminDeleteBusiness();
 
   if (!isAdmin) {
     return (
@@ -83,6 +85,37 @@ export default function AdminPanelScreen() {
           onPress: async () => {
             await toggleVisibility.mutateAsync({ id, data: { isHidden: willHide } });
             refetchBiz();
+          },
+        },
+      ]
+    );
+  };
+
+  const handleDeleteBusiness = (id: number, name: string) => {
+    Alert.alert(
+      "Delete Business",
+      `"${name}" and all its products, photos, and reviews will be permanently deleted. This cannot be undone.`,
+      [
+        { text: "Cancel", style: "cancel" },
+        {
+          text: "Delete",
+          style: "destructive",
+          onPress: () => {
+            Alert.alert("Are you sure?", `This will permanently delete "${name}". Really delete?`, [
+              { text: "Cancel", style: "cancel" },
+              {
+                text: "Delete Permanently",
+                style: "destructive",
+                onPress: async () => {
+                  try {
+                    await deleteBusiness.mutateAsync({ id });
+                    refetchBiz();
+                  } catch {
+                    Alert.alert("Error", "Could not delete the business. Please try again.");
+                  }
+                },
+              },
+            ]);
           },
         },
       ]
@@ -156,6 +189,13 @@ export default function AdminPanelScreen() {
                     >
                       <Feather name={b.isHidden ? "eye" : "eye-off"} size={13} color="#fff" />
                       <Text style={styles.toggleBtnText}>{b.isHidden ? "Unhide" : "Hide"}</Text>
+                    </Pressable>
+                    <Pressable
+                      onPress={() => handleDeleteBusiness(b.id, b.name)}
+                      style={styles.previewBtn}
+                      disabled={deleteBusiness.isPending}
+                    >
+                      <Feather name="trash-2" size={18} color={colors.destructive} />
                     </Pressable>
                   </View>
                 </View>

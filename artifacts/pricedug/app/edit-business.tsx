@@ -50,6 +50,8 @@ export default function EditBusinessScreen() {
   const [longitude, setLongitude] = useState<number | null>(null);
   const [locating, setLocating] = useState(false);
   const [showMap, setShowMap] = useState(false);
+  const [openingTime, setOpeningTime] = useState("");
+  const [closingTime, setClosingTime] = useState("");
 
   useEffect(() => {
     if (business) {
@@ -61,6 +63,8 @@ export default function EditBusinessScreen() {
       setImageUrl(business.imageUrl ?? null);
       setLatitude(business.latitude ?? null);
       setLongitude(business.longitude ?? null);
+      setOpeningTime(business.openingTime ?? "");
+      setClosingTime(business.closingTime ?? "");
     }
   }, [business]);
 
@@ -127,6 +131,8 @@ export default function EditBusinessScreen() {
         imageUrl: imageUrl ?? null,
         latitude,
         longitude,
+        openingTime: openingTime.trim() || null,
+        closingTime: closingTime.trim() || null,
       };
 
       if (business) {
@@ -294,6 +300,30 @@ export default function EditBusinessScreen() {
             keyboardType="phone-pad"
           />
 
+          <Text style={[styles.label, { color: colors.foreground }]}>Opening Hours</Text>
+          <View style={styles.hoursRow}>
+            <View style={styles.hoursField}>
+              <Text style={[styles.hoursLabel, { color: colors.mutedForeground }]}>Opens at</Text>
+              <TextInput
+                style={[styles.input, { backgroundColor: colors.muted, color: colors.foreground }]}
+                value={openingTime}
+                onChangeText={setOpeningTime}
+                placeholder="e.g. 8:00 AM"
+                placeholderTextColor={colors.mutedForeground}
+              />
+            </View>
+            <View style={styles.hoursField}>
+              <Text style={[styles.hoursLabel, { color: colors.mutedForeground }]}>Closes at</Text>
+              <TextInput
+                style={[styles.input, { backgroundColor: colors.muted, color: colors.foreground }]}
+                value={closingTime}
+                onChangeText={setClosingTime}
+                placeholder="e.g. 7:00 PM"
+                placeholderTextColor={colors.mutedForeground}
+              />
+            </View>
+          </View>
+
           <Pressable
             style={[styles.saveBtn, { backgroundColor: colors.primary, opacity: saving || uploading ? 0.6 : 1 }]}
             onPress={handleSave}
@@ -363,6 +393,9 @@ const styles = StyleSheet.create({
   changeImageText: { color: "#fff", fontSize: 12 },
   form: { padding: 16, gap: 4 },
   label: { fontSize: 14, fontWeight: "600" as const, marginBottom: 6, marginTop: 12 },
+  hoursRow: { flexDirection: "row", gap: 12 },
+  hoursField: { flex: 1 },
+  hoursLabel: { fontSize: 12, marginBottom: 4 },
   input: { borderRadius: 10, paddingHorizontal: 14, paddingVertical: 13, fontSize: 15 },
   textArea: { height: 100, paddingTop: 13 },
   helperText: { fontSize: 12, marginBottom: 8, marginTop: 4 },

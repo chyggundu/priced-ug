@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import {
   View,
   Text,
@@ -11,6 +11,8 @@ import {
   Linking,
   Alert,
   Modal,
+  Dimensions,
+  Share,
 } from "react-native";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import { Feather } from "@expo/vector-icons";
@@ -23,6 +25,8 @@ import {
 } from "@workspace/api-client-react";
 import { useColors } from "@/hooks/useColors";
 import { useAppAuth } from "@/context/AuthContext";
+import { useFavorites } from "@/hooks/useFavorites";
+import { recordBusinessView } from "@/lib/recentlyViewed";
 import { BusinessReviews } from "@/components/BusinessReviews";
 
 export default function BusinessDetailScreen() {
@@ -35,7 +39,21 @@ export default function BusinessDetailScreen() {
   const topPad = Platform.OS === "web" ? 67 : insets.top;
 
   const { isAdmin, userId } = useAppAuth();
-  const [viewerUrl, setViewerUrl] = useState<string | null>(null);
+  const [viewerImages, setViewerImages] = useState<string[] | null>(null);
+  const [viewerIndex, setViewerIndex] = useState(0);
+  const windowWidth = Dimensions.get("window").width;
+
+  const openViewer = (product: { imageUrls?: string[]; imageUrl?: string | null }) => {
+    const photos =
+      product.imageUrls && product.imageUrls.length > 0
+        ? product.imageUrls
+        : product.imageUrl
+          ? [product.imageUrl]
+          : [];
+    if (photos.length === 0) return;
+    setViewerIndex(0);
+    setViewerImages(photos);
+  };
 
   const { data: business, isLoading: bizLoading, error: bizError, refetch: refetchBusiness } =
     useGetBusiness(businessId, { query: { enabled: Number.isFinite(businessId) && businessId > 0 } });
@@ -43,6 +61,51 @@ export default function BusinessDetailScreen() {
     useGetBusinessProducts(businessId, {
       query: { enabled: !!business },
     });
+
+  const { isSignedIn, isBusinessFavorite, isProductFavorite, toggleBusiness, toggleProduct } =
+    useFavorites();
+
+  useEffect(() => {
+    if (business) {
+      recordBusinessView({
+        id: business.id,
+        name: business.name,
+        imageUrl: business.imageUrl,
+        city: business.city,
+      });
+    }
+  }, [business]);
+
+  const requireSignIn = (action: () => void) => {
+    if (!isSignedIn) {
+      router.push("/(auth)/sign-in");
+      return;
+    }
+    action();
+  };
+
+  const shareBusiness = () => {
+    if (!business) return;
+    const parts = [
+      `${business.name} on Priced Ug`,
+      business.description ? business.description : null,
+      business.city ? `Location: ${business.city}` : null,
+      business.phone ? `Contact: ${business.phone}` : null,
+      "Find them on the Priced Ug app!",
+    ].filter(Boolean);
+    Share.share({ message: parts.join("\n") }).catch(() => {});
+  };
+
+  const shareProduct = (product: { name: string; price?: string | null }) => {
+    if (!business) return;
+    const parts = [
+      `${product.name}${product.price ? ` – UGX ${product.price}` : ""}`,
+      `Available at ${business.name} on Priced Ug`,
+      business.phone ? `Contact: ${business.phone}` : null,
+      "Find it on the Priced Ug app!",
+    ].filter(Boolean);
+    Share.share({ message: parts.join("\n") }).catch(() => {});
+  };
 
   const isOwner = !!userId && business?.clerkUserId === userId;
   const canDelete = isAdmin || isOwner;
@@ -139,7 +202,29 @@ export default function BusinessDetailScreen() {
         <Text style={[styles.headerTitle, { color: colors.foreground }]} numberOfLines={1}>
           {business.name}
         </Text>
-        <View style={{ width: 40 }} />
+        <View style={styles.headerActions}>
+          <Pressable
+            onPress={() => router.replace("/(tabs)")}
+            style={styles.headerIconBtn}
+            hitSlop={4}
+          >
+            <Feather name="home" size={20} color={colors.primary} />
+          </Pressable>
+          <Pressable
+            onPress={() => requireSignIn(() => toggleBusiness(business.id))}
+            style={styles.headerIconBtn}
+            hitSlop={4}
+          >
+            <Feather
+              name="heart"
+              size={20}
+              color={isBusinessFavorite(business.id) ? colors.primary : colors.mutedForeground}
+            />
+          </Pressable>
+          <Pressable onPress={shareBusiness} style={styles.headerIconBtn} hitSlop={4}>
+            <Feather name="share-2" size={20} color={colors.foreground} />
+          </Pressable>
+        </View>
       </View>
 
       <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
@@ -193,6 +278,23 @@ export default function BusinessDetailScreen() {
                 </Pressable>
               </>
             )}
+            {(business.openingTime || business.closingTime) && (
+              <>
+                {(business.address || (business.latitude != null && business.longitude != null)) && (
+                  <View style={[styles.separator, { backgroundColor: colors.border }]} />
+                )}
+                <View style={styles.detailRow}>
+                  <Feather name="clock" size={16} color={colors.primary} />
+                  <Text style={[styles.detailText, { color: colors.foreground }]}>
+                    {business.openingTime && business.closingTime
+                      ? `Open ${business.openingTime} – ${business.closingTime}`
+                      : business.openingTime
+                        ? `Opens at ${business.openingTime}`
+                        : `Closes at ${business.closingTime}`}
+                  </Text>
+                </View>
+              </>
+            )}
             {business.phone && (
               <>
                 <View style={[styles.separator, { backgroundColor: colors.border }]} />
@@ -237,8 +339,14 @@ export default function BusinessDetailScreen() {
                   ]}
                 >
                   {product.imageUrl ? (
-                    <Pressable onPress={() => setViewerUrl(product.imageUrl!)}>
+                    <Pressable onPress={() => openViewer(product)}>
                       <Image source={{ uri: product.imageUrl }} style={styles.productImage} />
+                      {(product.imageUrls?.length ?? 0) > 1 && (
+                        <View style={styles.photoCountBadge}>
+                          <Feather name="image" size={11} color="#fff" />
+                          <Text style={styles.photoCountText}>{product.imageUrls!.length}</Text>
+                        </View>
+                      )}
                     </Pressable>
                   ) : (
                     <View style={[styles.productImagePlaceholder, { backgroundColor: colors.secondary }]}>
@@ -324,15 +432,35 @@ export default function BusinessDetailScreen() {
                         )}
                       </View>
                     )}
-                    {business.phone && (
+                    <View style={styles.productActions}>
+                      {business.phone && (
+                        <Pressable
+                          style={[styles.inquireBtn, { backgroundColor: "#25D366" }]}
+                          onPress={() => openWhatsApp(business.phone!)}
+                        >
+                          <Feather name="message-circle" size={13} color="#fff" />
+                          <Text style={styles.inquireBtnText}>Inquire</Text>
+                        </Pressable>
+                      )}
                       <Pressable
-                        style={[styles.inquireBtn, { backgroundColor: "#25D366" }]}
-                        onPress={() => openWhatsApp(business.phone!)}
+                        style={[styles.productActionBtn, { borderColor: colors.border }]}
+                        onPress={() => requireSignIn(() => toggleProduct(product.id))}
+                        hitSlop={4}
                       >
-                        <Feather name="message-circle" size={13} color="#fff" />
-                        <Text style={styles.inquireBtnText}>Inquire</Text>
+                        <Feather
+                          name="heart"
+                          size={15}
+                          color={isProductFavorite(product.id) ? colors.primary : colors.mutedForeground}
+                        />
                       </Pressable>
-                    )}
+                      <Pressable
+                        style={[styles.productActionBtn, { borderColor: colors.border }]}
+                        onPress={() => shareProduct(product)}
+                        hitSlop={4}
+                      >
+                        <Feather name="share-2" size={15} color={colors.mutedForeground} />
+                      </Pressable>
+                    </View>
                   </View>
                 </View>
               ))}
@@ -346,23 +474,53 @@ export default function BusinessDetailScreen() {
       </ScrollView>
 
       <Modal
-        visible={!!viewerUrl}
+        visible={!!viewerImages}
         transparent
         animationType="fade"
-        onRequestClose={() => setViewerUrl(null)}
+        onRequestClose={() => setViewerImages(null)}
       >
-        <Pressable style={styles.viewerOverlay} onPress={() => setViewerUrl(null)}>
-          {viewerUrl && (
-            <Image source={{ uri: viewerUrl }} style={styles.viewerImage} resizeMode="contain" />
+        <View style={styles.viewerOverlay}>
+          {viewerImages && (
+            <ScrollView
+              horizontal
+              pagingEnabled
+              showsHorizontalScrollIndicator={false}
+              onMomentumScrollEnd={(e) =>
+                setViewerIndex(Math.round(e.nativeEvent.contentOffset.x / windowWidth))
+              }
+            >
+              {viewerImages.map((url) => (
+                <Pressable
+                  key={url}
+                  style={{ width: windowWidth, justifyContent: "center" }}
+                  onPress={() => setViewerImages(null)}
+                >
+                  <Image source={{ uri: url }} style={styles.viewerImage} resizeMode="contain" />
+                </Pressable>
+              ))}
+            </ScrollView>
+          )}
+          {viewerImages && viewerImages.length > 1 && (
+            <View style={[styles.viewerDots, { bottom: insets.bottom + 24 }]}>
+              {viewerImages.map((url, i) => (
+                <View
+                  key={url}
+                  style={[
+                    styles.viewerDot,
+                    { backgroundColor: i === viewerIndex ? "#fff" : "rgba(255,255,255,0.4)" },
+                  ]}
+                />
+              ))}
+            </View>
           )}
           <Pressable
             style={[styles.viewerClose, { top: topPad + 16 }]}
-            onPress={() => setViewerUrl(null)}
+            onPress={() => setViewerImages(null)}
             hitSlop={12}
           >
             <Feather name="x" size={26} color="#fff" />
           </Pressable>
-        </Pressable>
+        </View>
       </Modal>
     </View>
   );
@@ -464,4 +622,37 @@ const styles = StyleSheet.create({
     borderRadius: 8,
   },
   inquireBtnText: { color: "#fff", fontSize: 13, fontWeight: "600" as const },
+  headerActions: { flexDirection: "row", alignItems: "center" },
+  headerIconBtn: { width: 40, height: 40, alignItems: "center", justifyContent: "center" },
+  productActions: { flexDirection: "row", alignItems: "center", gap: 8 },
+  productActionBtn: {
+    width: 34,
+    height: 34,
+    borderRadius: 8,
+    borderWidth: 1,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  viewerDots: {
+    position: "absolute",
+    left: 0,
+    right: 0,
+    flexDirection: "row",
+    justifyContent: "center",
+    gap: 8,
+  },
+  viewerDot: { width: 8, height: 8, borderRadius: 4 },
+  photoCountBadge: {
+    position: "absolute",
+    bottom: 8,
+    right: 8,
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 4,
+    backgroundColor: "rgba(0,0,0,0.6)",
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: 10,
+  },
+  photoCountText: { color: "#fff", fontSize: 11, fontWeight: "600" as const },
 });

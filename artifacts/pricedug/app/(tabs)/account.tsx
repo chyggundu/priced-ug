@@ -142,6 +142,14 @@ export default function AccountScreen() {
             <Feather name="chevron-right" size={16} color={colors.mutedForeground} />
           </Pressable>
 
+          <View style={[styles.menuDivider, { backgroundColor: colors.border }]} />
+
+          <Pressable style={styles.menuItem} onPress={() => router.push("/favorites")}>
+            <Feather name="heart" size={18} color={colors.primary} />
+            <Text style={[styles.menuItemText, { color: colors.foreground }]}>My Favorites</Text>
+            <Feather name="chevron-right" size={16} color={colors.mutedForeground} />
+          </Pressable>
+
           {canAccessCustomers && (
             <>
               <View style={[styles.menuDivider, { backgroundColor: colors.border }]} />

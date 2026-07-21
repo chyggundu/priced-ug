@@ -13,6 +13,7 @@ import {
 } from "react-native";
 import { Link, useRouter } from "expo-router";
 import { useSignIn } from "@clerk/expo";
+import GoogleAuthButton from "../../components/GoogleAuthButton";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Feather } from "@expo/vector-icons";
 import * as SecureStore from "expo-secure-store";
@@ -305,6 +306,8 @@ export default function SignInScreen() {
             <Text style={styles.link}>Sign up</Text>
           </Link>
         </View>
+
+        <GoogleAuthButton />
       </ScrollView>
     </KeyboardAvoidingView>
   );

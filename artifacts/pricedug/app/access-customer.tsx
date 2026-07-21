@@ -10,6 +10,7 @@ import {
   Platform,
   Linking,
   Modal,
+  Alert,
 } from "react-native";
 import { Image } from "expo-image";
 import { useRouter } from "expo-router";
@@ -21,6 +22,7 @@ import {
   useGetMyBusiness,
   useLookupCustomer,
   useGetAdminCustomers,
+  useAdminDeleteCustomer,
   type Customer,
 } from "@workspace/api-client-react";
 import ReadOnlyMap from "@/components/ReadOnlyMap";
@@ -79,7 +81,7 @@ const LOOKUP_ERROR_CONTENT: Record<
   },
 };
 
-function CustomerCard({ customer }: { customer: Customer }) {
+function CustomerCard({ customer, onDelete }: { customer: Customer; onDelete?: () => void }) {
   const colors = useColors();
   const hasPin = customer.latitude != null && customer.longitude != null;
   const [copied, setCopied] = useState(false);
@@ -121,7 +123,14 @@ function CustomerCard({ customer }: { customer: Customer }) {
 
   return (
     <View style={[styles.card, { backgroundColor: colors.card, borderColor: colors.border }]}>
-      <Text style={[styles.cardName, { color: colors.foreground }]}>{customer.fullName}</Text>
+      <View style={styles.cardHeader}>
+        <Text style={[styles.cardName, { color: colors.foreground, flex: 1 }]}>{customer.fullName}</Text>
+        {onDelete && (
+          <Pressable onPress={onDelete} hitSlop={8}>
+            <Feather name="trash-2" size={18} color={colors.destructive} />
+          </Pressable>
+        )}
+      </View>
 
       <View style={styles.row}>
         <Feather name="phone" size={14} color={colors.mutedForeground} />
@@ -213,9 +222,32 @@ export default function AccessCustomerScreen() {
     query: { enabled: !!isSignedIn && !isAdmin, retry: false },
   });
   const lookup = useLookupCustomer();
-  const { data: allCustomers = [], isLoading: listLoading } = useGetAdminCustomers({
+  const { data: allCustomers = [], isLoading: listLoading, refetch: refetchCustomers } = useGetAdminCustomers({
     query: { enabled: !!isSignedIn && isAdmin },
   });
+  const deleteCustomer = useAdminDeleteCustomer();
+
+  const handleDeleteCustomer = (id: number, name: string) => {
+    Alert.alert(
+      "Delete Customer Profile",
+      `${name}'s delivery profile (including their address photo) will be permanently deleted. This cannot be undone.`,
+      [
+        { text: "Cancel", style: "cancel" },
+        {
+          text: "Delete",
+          style: "destructive",
+          onPress: async () => {
+            try {
+              await deleteCustomer.mutateAsync({ id });
+              refetchCustomers();
+            } catch {
+              Alert.alert("Error", "Could not delete the customer profile. Please try again.");
+            }
+          },
+        },
+      ]
+    );
+  };
 
   const [phone, setPhone] = useState("");
   const [district, setDistrict] = useState("");
@@ -369,7 +401,13 @@ export default function AccessCustomerScreen() {
             ) : allCustomers.length === 0 ? (
               <Text style={[styles.emptyText, { color: colors.mutedForeground }]}>No customers yet.</Text>
             ) : (
-              allCustomers.map((c) => <CustomerCard key={c.id} customer={c} />)
+              allCustomers.map((c) => (
+                <CustomerCard
+                  key={c.id}
+                  customer={c}
+                  onDelete={() => handleDeleteCustomer(c.id, c.fullName)}
+                />
+              ))
             )}
           </View>
         )}
@@ -432,7 +470,8 @@ const styles = StyleSheet.create({
   },
   retryBtnText: { color: "#fff", fontSize: 15, fontWeight: "600" as const },
   card: { borderRadius: 12, borderWidth: 1, padding: 16, marginBottom: 12 },
-  cardName: { fontSize: 17, fontWeight: "700" as const, marginBottom: 10 },
+  cardHeader: { flexDirection: "row", alignItems: "center", gap: 10, marginBottom: 10 },
+  cardName: { fontSize: 17, fontWeight: "700" as const },
   row: { flexDirection: "row", alignItems: "center", gap: 8, marginBottom: 6 },
   rowText: { fontSize: 14, flex: 1 },
   photoRow: { flexDirection: "row", alignItems: "center", gap: 12, marginTop: 12 },

@@ -12,6 +12,7 @@ import {
 } from "react-native";
 import { Link, useRouter } from "expo-router";
 import { useSignUp } from "@clerk/expo";
+import GoogleAuthButton from "../../components/GoogleAuthButton";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 export default function SignUpScreen() {
@@ -110,6 +111,8 @@ export default function SignUpScreen() {
         >
           {fetchStatus === "fetching" ? <ActivityIndicator color="#fff" /> : <Text style={styles.buttonText}>Sign Up</Text>}
         </Pressable>
+
+        <GoogleAuthButton />
 
         <View style={styles.footer}>
           <Text style={styles.footerText}>Already have an account? </Text>

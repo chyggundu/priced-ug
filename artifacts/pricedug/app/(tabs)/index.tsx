@@ -12,12 +12,14 @@ import {
   Linking,
   Modal,
 } from "react-native";
-import { useRouter } from "expo-router";
+import { useRouter, useFocusEffect } from "expo-router";
 import { Feather } from "@expo/vector-icons";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useAuth } from "@clerk/expo";
 import { useGetCategories, useGetProducts } from "@workspace/api-client-react";
 import { useColors } from "@/hooks/useColors";
+import { useFavorites } from "@/hooks/useFavorites";
+import { getRecentlyViewed, type RecentBusiness } from "@/lib/recentlyViewed";
 
 const WHATSAPP_NUMBER = "18186603495";
 
@@ -89,6 +91,22 @@ export default function BrowseScreen() {
   const [selectedCondition, setSelectedCondition] = useState<string | null>(null);
   const [sortBy, setSortBy] = useState<SortKey>("newest");
   const [filtersOpen, setFiltersOpen] = useState(false);
+  const [recentBusinesses, setRecentBusinesses] = useState<RecentBusiness[]>([]);
+  const { isProductFavorite, toggleProduct } = useFavorites();
+
+  useFocusEffect(
+    React.useCallback(() => {
+      getRecentlyViewed().then(setRecentBusinesses);
+    }, [])
+  );
+
+  const handleToggleFavorite = (productId: number) => {
+    if (!isSignedIn) {
+      router.push("/(auth)/sign-in");
+      return;
+    }
+    toggleProduct(productId);
+  };
 
   // Debounce typing into the actual search query so items appear as you type.
   useEffect(() => {
@@ -172,9 +190,14 @@ export default function BrowseScreen() {
               <Text style={styles.logoText}>Priced Ug</Text>
             </View>
           </View>
-          <Pressable onPress={openWhatsApp} style={styles.whatsappBtn}>
-            <Feather name="message-circle" size={20} color="#25D366" />
-          </Pressable>
+          <View style={styles.headerActions}>
+            <Pressable onPress={() => router.push("/favorites")} style={styles.headerIconBtn}>
+              <Feather name="heart" size={20} color={colors.primary} />
+            </Pressable>
+            <Pressable onPress={openWhatsApp} style={styles.whatsappBtn}>
+              <Feather name="message-circle" size={20} color="#25D366" />
+            </Pressable>
+          </View>
         </View>
 
         <View style={styles.searchRow}>
@@ -233,6 +256,52 @@ export default function BrowseScreen() {
               </View>
               <Feather name="chevron-right" size={20} color="#fff" />
             </Pressable>
+          </View>
+        )}
+
+        {/* Nearby stores shortcut */}
+        <View style={styles.section}>
+          <Pressable
+            style={[styles.nearbyBanner, { backgroundColor: colors.card, borderColor: colors.border }]}
+            onPress={() => router.push("/nearby")}
+          >
+            <View style={[styles.nearbyIcon, { backgroundColor: colors.secondary }]}>
+              <Feather name="map-pin" size={18} color={colors.primary} />
+            </View>
+            <Text style={[styles.nearbyText, { color: colors.foreground }]}>Stores near me</Text>
+            <Feather name="chevron-right" size={18} color={colors.mutedForeground} />
+          </Pressable>
+        </View>
+
+        {/* Recently viewed */}
+        {recentBusinesses.length > 0 && (
+          <View style={styles.section}>
+            <Text style={[styles.sectionTitle, { color: colors.foreground }]}>Recently Viewed</Text>
+            <ScrollView horizontal showsHorizontalScrollIndicator={false}>
+              {recentBusinesses.map((biz) => (
+                <Pressable
+                  key={biz.id}
+                  style={[styles.recentCard, { backgroundColor: colors.card, borderColor: colors.border }]}
+                  onPress={() => router.push(`/business/${biz.id}`)}
+                >
+                  {biz.imageUrl ? (
+                    <Image source={{ uri: biz.imageUrl }} style={styles.recentImage} />
+                  ) : (
+                    <View style={[styles.recentImagePlaceholder, { backgroundColor: colors.secondary }]}>
+                      <Feather name="briefcase" size={18} color={colors.primary} />
+                    </View>
+                  )}
+                  <Text style={[styles.recentName, { color: colors.foreground }]} numberOfLines={1}>
+                    {biz.name}
+                  </Text>
+                  {biz.city && (
+                    <Text style={[styles.recentCity, { color: colors.mutedForeground }]} numberOfLines={1}>
+                      {biz.city}
+                    </Text>
+                  )}
+                </Pressable>
+              ))}
+            </ScrollView>
           </View>
         )}
 
@@ -315,6 +384,20 @@ export default function BrowseScreen() {
                       <Feather name="package" size={28} color={colors.primary} />
                     </View>
                   )}
+                  <Pressable
+                    onPress={() => handleToggleFavorite(product.id)}
+                    hitSlop={8}
+                    style={[
+                      styles.cardHeart,
+                      {
+                        backgroundColor: isProductFavorite(product.id)
+                          ? "rgba(224,30,55,0.92)"
+                          : "rgba(0,0,0,0.35)",
+                      },
+                    ]}
+                  >
+                    <Feather name="heart" size={15} color="#fff" />
+                  </Pressable>
                   <View style={styles.businessInfo}>
                     <Text style={[styles.businessName, { color: colors.foreground }]} numberOfLines={1}>
                       {product.name}
@@ -472,6 +555,55 @@ export default function BrowseScreen() {
 
 const styles = StyleSheet.create({
   container: { flex: 1 },
+  headerActions: { flexDirection: "row", alignItems: "center", gap: 8 },
+  headerIconBtn: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: "#FFF0F2",
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  nearbyBanner: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 12,
+    borderRadius: 12,
+    borderWidth: 1,
+    paddingHorizontal: 14,
+    paddingVertical: 12,
+  },
+  nearbyIcon: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  nearbyText: { flex: 1, fontSize: 15, fontWeight: "600" as const },
+  recentCard: {
+    width: 120,
+    borderRadius: 12,
+    borderWidth: 1,
+    overflow: "hidden",
+    marginRight: 10,
+    paddingBottom: 8,
+  },
+  recentImage: { width: "100%", height: 70, resizeMode: "cover" },
+  recentImagePlaceholder: { width: "100%", height: 70, alignItems: "center", justifyContent: "center" },
+  recentName: { fontSize: 12, fontWeight: "600" as const, paddingHorizontal: 8, paddingTop: 6 },
+  recentCity: { fontSize: 10, paddingHorizontal: 8, paddingTop: 2 },
+  cardHeart: {
+    position: "absolute",
+    top: 8,
+    right: 8,
+    width: 28,
+    height: 28,
+    borderRadius: 14,
+    alignItems: "center",
+    justifyContent: "center",
+    zIndex: 2,
+  },
   header: {
     paddingHorizontal: 16,
     paddingBottom: 12,
