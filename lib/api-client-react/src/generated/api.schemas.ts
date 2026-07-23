@@ -85,6 +85,7 @@ export interface Product {
   name: string;
   description?: string | null;
   price?: string | null;
+  priceType?: string | null;
   imageUrl?: string | null;
   imageUrls?: string[];
   size?: string | null;
@@ -102,6 +103,7 @@ export interface ProductSearchResult {
   name: string;
   description?: string | null;
   price?: string | null;
+  priceType?: string | null;
   imageUrl?: string | null;
   imageUrls?: string[];
   size?: string | null;
@@ -123,6 +125,7 @@ export interface CreateProductInput {
   categoryId: number;
   description?: string | null;
   price?: string | null;
+  priceType?: string | null;
   imageUrl?: string | null;
   imageUrls?: string[];
   size?: string | null;
@@ -138,6 +141,7 @@ export interface UpdateProductInput {
   categoryId?: number;
   description?: string | null;
   price?: string | null;
+  priceType?: string | null;
   imageUrl?: string | null;
   imageUrls?: string[];
   size?: string | null;

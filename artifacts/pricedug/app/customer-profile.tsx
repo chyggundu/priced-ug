@@ -26,6 +26,7 @@ import {
 import { pickImageAsset } from "@/lib/imagePicker";
 import { uploadImageToSignedUrl, uploadErrorMessage } from "@/lib/uploadImage";
 import { useColors } from "@/hooks/useColors";
+import { normalizePhone, PHONE_ERROR_MESSAGE } from "@/lib/phone";
 
 export default function CustomerProfileScreen() {
   const colors = useColors();
@@ -111,12 +112,17 @@ export default function CustomerProfileScreen() {
       Alert.alert("Validation", "Full name, phone number, and district are required.");
       return;
     }
+    const normalizedPhone = normalizePhone(phone);
+    if (!normalizedPhone) {
+      Alert.alert("Validation", PHONE_ERROR_MESSAGE);
+      return;
+    }
     setSaving(true);
     try {
       await saveProfile.mutateAsync({
         data: {
           fullName: fullName.trim(),
-          phone: phone.trim(),
+          phone: normalizedPhone,
           district: district.trim(),
           town: town.trim() || null,
           village: village.trim() || null,

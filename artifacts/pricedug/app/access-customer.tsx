@@ -25,7 +25,7 @@ import {
   useAdminDeleteCustomer,
   type Customer,
 } from "@workspace/api-client-react";
-import ReadOnlyMap from "@/components/ReadOnlyMap";
+import LocationMap from "@/components/LocationMap";
 import { useColors } from "@/hooks/useColors";
 import { useAppAuth } from "@/context/AuthContext";
 
@@ -57,7 +57,7 @@ const LOOKUP_ERROR_CONTENT: Record<
   notFound: {
     icon: "user-x",
     title: "No customer found",
-    message: "No customer matches that phone number and district. Double-check the details and try again.",
+    message: "No customer matches that phone number and location. Double-check the details and try again.",
   },
   forbidden: {
     icon: "lock",
@@ -165,7 +165,7 @@ function CustomerCard({ customer, onDelete }: { customer: Customer; onDelete?: (
 
       {hasPin && (
         <View style={{ marginTop: 12 }}>
-          <ReadOnlyMap latitude={customer.latitude!} longitude={customer.longitude!} height={180} />
+          <LocationMap latitude={customer.latitude!} longitude={customer.longitude!} height={200} label="Open customer location in Google Maps" />
         </View>
       )}
 
@@ -312,7 +312,7 @@ export default function AccessCustomerScreen() {
       <ScrollView style={styles.content} keyboardShouldPersistTaps="handled" showsVerticalScrollIndicator={false}>
         <View style={styles.form}>
           <Text style={[styles.intro, { color: colors.mutedForeground }]}>
-            Enter the customer's registered phone number and district to retrieve their delivery details.
+            Enter the customer's registered phone number and location (their district, town, or village) to retrieve their delivery details.
           </Text>
 
           <Text style={[styles.label, { color: colors.foreground }]}>Phone Number</Text>
@@ -325,12 +325,12 @@ export default function AccessCustomerScreen() {
             keyboardType="phone-pad"
           />
 
-          <Text style={[styles.label, { color: colors.foreground }]}>District</Text>
+          <Text style={[styles.label, { color: colors.foreground }]}>Location</Text>
           <TextInput
             style={[styles.input, { backgroundColor: colors.muted, color: colors.foreground }]}
             value={district}
             onChangeText={setDistrict}
-            placeholder="e.g. Kampala"
+            placeholder="e.g. Kampala, Nakawa or Kyambogo"
             placeholderTextColor={colors.mutedForeground}
           />
 

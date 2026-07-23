@@ -18,6 +18,7 @@ import { pickImageAsset } from "@/lib/imagePicker";
 import { uploadImageToSignedUrl, uploadErrorMessage } from "@/lib/uploadImage";
 import { useCreateProduct, useGetUploadUrl, useGetCategories } from "@workspace/api-client-react";
 import { useColors } from "@/hooks/useColors";
+import { PRICE_TYPE_OPTIONS, type PriceType } from "@/lib/formatPrice";
 
 const CONDITION_OPTIONS = ["New", "Slightly Used", "Used"] as const;
 
@@ -35,6 +36,7 @@ export default function AddProductScreen() {
   const [categoryId, setCategoryId] = useState<number | null>(null);
   const [description, setDescription] = useState("");
   const [price, setPrice] = useState("");
+  const [priceType, setPriceType] = useState<PriceType>("exact");
   const [size, setSize] = useState("");
   const [materials, setMaterials] = useState("");
   const [color, setColor] = useState("");
@@ -90,6 +92,7 @@ export default function AddProductScreen() {
           categoryId,
           description: description.trim() || null,
           price: price.trim() || null,
+          priceType,
           size: size.trim() || null,
           materials: materials.trim() || null,
           color: color.trim() || null,
@@ -214,6 +217,25 @@ export default function AddProductScreen() {
             placeholderTextColor={colors.mutedForeground}
             keyboardType="numeric"
           />
+
+          <Text style={[styles.label, { color: colors.foreground }]}>Price Shown As</Text>
+          <View style={styles.conditionWrap}>
+            {PRICE_TYPE_OPTIONS.map((opt) => {
+              const selected = priceType === opt.value;
+              return (
+                <Pressable
+                  key={opt.value}
+                  style={[styles.categoryChip, { backgroundColor: selected ? colors.primary : colors.muted }]}
+                  onPress={() => setPriceType(opt.value)}
+                >
+                  {selected && <Feather name="check" size={13} color="#fff" style={{ marginRight: 4 }} />}
+                  <Text style={[styles.categoryChipText, { color: selected ? "#fff" : colors.foreground }]}>
+                    {opt.label}
+                  </Text>
+                </Pressable>
+              );
+            })}
+          </View>
 
           <Text style={[styles.label, { color: colors.foreground }]}>Description</Text>
           <TextInput

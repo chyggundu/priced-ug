@@ -20,6 +20,7 @@ import {
   useDeleteProduct,
 } from "@workspace/api-client-react";
 import { useColors } from "@/hooks/useColors";
+import { formatPrice } from "@/lib/formatPrice";
 
 export default function MyBusinessScreen() {
   const colors = useColors();
@@ -211,7 +212,7 @@ export default function MyBusinessScreen() {
                     </Text>
                     {product.price && (
                       <Text style={[styles.productPrice, { color: colors.primary }]}>
-                        UGX {product.price}
+                        {formatPrice(product.price, product.priceType)}
                       </Text>
                     )}
                     {product.size && (

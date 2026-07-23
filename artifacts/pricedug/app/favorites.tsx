@@ -14,6 +14,7 @@ import { Feather } from "@expo/vector-icons";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useColors } from "@/hooks/useColors";
 import { useFavorites } from "@/hooks/useFavorites";
+import { formatPrice } from "@/lib/formatPrice";
 
 export default function FavoritesScreen() {
   const colors = useColors();
@@ -135,7 +136,7 @@ export default function FavoritesScreen() {
                       </Text>
                       {product.price && (
                         <Text style={[styles.cardPrice, { color: colors.primary }]} numberOfLines={1}>
-                          UGX {product.price}
+                          {formatPrice(product.price, product.priceType)}
                         </Text>
                       )}
                       <View style={styles.metaRow}>

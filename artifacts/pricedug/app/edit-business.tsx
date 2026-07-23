@@ -26,6 +26,7 @@ import {
   useGetUploadUrl,
 } from "@workspace/api-client-react";
 import { useColors } from "@/hooks/useColors";
+import { normalizePhone, PHONE_ERROR_MESSAGE } from "@/lib/phone";
 
 export default function EditBusinessScreen() {
   const colors = useColors();
@@ -120,6 +121,15 @@ export default function EditBusinessScreen() {
       return;
     }
 
+    let normalizedPhone: string | null = null;
+    if (phone.trim()) {
+      normalizedPhone = normalizePhone(phone);
+      if (!normalizedPhone) {
+        Alert.alert("Validation", PHONE_ERROR_MESSAGE);
+        return;
+      }
+    }
+
     setSaving(true);
     try {
       const payload = {
@@ -127,7 +137,7 @@ export default function EditBusinessScreen() {
         description: description.trim() || null,
         address: address.trim() || null,
         city: city.trim() || null,
-        phone: phone.trim() || null,
+        phone: normalizedPhone,
         imageUrl: imageUrl ?? null,
         latitude,
         longitude,

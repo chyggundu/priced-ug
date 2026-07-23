@@ -20,6 +20,7 @@ import { useGetCategories, useGetProducts } from "@workspace/api-client-react";
 import { useColors } from "@/hooks/useColors";
 import { useFavorites } from "@/hooks/useFavorites";
 import { getRecentlyViewed, type RecentBusiness } from "@/lib/recentlyViewed";
+import { formatPrice } from "@/lib/formatPrice";
 
 const WHATSAPP_NUMBER = "18186603495";
 
@@ -404,7 +405,7 @@ export default function BrowseScreen() {
                     </Text>
                     {product.price && (
                       <Text style={[styles.priceText, { color: colors.primary }]} numberOfLines={1}>
-                        UGX {product.price}
+                        {formatPrice(product.price, product.priceType)}
                       </Text>
                     )}
                     {(product.condition || product.color) && (

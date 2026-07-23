@@ -26,29 +26,86 @@ export default function GoogleAuthButton() {
   const onPress = useCallback(async () => {
     setLoading(true);
     try {
-      const { createdSessionId, setActive } = await startSSOFlow({
+      const { createdSessionId, setActive, signIn, signUp } = await startSSOFlow({
         strategy: "oauth_google",
         redirectUrl: AuthSession.makeRedirectUri(),
       });
 
+      const goHome = async ({ session, decorateUrl }: any) => {
+        if (session?.currentTask) {
+          return;
+        }
+        const url = decorateUrl("/");
+        if (url.startsWith("http")) return;
+        router.replace("/(tabs)");
+      };
+
       if (createdSessionId) {
-        await setActive!({
-          session: createdSessionId,
-          navigate: async ({ session, decorateUrl }) => {
-            if (session?.currentTask) {
-              return;
-            }
-            const url = decorateUrl("/");
-            if (url.startsWith("http")) return;
-            router.replace("/(tabs)");
-          },
-        });
-      } else {
-        Alert.alert(
-          "Almost there",
-          "Google sign-in needs one more step. Please try again or use email and password."
-        );
+        await setActive!({ session: createdSessionId, navigate: goHome });
+        return;
       }
+
+      // No session yet — Clerk stopped part-way ("Almost there"). Finish the
+      // remaining steps ourselves: satisfy sign-up requirements (e.g. legal
+      // consent) and run Clerk's bidirectional transfer flow between the
+      // sign-in and sign-up objects.
+      let sessionId: string | null = null;
+
+      try {
+        if (signUp && signUp.status === "missing_requirements") {
+          let current = signUp;
+          if (current.missingFields.includes("legal_accepted")) {
+            current = await current.update({ legalAccepted: true });
+          } else if (
+            current.missingFields.length === 0 &&
+            current.unverifiedFields.length === 0
+          ) {
+            current = await current.update({});
+          }
+          if (current.status === "complete" && current.createdSessionId) {
+            sessionId = current.createdSessionId;
+          }
+        }
+
+        if (
+          !sessionId &&
+          signUp &&
+          signIn?.firstFactorVerification?.status === "transferable"
+        ) {
+          const transferred = await signUp.create({ transfer: true });
+          if (transferred.status === "complete" && transferred.createdSessionId) {
+            sessionId = transferred.createdSessionId;
+          }
+        }
+
+        if (
+          !sessionId &&
+          signIn &&
+          signUp?.verifications?.externalAccount?.status === "transferable"
+        ) {
+          const transferred = await signIn.create({ transfer: true });
+          if (transferred.status === "complete" && transferred.createdSessionId) {
+            sessionId = transferred.createdSessionId;
+          }
+        }
+      } catch {
+        // fall through to the alert below
+      }
+
+      if (sessionId) {
+        await setActive!({ session: sessionId, navigate: goHome });
+        return;
+      }
+
+      const pending = [
+        ...(signUp?.missingFields ?? []),
+        ...(signUp?.unverifiedFields ?? []),
+      ];
+      const missing = pending.length ? ` (needs: ${pending.join(", ")})` : "";
+      Alert.alert(
+        "Almost there",
+        `Google sign-in needs one more step${missing}. Please try again or use email and password.`
+      );
     } catch (err: any) {
       // Surface Clerk's real reason (Clerk errors carry an `errors[]` array) so
       // config problems (Google connection off, missing prod OAuth credentials,

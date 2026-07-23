@@ -28,6 +28,8 @@ import { useAppAuth } from "@/context/AuthContext";
 import { useFavorites } from "@/hooks/useFavorites";
 import { recordBusinessView } from "@/lib/recentlyViewed";
 import { BusinessReviews } from "@/components/BusinessReviews";
+import { formatPrice } from "@/lib/formatPrice";
+import LocationMap from "@/components/LocationMap";
 
 export default function BusinessDetailScreen() {
   const colors = useColors();
@@ -96,10 +98,11 @@ export default function BusinessDetailScreen() {
     Share.share({ message: parts.join("\n") }).catch(() => {});
   };
 
-  const shareProduct = (product: { name: string; price?: string | null }) => {
+  const shareProduct = (product: { name: string; price?: string | null; priceType?: string | null }) => {
     if (!business) return;
+    const priceText = formatPrice(product.price, product.priceType);
     const parts = [
-      `${product.name}${product.price ? ` – UGX ${product.price}` : ""}`,
+      `${product.name}${priceText ? ` – ${priceText}` : ""}`,
       `Available at ${business.name} on Priced Ug`,
       business.phone ? `Contact: ${business.phone}` : null,
       "Find it on the Priced Ug app!",
@@ -276,6 +279,14 @@ export default function BusinessDetailScreen() {
                   <Feather name="navigation" size={16} color={colors.primary} />
                   <Text style={[styles.detailText, { color: colors.primary }]}>Get Directions</Text>
                 </Pressable>
+                <View style={{ marginTop: 12 }}>
+                  <LocationMap
+                    latitude={business.latitude}
+                    longitude={business.longitude}
+                    height={220}
+                    label="Open in Google Maps"
+                  />
+                </View>
               </>
             )}
             {(business.openingTime || business.closingTime) && (
@@ -383,7 +394,7 @@ export default function BusinessDetailScreen() {
                     </View>
                     {product.price && (
                       <Text style={[styles.productPrice, { color: colors.primary }]}>
-                        UGX {product.price}
+                        {formatPrice(product.price, product.priceType)}
                       </Text>
                     )}
                     {product.deliveredByPricedUg && (
