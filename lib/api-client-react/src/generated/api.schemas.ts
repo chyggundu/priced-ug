@@ -88,6 +88,7 @@ export interface Product {
   priceType?: string | null;
   imageUrl?: string | null;
   imageUrls?: string[];
+  videoUrl?: string | null;
   size?: string | null;
   materials?: string | null;
   color?: string | null;
@@ -106,6 +107,7 @@ export interface ProductSearchResult {
   priceType?: string | null;
   imageUrl?: string | null;
   imageUrls?: string[];
+  videoUrl?: string | null;
   size?: string | null;
   materials?: string | null;
   color?: string | null;
@@ -128,6 +130,7 @@ export interface CreateProductInput {
   priceType?: string | null;
   imageUrl?: string | null;
   imageUrls?: string[];
+  videoUrl?: string | null;
   size?: string | null;
   materials?: string | null;
   color?: string | null;
@@ -144,6 +147,7 @@ export interface UpdateProductInput {
   priceType?: string | null;
   imageUrl?: string | null;
   imageUrls?: string[];
+  videoUrl?: string | null;
   size?: string | null;
   materials?: string | null;
   color?: string | null;

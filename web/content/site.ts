@@ -26,7 +26,7 @@ export const links = {
   playStore: "",
   /** Taken from the Contact section of the published privacy policy. */
   email: "priceduganda@gmail.com",
-  whatsapp: "",
+  whatsapp: "256787298866",
   phone: "",
 } as const;
 

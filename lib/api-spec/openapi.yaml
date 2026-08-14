@@ -801,6 +801,9 @@ components:
         imageUrl:
           type: string
           nullable: true
+        videoUrl:
+          type: string
+          nullable: true
         size:
           type: string
           nullable: true
@@ -898,6 +901,9 @@ components:
         imageUrl:
           type: string
           nullable: true
+        videoUrl:
+          type: string
+          nullable: true
         size:
           type: string
           nullable: true
@@ -930,6 +936,9 @@ components:
           type: string
           nullable: true
         imageUrl:
+          type: string
+          nullable: true
+        videoUrl:
           type: string
           nullable: true
         size:

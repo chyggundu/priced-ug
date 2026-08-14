@@ -10,6 +10,7 @@ export const productsTable = pgTable("products", {
   description: text("description"),
   price: text("price"),
   imageUrl: text("image_url"),
+  videoUrl: text("video_url"),
   size: text("size"),
   materials: text("materials"),
   color: text("color"),

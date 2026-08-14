@@ -29,6 +29,7 @@ const DEFAULT_CATEGORIES = [
   "Restaurants",
   "Saloons",
   "Schools",
+  "Security And Video Surveillance",
   "Services",
   "Shoes",
   "Tilers",

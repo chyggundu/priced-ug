@@ -15,10 +15,12 @@ import { useRouter } from "expo-router";
 import { Feather } from "@expo/vector-icons";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { pickImageAsset } from "@/lib/imagePicker";
+import { pickVideoAsset } from "@/lib/videoPicker";
 import { uploadImageToSignedUrl, uploadErrorMessage } from "@/lib/uploadImage";
 import { useCreateProduct, useGetUploadUrl, useGetCategories } from "@workspace/api-client-react";
 import { useColors } from "@/hooks/useColors";
 import { PRICE_TYPE_OPTIONS, type PriceType } from "@/lib/formatPrice";
+import VideoModal from "@/components/VideoModal";
 
 const CONDITION_OPTIONS = ["New", "Slightly Used", "Used"] as const;
 
@@ -44,7 +46,10 @@ export default function AddProductScreen() {
   const [deliveredByPricedUg, setDeliveredByPricedUg] = useState(false);
   const [deliveredByBusiness, setDeliveredByBusiness] = useState(false);
   const [imageUrls, setImageUrls] = useState<string[]>([]);
+  const [videoUrl, setVideoUrl] = useState<string | null>(null);
   const [uploading, setUploading] = useState(false);
+  const [uploadingVideo, setUploadingVideo] = useState(false);
+  const [previewingVideo, setPreviewingVideo] = useState(false);
   const [saving, setSaving] = useState(false);
 
   const pickImage = async () => {
@@ -75,6 +80,26 @@ export default function AddProductScreen() {
     setImageUrls((prev) => prev.filter((u) => u !== url));
   };
 
+  const pickVideo = async () => {
+    const asset = await pickVideoAsset();
+    if (!asset) return;
+
+    setUploadingVideo(true);
+    try {
+      const filename = asset.uri.split("/").pop() ?? "video.mp4";
+      const contentType = asset.mimeType || "video/mp4";
+      const { uploadUrl, publicUrl } = await getUploadUrl.mutateAsync({
+        data: { filename, contentType },
+      });
+      await uploadImageToSignedUrl(uploadUrl, asset.uri, contentType);
+      setVideoUrl(publicUrl);
+    } catch (err) {
+      Alert.alert("Upload failed", uploadErrorMessage(err, "Could not upload video."));
+    } finally {
+      setUploadingVideo(false);
+    }
+  };
+
   const handleSave = async () => {
     if (!name.trim()) {
       Alert.alert("Validation", "Product name is required.");
@@ -99,6 +124,7 @@ export default function AddProductScreen() {
           condition: condition || null,
           imageUrl: imageUrls[0] ?? null,
           imageUrls,
+          videoUrl,
           deliveredByPricedUg,
           deliveredByBusiness,
         },
@@ -178,6 +204,45 @@ export default function AddProductScreen() {
             </Text>
           </View>
         )}
+
+        <View style={styles.videoSection}>
+          <Text style={[styles.label, { color: colors.foreground }]}>Video (optional)</Text>
+          {videoUrl ? (
+            <View style={styles.videoThumbWrap}>
+              <Pressable
+                style={[styles.videoThumb, { backgroundColor: colors.secondary }]}
+                onPress={() => setPreviewingVideo(true)}
+              >
+                <Feather name="play-circle" size={26} color={colors.primary} />
+                <Text style={[styles.videoThumbText, { color: colors.primary }]}>Preview</Text>
+              </Pressable>
+              <Pressable
+                style={styles.photoRemove}
+                onPress={() => setVideoUrl(null)}
+                hitSlop={8}
+              >
+                <Feather name="x" size={14} color="#fff" />
+              </Pressable>
+            </View>
+          ) : (
+            <Pressable
+              style={[styles.videoAdd, { backgroundColor: colors.secondary }]}
+              onPress={pickVideo}
+              disabled={uploadingVideo}
+            >
+              {uploadingVideo ? (
+                <ActivityIndicator color={colors.primary} />
+              ) : (
+                <>
+                  <Feather name="video" size={22} color={colors.primary} />
+                  <Text style={[styles.imagePlaceholderText, { color: colors.primary }]}>
+                    Add a short video (up to 60s)
+                  </Text>
+                </>
+              )}
+            </Pressable>
+          )}
+        </View>
 
         <View style={styles.form}>
           <Text style={[styles.label, { color: colors.foreground }]}>Product Name *</Text>
@@ -356,6 +421,12 @@ export default function AddProductScreen() {
 
         <View style={{ height: Platform.OS === "web" ? 40 : insets.bottom + 32 }} />
       </ScrollView>
+
+      <VideoModal
+        visible={previewingVideo}
+        uri={videoUrl}
+        onClose={() => setPreviewingVideo(false)}
+      />
     </View>
   );
 }
@@ -404,6 +475,25 @@ const styles = StyleSheet.create({
     justifyContent: "center",
   },
   photoHint: { fontSize: 12, paddingHorizontal: 16, paddingTop: 8 },
+  videoSection: { paddingHorizontal: 16, paddingTop: 12 },
+  videoThumbWrap: { position: "relative", alignSelf: "flex-start" },
+  videoThumb: {
+    width: 120,
+    height: 70,
+    borderRadius: 8,
+    alignItems: "center",
+    justifyContent: "center",
+    gap: 4,
+  },
+  videoThumbText: { fontSize: 11, fontWeight: "600" as const },
+  videoAdd: {
+    height: 70,
+    borderRadius: 8,
+    alignItems: "center",
+    justifyContent: "center",
+    flexDirection: "row",
+    gap: 8,
+  },
   imagePlaceholder: { width: "100%", height: 200, alignItems: "center", justifyContent: "center", gap: 10 },
   imagePlaceholderText: { fontSize: 14, fontWeight: "500" as const },
   changeImageOverlay: {

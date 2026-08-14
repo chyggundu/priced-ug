@@ -15,6 +15,7 @@ export interface Product {
   description?: string | null;
   price?: string | null;
   imageUrl?: string | null;
+  videoUrl?: string | null;
   size?: string | null;
   materials?: string | null;
   color?: string | null;

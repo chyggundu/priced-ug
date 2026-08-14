@@ -19,13 +19,14 @@
       "buildNumber": "7",
       "infoPlist": {
         "NSLocationWhenInUseUsageDescription": "Allow Priced Ug to use your location to pin your business on the map.",
-        "NSPhotoLibraryUsageDescription": "Allow Priced Ug to access your photos to upload product and business images.",
-        "NSCameraUsageDescription": "Allow Priced Ug to use your camera to take product and business photos."
+        "NSPhotoLibraryUsageDescription": "Allow Priced Ug to access your photos to upload product and business images and videos.",
+        "NSCameraUsageDescription": "Allow Priced Ug to use your camera to take product and business photos and videos.",
+        "NSMicrophoneUsageDescription": "Allow Priced Ug to use your microphone to record audio for product videos."
       }
     },
     "android": {
       "package": "com.pricedug.mobile",
-      "versionCode": 9
+      "versionCode": 10
     },
     "web": {
       "favicon": "./assets/images/favicon.png"
@@ -57,10 +58,12 @@
       [
         "expo-image-picker",
         {
-          "photosPermission": "Allow Priced Ug to access your photos to upload product and business images.",
-          "cameraPermission": "Allow Priced Ug to use your camera to take product and business photos."
+          "photosPermission": "Allow Priced Ug to access your photos to upload product and business images and videos.",
+          "cameraPermission": "Allow Priced Ug to use your camera to take product and business photos and videos.",
+          "microphonePermission": "Allow Priced Ug to use your microphone to record audio for product videos."
         }
-      ]
+      ],
+      "expo-video"
     ],
     "experiments": {
       "typedRoutes": true,

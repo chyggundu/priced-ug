@@ -163,6 +163,7 @@ const mapProduct = (r: any): Product => ({
   priceType: r.price_type ?? null,
   imageUrl: r.image_url ?? null,
   imageUrls: (r.image_urls ?? []) as string[],
+  videoUrl: r.video_url ?? null,
   size: r.size ?? null,
   materials: r.materials ?? null,
   color: r.color ?? null,
@@ -475,7 +476,7 @@ function productPayload(data: CreateProductInput | UpdateProductInput) {
   const src = data as Record<string, unknown>;
   for (const [k, dbk] of [
     ["name", "name"], ["categoryId", "category_id"], ["description", "description"],
-    ["price", "price"], ["priceType", "price_type"], ["imageUrl", "image_url"], ["imageUrls", "image_urls"], ["size", "size"],
+    ["price", "price"], ["priceType", "price_type"], ["imageUrl", "image_url"], ["imageUrls", "image_urls"], ["videoUrl", "video_url"], ["size", "size"],
     ["materials", "materials"], ["color", "color"], ["condition", "condition"],
     ["deliveredByPricedUg", "delivered_by_priced_ug"],
     ["deliveredByBusiness", "delivered_by_business"],

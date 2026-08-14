@@ -30,6 +30,7 @@ import { recordBusinessView } from "@/lib/recentlyViewed";
 import { BusinessReviews } from "@/components/BusinessReviews";
 import { formatPrice } from "@/lib/formatPrice";
 import LocationMap from "@/components/LocationMap";
+import VideoModal from "@/components/VideoModal";
 
 export default function BusinessDetailScreen() {
   const colors = useColors();
@@ -43,6 +44,7 @@ export default function BusinessDetailScreen() {
   const { isAdmin, userId } = useAppAuth();
   const [viewerImages, setViewerImages] = useState<string[] | null>(null);
   const [viewerIndex, setViewerIndex] = useState(0);
+  const [playingVideoUrl, setPlayingVideoUrl] = useState<string | null>(null);
   const windowWidth = Dimensions.get("window").width;
 
   const openViewer = (product: { imageUrls?: string[]; imageUrl?: string | null }) => {
@@ -364,6 +366,16 @@ export default function BusinessDetailScreen() {
                       <Feather name="image" size={24} color={colors.primary} />
                     </View>
                   )}
+                  {product.videoUrl && (
+                    <Pressable
+                      style={styles.videoPlayBadge}
+                      onPress={() => setPlayingVideoUrl(product.videoUrl!)}
+                      hitSlop={8}
+                    >
+                      <Feather name="play-circle" size={16} color="#fff" />
+                      <Text style={styles.photoCountText}>Video</Text>
+                    </Pressable>
+                  )}
                   {canDelete && (
                     <Pressable
                       style={styles.deleteBtn}
@@ -533,6 +545,12 @@ export default function BusinessDetailScreen() {
           </Pressable>
         </View>
       </Modal>
+
+      <VideoModal
+        visible={!!playingVideoUrl}
+        uri={playingVideoUrl}
+        onClose={() => setPlayingVideoUrl(null)}
+      />
     </View>
   );
 }
@@ -666,4 +684,17 @@ const styles = StyleSheet.create({
     borderRadius: 10,
   },
   photoCountText: { color: "#fff", fontSize: 11, fontWeight: "600" as const },
+  videoPlayBadge: {
+    position: "absolute",
+    top: 8,
+    left: 8,
+    zIndex: 2,
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 4,
+    backgroundColor: "rgba(0,0,0,0.6)",
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: 10,
+  },
 });

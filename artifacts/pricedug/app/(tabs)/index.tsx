@@ -22,7 +22,7 @@ import { useFavorites } from "@/hooks/useFavorites";
 import { getRecentlyViewed, type RecentBusiness } from "@/lib/recentlyViewed";
 import { formatPrice } from "@/lib/formatPrice";
 
-const WHATSAPP_NUMBER = "18186603495";
+const WHATSAPP_NUMBER = "256787298866";
 
 const CONDITION_OPTIONS = ["New", "Slightly Used", "Used"] as const;
 
