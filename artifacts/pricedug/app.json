@@ -2,7 +2,7 @@
   "expo": {
     "name": "Priced Ug",
     "slug": "pricedug",
-    "version": "1.2.2",
+    "version": "1.2.3",
     "orientation": "portrait",
     "icon": "./assets/images/icon.png",
     "scheme": "pricedug",
@@ -26,7 +26,7 @@
     },
     "android": {
       "package": "com.pricedug.mobile",
-      "versionCode": 10
+      "versionCode": 11
     },
     "web": {
       "favicon": "./assets/images/favicon.png"
@@ -63,11 +63,34 @@
           "microphonePermission": "Allow Priced Ug to use your microphone to record audio for product videos."
         }
       ],
-      "expo-video"
+      "expo-video",
+      "@clerk/expo",
+      [
+        "expo-build-properties",
+        {
+          "ios": {
+            "extraPods": [
+              {
+                "name": "GoogleUtilities",
+                "modular_headers": true
+              },
+              {
+                "name": "RecaptchaInterop",
+                "modular_headers": true
+              }
+            ]
+          }
+        }
+      ]
     ],
     "experiments": {
       "typedRoutes": true,
       "reactCompiler": true
+    },
+    "extra": {
+      "EXPO_PUBLIC_CLERK_GOOGLE_WEB_CLIENT_ID": "157407249642-g0i3nojfcv2puck6vs4qmad38gu6oemv.apps.googleusercontent.com",
+      "EXPO_PUBLIC_CLERK_GOOGLE_IOS_CLIENT_ID": "157407249642-lu1ej8o8aluse2191kcqkvsg4fj74tof.apps.googleusercontent.com",
+      "EXPO_PUBLIC_CLERK_GOOGLE_IOS_URL_SCHEME": "com.googleusercontent.apps.157407249642-lu1ej8o8aluse2191kcqkvsg4fj74tof"
     }
   }
 }

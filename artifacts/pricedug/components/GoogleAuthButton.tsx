@@ -1,8 +1,18 @@
 import React, { useCallback, useEffect, useState } from "react";
-import { View, Text, Pressable, StyleSheet, ActivityIndicator, Platform, Alert } from "react-native";
+import {
+  View,
+  Text,
+  Pressable,
+  StyleSheet,
+  ActivityIndicator,
+  Platform,
+  Alert,
+  TextInput,
+} from "react-native";
 import * as WebBrowser from "expo-web-browser";
 import * as AuthSession from "expo-auth-session";
-import { useClerk, useSSO } from "@clerk/expo";
+import { useClerk, useNativeSession, useSSO, useSignIn } from "@clerk/expo";
+import { useSignInWithGoogle } from "@clerk/expo/google";
 import { useRouter } from "expo-router";
 
 export const useWarmUpBrowser = () => {
@@ -31,9 +41,9 @@ async function waitForRecoveredSession(
   priorSessionId: string | null,
 ): Promise<boolean> {
   // "Signed in" means the app can actually mint a token for the new session.
-  // A session object alone is not enough: the browser can hand back one that the
-  // app's Clerk client cannot use, and reporting that as success navigates the
-  // user to a home screen where they are still signed out — worse than an error.
+  // A session object alone is not enough: the browser can hand back one the
+  // app's Clerk client cannot use, and reporting that as success drops the user
+  // on a home screen where they are still signed out — worse than an error.
   const usable = async (): Promise<boolean> => {
     const session = clerk.session;
     if (!session || session.id === priorSessionId) return false;
@@ -44,22 +54,35 @@ async function waitForRecoveredSession(
     }
   };
 
-  for (let attempt = 0; attempt < 10; attempt++) {
+  // Ask the server for the client instead of waiting for a background sync to
+  // arrive on its own. This is what removes the visible pause: the session is
+  // already created by the time the browser closes, so one fetch normally
+  // settles it and the retries below never run.
+  for (let attempt = 0; attempt < 4; attempt++) {
+    try {
+      await clerk.client?.reload();
+    } catch {
+      // Offline or mid-rotation; the checks below still get a chance.
+    }
+
     if (await usable()) return true;
 
-    const candidate = (clerk.client?.sessions ?? []).find(
-      (s: any) => s.status === "active" && s.id !== priorSessionId,
-    );
-    if (candidate) {
+    const candidateId =
+      clerk.client?.lastActiveSessionId ??
+      (clerk.client?.sessions ?? []).find((s: any) => s.status === "active")?.id ??
+      null;
+
+    if (candidateId && candidateId !== priorSessionId) {
       try {
-        await clerk.setActive({ session: candidate.id, navigate: goHome });
+        await clerk.setActive({ session: candidateId, navigate: goHome });
         if (await usable()) return true;
       } catch {
-        // Fall through and keep polling — a later attempt may succeed.
+        // Fall through; a later attempt may succeed.
       }
     }
 
-    await new Promise((resolve) => setTimeout(resolve, 400));
+    // Short backoff — only reached when the first fetch was too early.
+    if (attempt < 3) await new Promise((resolve) => setTimeout(resolve, 200));
   }
   return false;
 }
@@ -67,20 +90,66 @@ async function waitForRecoveredSession(
 export default function GoogleAuthButton() {
   useWarmUpBrowser();
   const { startSSOFlow } = useSSO();
+  // Native Google auth (clerk-android / clerk-ios). It signs in through the
+  // native SDK, so there is no in-app browser and no session handed back across
+  // a redirect — which is the step that drops the session on this instance.
+  // Available only once the @clerk/expo config plugin is prebuilt in; until then
+  // `isAvailable` is false and the browser flow below runs exactly as before.
+  const { startGoogleAuthenticationFlow } = useSignInWithGoogle();
+  const { isAvailable: nativeAuthAvailable } = useNativeSession();
+  const { signIn: currentSignIn } = useSignIn();
   const clerk = useClerk();
   const router = useRouter();
   const [loading, setLoading] = useState(false);
+  // Second-factor step: this instance emails a code on every sign-in, so an
+  // existing account coming back through Google lands here rather than finishing
+  // outright. A brand-new account takes the sign-up path and never sees this.
+  const [codeStep, setCodeStep] = useState(false);
+  const [code, setCode] = useState("");
+  const [codeError, setCodeError] = useState<string | null>(null);
+  const [verifying, setVerifying] = useState(false);
+
+  const finishAfterCode = useCallback(async () => {
+    setCodeError(null);
+    setVerifying(true);
+    try {
+      const { error } = await currentSignIn.mfa.verifyEmailCode({ code });
+      if (error) {
+        setCodeError(error.longMessage ?? error.message ?? "That code didn't work.");
+        return;
+      }
+      if (currentSignIn.status === "complete") {
+        await currentSignIn.finalize();
+        setCodeStep(false);
+        setCode("");
+        router.replace("/(tabs)");
+      }
+    } catch (e: any) {
+      setCodeError(e?.message ?? "Something went wrong. Please try again.");
+    } finally {
+      setVerifying(false);
+    }
+  }, [currentSignIn, code, router]);
 
   const onPress = useCallback(async () => {
     setLoading(true);
     // Snapshot before the flow so recovery can tell a new session from an old one.
     const priorSessionId = clerk.session?.id ?? null;
     try {
-      const { createdSessionId, authSessionResult, setActive, signIn, signUp } =
-        await startSSOFlow({
-          strategy: "oauth_google",
-          redirectUrl: AuthSession.makeRedirectUri(),
-        });
+      const result = nativeAuthAvailable
+        ? await startGoogleAuthenticationFlow()
+        : await startSSOFlow({
+            strategy: "oauth_google",
+            redirectUrl: AuthSession.makeRedirectUri(),
+          });
+
+      const { createdSessionId, setActive, signIn, signUp } = result;
+      // Only the browser flow reports how the web session ended; the native flow
+      // has no browser to dismiss.
+      const authSessionResult =
+        "authSessionResult" in result
+          ? (result.authSessionResult as { type?: string } | null)
+          : null;
 
       // Closing the Google page (back gesture, "Cancel", swiping the sheet away)
       // resolves the flow with no session and nothing to recover. That is not an
@@ -171,6 +240,28 @@ export default function GoogleAuthButton() {
         return;
       }
 
+      // An existing account signing back in needs the emailed code. The old code
+      // ignored this status entirely, which is why a returning user always hit
+      // the alert while a brand-new one sailed through.
+      const needsCode =
+        signIn?.status === "needs_second_factor" ||
+        signIn?.status === "needs_client_trust" ||
+        currentSignIn?.status === "needs_second_factor" ||
+        currentSignIn?.status === "needs_client_trust";
+
+      if (needsCode) {
+        const { error: sendError } = await currentSignIn.mfa.sendEmailCode();
+        if (sendError) {
+          Alert.alert(
+            "Couldn't send the code",
+            sendError.longMessage ?? sendError.message ?? "Please try again.",
+          );
+          return;
+        }
+        setCodeStep(true);
+        return;
+      }
+
       // Clerk can complete the sign-in server-side and still hand this flow back
       // a null createdSessionId — the browser-to-app handoff drops the id, but
       // the session is real and lands on the client a moment later. (The Clerk
@@ -218,7 +309,48 @@ export default function GoogleAuthButton() {
     } finally {
       setLoading(false);
     }
-  }, [startSSOFlow, clerk, router]);
+  }, [startSSOFlow, startGoogleAuthenticationFlow, nativeAuthAvailable, clerk, currentSignIn, router]);
+
+  if (codeStep) {
+    return (
+      <View style={styles.codeBox}>
+        <Text style={styles.codeTitle}>Verify your account</Text>
+        <Text style={styles.codeHint}>
+          Enter the 6-digit code we emailed you to finish signing in with Google.
+        </Text>
+        <TextInput
+          style={styles.codeInput}
+          value={code}
+          onChangeText={setCode}
+          placeholder="Verification code"
+          placeholderTextColor="#999"
+          keyboardType="numeric"
+          autoFocus
+        />
+        {codeError && <Text style={styles.codeError}>{codeError}</Text>}
+        <Pressable
+          style={[styles.googleButton, styles.verifyButton, (!code || verifying) && styles.buttonDisabled]}
+          onPress={finishAfterCode}
+          disabled={!code || verifying}
+        >
+          {verifying ? (
+            <ActivityIndicator color="#fff" />
+          ) : (
+            <Text style={styles.verifyText}>Verify</Text>
+          )}
+        </Pressable>
+        <Pressable
+          onPress={() => {
+            setCodeStep(false);
+            setCode("");
+            setCodeError(null);
+          }}
+        >
+          <Text style={styles.codeCancel}>Cancel</Text>
+        </Pressable>
+      </View>
+    );
+  }
 
   return (
     <View>
@@ -282,6 +414,28 @@ const styles = StyleSheet.create({
     fontWeight: "bold" as const,
     color: "#4285F4",
   },
+  codeBox: {
+    borderWidth: 1,
+    borderColor: "#DDDDDD",
+    borderRadius: 10,
+    padding: 16,
+    gap: 10,
+  },
+  codeTitle: { fontSize: 16, fontWeight: "700" as const, color: "#1a1a1a" },
+  codeHint: { fontSize: 13, color: "#888888" },
+  codeInput: {
+    borderWidth: 1,
+    borderColor: "#E5E5E5",
+    borderRadius: 10,
+    paddingHorizontal: 14,
+    paddingVertical: 12,
+    fontSize: 15,
+    color: "#1a1a1a",
+  },
+  codeError: { fontSize: 13, color: "#CC0020" },
+  verifyButton: { backgroundColor: "#E01E37", borderColor: "#E01E37" },
+  verifyText: { color: "#FFFFFF", fontSize: 15, fontWeight: "600" as const },
+  codeCancel: { fontSize: 14, color: "#888888", textAlign: "center" as const },
   googleText: {
     color: "#1a1a1a",
     fontSize: 15,
