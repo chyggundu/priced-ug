@@ -1,7 +1,10 @@
 "use client";
 
 import Link from "next/link";
+import { useState } from "react";
 import { useClerk, useUser } from "@clerk/react";
+import { deleteMyAccountData } from "@/lib/api";
+import { Notice } from "@/components/dashboard/DashboardShell";
 import { isAdminUser } from "@/lib/admin";
 import { DashboardShell, RequireSignIn, ghostButton } from "@/components/dashboard/DashboardShell";
 import { links } from "@/content/site";
@@ -30,6 +33,32 @@ export default function AccountPage() {
 function Account() {
   const { user } = useUser();
   const { signOut } = useClerk();
+  const [deleting, setDeleting] = useState(false);
+  const [deleteError, setDeleteError] = useState<string | null>(null);
+
+  // Same two-step order as the mobile app: clear the Supabase rows while the
+  // Clerk token is still valid, then delete the Clerk account, which ends the
+  // session. Reversing these would strand the data with no way back in.
+  const handleDelete = async () => {
+    if (
+      !window.confirm(
+        "This permanently deletes your account and all your data — your business page, products, reviews, and saved profile. This cannot be undone.",
+      )
+    ) {
+      return;
+    }
+    setDeleteError(null);
+    setDeleting(true);
+    try {
+      await deleteMyAccountData();
+      await user?.delete();
+    } catch (e) {
+      setDeleteError(
+        e instanceof Error ? e.message : "Please try again or contact support.",
+      );
+      setDeleting(false);
+    }
+  };
 
   return (
     <DashboardShell
@@ -71,11 +100,25 @@ function Account() {
         )}
       </ul>
 
-      <div className="mt-8">
+      <div className="mt-8 flex flex-wrap items-center gap-3">
         <button type="button" className={ghostButton} onClick={() => signOut({ redirectUrl: "/" })}>
           Sign out
         </button>
+        <button
+          type="button"
+          onClick={handleDelete}
+          disabled={deleting}
+          className="rounded-[10px] px-5 py-3 text-[15px] font-semibold text-brand-600 transition hover:bg-brand-100 disabled:opacity-50"
+        >
+          {deleting ? "Deleting…" : "Delete account"}
+        </button>
       </div>
+
+      {deleteError && (
+        <div className="mt-4">
+          <Notice>{deleteError}</Notice>
+        </div>
+      )}
     </DashboardShell>
   );
 }

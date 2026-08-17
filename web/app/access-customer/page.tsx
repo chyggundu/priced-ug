@@ -1,7 +1,9 @@
 "use client";
 
-import { useState } from "react";
-import { lookupCustomer, type Customer } from "@/lib/api";
+import { useEffect, useState } from "react";
+import { useUser } from "@clerk/react";
+import { getAdminCustomers, lookupCustomer, type Customer } from "@/lib/api";
+import { isAdminUser } from "@/lib/admin";
 import {
   DashboardShell,
   Notice,
@@ -106,6 +108,8 @@ function AccessCustomer() {
         </div>
       </form>
 
+      <AdminCustomerList />
+
       {customer && (
         <section className="mt-10 rounded-[10px] border border-line p-5">
           <h2 className="text-lg font-bold tracking-tight">{customer.fullName}</h2>
@@ -149,5 +153,78 @@ function AccessCustomer() {
         </section>
       )}
     </DashboardShell>
+  );
+}
+
+/**
+ * The full customer directory, which the mobile access-customer screen shows to
+ * the admin account only. RLS enforces the same rule server-side, so this is
+ * presentation, not protection.
+ */
+function AdminCustomerList() {
+  const { user } = useUser();
+  const [customers, setCustomers] = useState<Customer[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  const isAdmin = isAdminUser(user);
+
+  useEffect(() => {
+    if (!isAdmin) return;
+    getAdminCustomers()
+      .then(setCustomers)
+      .catch((e: unknown) =>
+        setError(e instanceof Error ? e.message : "Could not load customers."),
+      )
+      .finally(() => setLoading(false));
+  }, [isAdmin]);
+
+  if (!isAdmin) return null;
+
+  return (
+    <section className="mt-12">
+      <h2 className="text-lg font-bold tracking-tight">
+        All customers{" "}
+        {!loading && <span className="font-medium text-ink-400">({customers.length})</span>}
+      </h2>
+
+      {error && (
+        <div className="mt-3">
+          <Notice>{error}</Notice>
+        </div>
+      )}
+
+      {loading ? (
+        <div className="mt-4 h-24 animate-pulse rounded-[10px] bg-ink-900/5" />
+      ) : customers.length === 0 ? (
+        <p className="mt-3 text-ink-600">No delivery profiles saved yet.</p>
+      ) : (
+        <ul className="mt-4 flex flex-col gap-3">
+          {customers.map((entry) => (
+            <li
+              key={entry.id}
+              className="flex flex-wrap items-center gap-3 rounded-[10px] border border-line p-3"
+            >
+              <div className="min-w-0 flex-1">
+                <p className="truncate font-semibold">{entry.fullName}</p>
+                <p className="truncate text-sm text-ink-400">
+                  {[entry.street, entry.village, entry.town, entry.district]
+                    .filter(Boolean)
+                    .join(", ")}
+                </p>
+              </div>
+              <a
+                href={whatsappHref(entry.phone)}
+                target="_blank"
+                rel="noreferrer"
+                className="shrink-0 text-sm font-semibold text-[#25D366] transition hover:brightness-90"
+              >
+                {entry.phone}
+              </a>
+            </li>
+          ))}
+        </ul>
+      )}
+    </section>
   );
 }

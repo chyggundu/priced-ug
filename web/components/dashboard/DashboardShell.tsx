@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useAuth } from "@clerk/react";
 import { Nav } from "@/components/Nav";
+import { ConsentGate } from "@/components/ConsentGate";
 import { isClerkConfigured } from "@/lib/clerk";
 import { isSupabaseConfigured } from "@/lib/supabase";
 
@@ -92,5 +93,6 @@ function RequireSignInLive({ children }: { children: React.ReactNode }) {
     );
   }
 
-  return <>{children}</>;
+  // The app requires the agreement before any signed-in use; so does this.
+  return <ConsentGate>{children}</ConsentGate>;
 }

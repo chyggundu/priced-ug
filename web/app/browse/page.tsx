@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
 import { Nav } from "@/components/Nav";
+import { FavoriteButton } from "@/components/FavoriteButton";
 import { getCategories, searchProducts, type Category, type ProductSearchResult } from "@/lib/api";
 import { formatPrice } from "@/lib/formatPrice";
 import { isSupabaseConfigured } from "@/lib/supabase";
@@ -139,7 +140,8 @@ export default function BrowsePage() {
         ) : (
           <ul className="mt-8 grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
             {sorted.map((product) => (
-              <li key={product.id}>
+              <li key={product.id} className="relative">
+                <FavoriteButton productId={product.id} className="absolute right-3 top-3 z-10" />
                 <Link
                   href={`/business?id=${product.businessId}&item=${product.id}`}
                   className="group block overflow-hidden rounded-[10px] border border-line transition duration-300 hover:-translate-y-0.5 hover:border-brand-500 hover:shadow-lg hover:shadow-black/5"

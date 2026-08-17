@@ -12,6 +12,7 @@ import {
   linkClass,
 } from "@/components/auth/AuthShell";
 import { AuthUnavailable } from "@/components/auth/AuthUnavailable";
+import { GoogleAuthButton } from "@/components/auth/GoogleAuthButton";
 import { isClerkConfigured } from "@/lib/clerk";
 
 /** Mirrors the mobile app's sign-up screen: password, then an emailed code. */
@@ -125,6 +126,8 @@ function SignUpForm() {
           {busy ? "Creating account…" : "Sign Up"}
         </button>
       </form>
+
+      <GoogleAuthButton mode="sign-up" />
 
       <p className="mt-8 text-center text-sm text-ink-600">
         Already have an account?{" "}

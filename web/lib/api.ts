@@ -535,6 +535,22 @@ export async function lookupCustomer(phone: string, district: string): Promise<C
   return mapCustomer(data);
 }
 
+export async function getAdminCustomers(): Promise<Customer[]> {
+  const { data, error } = await sb()
+    .from("customers_view")
+    .select("*")
+    .order("created_at", { ascending: false });
+  if (error) raise(error);
+  return (data ?? []).map(mapCustomer);
+}
+
+/** Removes every row this user owns. Runs before the Clerk account is deleted,
+ *  while the token is still valid. */
+export async function deleteMyAccountData(): Promise<void> {
+  const { error } = await sb().rpc("delete_my_account");
+  if (error) raise(error);
+}
+
 /* -------------------------------------------------------------------- admin */
 
 export async function getAdminBusinesses(): Promise<Business[]> {

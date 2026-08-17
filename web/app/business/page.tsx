@@ -4,6 +4,9 @@ import { useSearchParams } from "next/navigation";
 import { Suspense, useEffect, useState } from "react";
 import { Nav } from "@/components/Nav";
 import { BusinessReviews } from "@/components/BusinessReviews";
+import { FavoriteButton } from "@/components/FavoriteButton";
+import { ShareButton } from "@/components/ShareButton";
+import { BusinessMap } from "@/components/BusinessMap";
 import { Notice } from "@/components/dashboard/DashboardShell";
 import { getBusiness, getBusinessProducts, type Business, type Product } from "@/lib/api";
 import { formatPrice, whatsappHref } from "@/lib/formatPrice";
@@ -97,7 +100,18 @@ function BusinessDetail() {
       )}
 
       <main className="mx-auto w-full max-w-4xl px-5 py-8">
-        <h1 className="text-2xl font-bold tracking-tight sm:text-3xl">{business.name}</h1>
+        <div className="flex items-start justify-between gap-4">
+          <h1 className="text-2xl font-bold tracking-tight sm:text-3xl">{business.name}</h1>
+          <div className="flex shrink-0 items-center gap-2">
+            <FavoriteButton businessId={business.id} />
+            <ShareButton
+              title={business.name}
+              text={[business.name, business.description, business.phone]
+                .filter(Boolean)
+                .join("\n")}
+            />
+          </div>
+        </div>
 
         {business.categories.length > 0 && (
           <ul className="mt-3 flex flex-wrap gap-2">
@@ -113,6 +127,14 @@ function BusinessDetail() {
         )}
 
         {business.description && <p className="mt-4 text-ink-600">{business.description}</p>}
+
+        {business.latitude != null && business.longitude != null && (
+          <BusinessMap
+            latitude={business.latitude}
+            longitude={business.longitude}
+            name={business.name}
+          />
+        )}
 
         <div className="mt-6 divide-y divide-line rounded-[10px] border border-line">
           {(business.address || business.city) && (
@@ -179,7 +201,18 @@ function BusinessDetail() {
                     product.id === highlightId ? "border-brand-500" : "border-line"
                   }`}
                 >
-                  {product.imageUrl ? (
+                  {product.imageUrls.length > 1 ? (
+                    // Mobile opens a swipeable viewer; on the web a horizontal
+                    // strip shows the same photos without hiding any behind a tap.
+                    <ul className="flex snap-x gap-1 overflow-x-auto">
+                      {product.imageUrls.map((url) => (
+                        <li key={url} className="shrink-0 snap-start">
+                          {/* eslint-disable-next-line @next/next/no-img-element */}
+                          <img src={url} alt="" className="h-44 w-56 object-cover" />
+                        </li>
+                      ))}
+                    </ul>
+                  ) : product.imageUrl ? (
                     // eslint-disable-next-line @next/next/no-img-element
                     <img src={product.imageUrl} alt="" className="h-44 w-full object-cover" />
                   ) : (

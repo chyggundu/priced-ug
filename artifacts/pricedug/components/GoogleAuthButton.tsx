@@ -30,18 +30,30 @@ async function waitForRecoveredSession(
   goHome: (opts: any) => Promise<void>,
   priorSessionId: string | null,
 ): Promise<boolean> {
-  for (let attempt = 0; attempt < 10; attempt++) {
-    // Compare against the session held before the flow started, so a stale one
-    // can never be mistaken for a successful sign-in.
-    if (clerk.session && clerk.session.id !== priorSessionId) return true;
+  // "Signed in" means the app can actually mint a token for the new session.
+  // A session object alone is not enough: the browser can hand back one that the
+  // app's Clerk client cannot use, and reporting that as success navigates the
+  // user to a home screen where they are still signed out — worse than an error.
+  const usable = async (): Promise<boolean> => {
+    const session = clerk.session;
+    if (!session || session.id === priorSessionId) return false;
+    try {
+      return Boolean(await session.getToken());
+    } catch {
+      return false;
+    }
+  };
 
-    const active = (clerk.client?.sessions ?? []).find(
-      (s: any) => s.status === "active" || s.status === "pending",
+  for (let attempt = 0; attempt < 10; attempt++) {
+    if (await usable()) return true;
+
+    const candidate = (clerk.client?.sessions ?? []).find(
+      (s: any) => s.status === "active" && s.id !== priorSessionId,
     );
-    if (active) {
+    if (candidate) {
       try {
-        await clerk.setActive({ session: active.id, navigate: goHome });
-        return true;
+        await clerk.setActive({ session: candidate.id, navigate: goHome });
+        if (await usable()) return true;
       } catch {
         // Fall through and keep polling — a later attempt may succeed.
       }
