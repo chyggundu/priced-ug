@@ -49,7 +49,6 @@ Thumbs.db
 .local/
 
 # Environment variables
-.env
-.env.local
 .env.*.local
 .mcp.json
+config.bat

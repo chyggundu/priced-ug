@@ -6,9 +6,12 @@ out/
 next-env.d.ts
 
 # Env
+# Tracked on purpose: these hold only NEXT_PUBLIC_* values, which are compiled
+# into the static site and downloaded by every visitor, so tracking them adds no
+# exposure. The negations override the repo-root .gitignore.
 .env
-.env.local
-.env.*.local
+!.env.local
+!.env.production.local
 
 # Misc
 .DS_Store

@@ -57,7 +57,10 @@ yarn-error.*
 *.tsbuildinfo
 .vercel
 
-.env
+# Tracked on purpose: this file holds only EXPO_PUBLIC_* values, which are
+# compiled into the app binary and readable by anyone who downloads it. The
+# negation is needed because the repo-root .gitignore also excludes `.env`.
+!.env
 
 # Google Play service account key (sensitive — never commit)
 google-service-account.json
