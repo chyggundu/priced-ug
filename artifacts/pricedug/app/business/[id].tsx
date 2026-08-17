@@ -153,12 +153,9 @@ export default function BusinessDetailScreen() {
   }, [products, highlightId]);
 
   const openWhatsApp = (phone: string) => {
-    Linking.openURL(`whatsapp://send?phone=${phone.replace(/\D/g, "")}`)
-      .catch(() => Linking.openURL(`tel:${phone}`));
-  };
-
-  const callPhone = (phone: string) => {
-    Linking.openURL(`tel:${phone}`);
+    const digits = phone.replace(/\D/g, "");
+    Linking.openURL(`whatsapp://send?phone=${digits}`)
+      .catch(() => Linking.openURL(`https://wa.me/${digits}`));
   };
 
   const openDirections = (lat: number, lng: number) => {
@@ -311,7 +308,7 @@ export default function BusinessDetailScreen() {
             {business.phone && (
               <>
                 <View style={[styles.separator, { backgroundColor: colors.border }]} />
-                <Pressable style={styles.detailRow} onPress={() => callPhone(business.phone!)}>
+                <Pressable style={styles.detailRow} onPress={() => openWhatsApp(business.phone!)}>
                   <Feather name="phone" size={16} color={colors.primary} />
                   <Text style={[styles.detailText, { color: colors.primary }]}>{business.phone}</Text>
                 </Pressable>
