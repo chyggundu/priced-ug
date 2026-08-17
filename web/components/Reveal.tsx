@@ -30,18 +30,34 @@ export function Reveal({ children, delay = 0, className = "" }: RevealProps) {
       return;
     }
 
+    // Reveal immediately if the element is already in the viewport
+    // (e.g. the page was anchored to this section, or it is above the fold).
+    const rect = el.getBoundingClientRect();
+    if (rect.top < window.innerHeight && rect.bottom > 0) {
+      setShown(true);
+      return;
+    }
+
+    // Fallback: guarantee content is visible after 300 ms in environments where
+    // IntersectionObserver does not fire reliably (embedded iframes, etc.).
+    const fallback = setTimeout(() => setShown(true), 300);
+
     const io = new IntersectionObserver(
       ([entry]) => {
         if (entry.isIntersecting) {
           setShown(true);
+          clearTimeout(fallback);
           io.disconnect(); // reveal once; do not re-hide on scroll back up
         }
       },
-      { threshold: 0.12, rootMargin: "0px 0px -8% 0px" },
+      { threshold: 0.05 },
     );
 
     io.observe(el);
-    return () => io.disconnect();
+    return () => {
+      clearTimeout(fallback);
+      io.disconnect();
+    };
   }, []);
 
   return (

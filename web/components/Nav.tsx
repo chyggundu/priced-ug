@@ -4,13 +4,14 @@ import Image from "next/image";
 import Link from "next/link";
 import { useEffect, useState } from "react";
 import { site } from "@/content/site";
+import { AuthButtons } from "./AuthButtons";
 
 const NAV_LINKS = [
+  { href: "/browse", label: "Browse" },
   { href: "/#how-it-works", label: "How it works" },
   { href: "/#features", label: "Features" },
-  { href: "/#team", label: "Leadership" },
   { href: "/#contact", label: "Contact" },
-  { href: "/privacy", label: "Privacy" },
+  { href: "/#download", label: "Get the app" },
 ];
 
 export function Nav() {
@@ -63,12 +64,7 @@ export function Nav() {
           ))}
         </ul>
 
-        <Link
-          href="/#download"
-          className="rounded-lg bg-brand-500 px-4 py-2 text-sm font-semibold text-white shadow-sm shadow-brand-500/30 transition duration-300 hover:-translate-y-0.5 hover:bg-brand-600 hover:shadow-lg hover:shadow-brand-500/40 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-500"
-        >
-          Get the app
-        </Link>
+        <AuthButtons />
       </nav>
     </header>
   );

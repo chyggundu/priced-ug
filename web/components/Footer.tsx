@@ -29,6 +29,9 @@ export function Footer() {
           <Link href="/privacy" className="text-ink-600 transition hover:text-brand-500">
             Privacy Policy
           </Link>
+          <Link href="/legal" className="text-ink-600 transition hover:text-brand-500">
+            User Agreement
+          </Link>
           <a
             href={`mailto:${links.email}`}
             className="text-ink-600 transition hover:text-brand-500"

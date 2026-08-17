@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { Inter } from "next/font/google";
 import { site } from "@/content/site";
+import { Providers } from "./providers";
 import "./globals.css";
 
 const inter = Inter({
@@ -66,7 +67,7 @@ export default function RootLayout({
             __html: `<style>.reveal{opacity:1!important;transform:none!important}</style>`,
           }}
         />
-        {children}
+        <Providers>{children}</Providers>
       </body>
     </html>
   );

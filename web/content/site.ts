@@ -23,7 +23,7 @@ export const site = {
  */
 export const links = {
   appStore: "",
-  playStore: "",
+  playStore: "https://play.google.com/store/apps/details?id=com.pricedug.mobile",
   /** Taken from the Contact section of the published privacy policy. */
   email: "priceduganda@gmail.com",
   whatsapp: "256787298866",
