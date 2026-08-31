@@ -1,0 +1,9 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(xcrun simctl *)",
+      "Bash(lsof -iTCP:8081 -sTCP:LISTEN -n)",
+      "Bash(java -version)"
+    ]
+  }
+}

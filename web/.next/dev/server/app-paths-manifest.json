@@ -1,0 +1,8 @@
+{
+  "/access-customer/page": "app/access-customer/page.js",
+  "/browse/page": "app/browse/page.js",
+  "/business/page": "app/business/page.js",
+  "/legal/page": "app/legal/page.js",
+  "/my-business/page": "app/my-business/page.js",
+  "/sign-in/page": "app/sign-in/page.js"
+}

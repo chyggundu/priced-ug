@@ -1,0 +1,2 @@
+{"timestamp":"00:00:00.585","source":"Server","level":"LOG","message":""}
+{"timestamp":"00:00:15.013","source":"Server","level":"WARN","message":"⚠️  Node.js 20 and below are deprecated and will no longer be supported in future versions of @supabase/supabase-js. Please upgrade to Node.js 22 or later. For more information, visit: https://github.com/orgs/supabase/discussions/45715"}
