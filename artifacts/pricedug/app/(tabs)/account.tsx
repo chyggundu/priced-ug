@@ -4,7 +4,7 @@ import { useRouter } from "expo-router";
 import { Feather } from "@expo/vector-icons";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useAuth, useUser } from "@clerk/expo";
-import { useGetMyBusiness } from "@workspace/api-client-react";
+import { useMyBusiness } from "@/lib/queries";
 import { useColors } from "@/hooks/useColors";
 import { useAppAuth } from "@/context/AuthContext";
 
@@ -14,12 +14,13 @@ export default function AccountScreen() {
   const colors = useColors();
   const router = useRouter();
   const insets = useSafeAreaInsets();
-  const { isSignedIn, signOut } = useAuth();
+  const { isSignedIn, signOut, userId } = useAuth();
   const { user } = useUser();
   const { isAdmin } = useAppAuth();
   const topPad = Platform.OS === "web" ? 67 : insets.top;
 
-  const { data: business } = useGetMyBusiness({ query: { enabled: !!isSignedIn && !isAdmin, retry: false } });
+  // RLS returns only this Clerk user's row; admins have no business of their own.
+  const { data: business } = useMyBusiness(isSignedIn && !isAdmin ? userId : null);
   const canAccessCustomers = isAdmin || !!business;
 
   const handleSignOut = () => {
@@ -38,7 +39,7 @@ export default function AccountScreen() {
   if (!isSignedIn) {
     return (
       <View style={[styles.container, styles.center, { backgroundColor: colors.background, paddingTop: topPad }]}>
-        <Feather name="user-circle" size={64} color={colors.mutedForeground} />
+        <Feather name="user" size={64} color={colors.mutedForeground} />
         <Text style={[styles.centerTitle, { color: colors.foreground }]}>Not signed in</Text>
         <Text style={[styles.centerSubtitle, { color: colors.mutedForeground }]}>
           Sign in to manage your business page

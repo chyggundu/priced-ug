@@ -15,12 +15,8 @@ import { Feather } from "@expo/vector-icons";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useAuth } from "@clerk/expo";
 import * as Clipboard from "expo-clipboard";
-import {
-  useGetMyBusiness,
-  useLookupCustomer,
-  useGetAdminCustomers,
-  type Customer,
-} from "@workspace/api-client-react";
+import { useMyBusiness } from "@/lib/queries";
+import { useAdminCustomers, useLookupCustomer, type Customer } from "@/lib/mutations";
 import ReadOnlyMap from "@/components/ReadOnlyMap";
 import { useColors } from "@/hooks/useColors";
 import { useAppAuth } from "@/context/AuthContext";
@@ -178,16 +174,16 @@ export default function AccessCustomerScreen() {
   const router = useRouter();
   const insets = useSafeAreaInsets();
   const topPad = Platform.OS === "web" ? 67 : insets.top;
-  const { isSignedIn } = useAuth();
+  const { isSignedIn, userId } = useAuth();
   const { isAdmin } = useAppAuth();
 
-  const { data: business, isLoading: bizLoading } = useGetMyBusiness({
-    query: { enabled: !!isSignedIn && !isAdmin, retry: false },
-  });
+  const { data: business, isLoading: bizLoading } = useMyBusiness(
+    isSignedIn && !isAdmin ? userId : null
+  );
   const lookup = useLookupCustomer();
-  const { data: allCustomers = [], isLoading: listLoading } = useGetAdminCustomers({
-    query: { enabled: !!isSignedIn && isAdmin },
-  });
+  const { data: allCustomers = [], isLoading: listLoading } = useAdminCustomers(
+    !!isSignedIn && isAdmin
+  );
 
   const [phone, setPhone] = useState("");
   const [district, setDistrict] = useState("");
@@ -202,7 +198,8 @@ export default function AccessCustomerScreen() {
     setLookupError(null);
     try {
       const customer = await lookup.mutateAsync({
-        data: { phone: phone.trim(), district: district.trim() },
+        phone: phone.trim(),
+        district: district.trim(),
       });
       setResult(customer);
     } catch (err) {

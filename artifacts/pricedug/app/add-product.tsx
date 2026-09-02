@@ -15,8 +15,10 @@ import { useRouter } from "expo-router";
 import { Feather } from "@expo/vector-icons";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { pickImageAsset } from "@/lib/imagePicker";
-import { uploadImageToSignedUrl } from "@/lib/uploadImage";
-import { useCreateProduct, useGetUploadUrl, useGetCategories } from "@workspace/api-client-react";
+import { useAuth } from "@clerk/expo";
+import { uploadImage } from "@/lib/storage";
+import { useCategories, useMyBusiness } from "@/lib/queries";
+import { useCreateProduct } from "@/lib/mutations";
 import { useColors } from "@/hooks/useColors";
 
 export default function AddProductScreen() {
@@ -25,9 +27,12 @@ export default function AddProductScreen() {
   const insets = useSafeAreaInsets();
   const topPad = Platform.OS === "web" ? 67 : insets.top;
 
+  const { userId } = useAuth();
+  // The API derived the owner's business from the session; PostgREST needs it
+  // named explicitly on the insert.
+  const { data: business } = useMyBusiness(userId);
   const createProduct = useCreateProduct();
-  const getUploadUrl = useGetUploadUrl();
-  const { data: categories = [] } = useGetCategories();
+  const { data: categories = [] } = useCategories();
 
   const [name, setName] = useState("");
   const [categoryId, setCategoryId] = useState<number | null>(null);
@@ -45,12 +50,8 @@ export default function AddProductScreen() {
 
     setUploading(true);
     try {
-      const filename = asset.uri.split("/").pop() ?? "image.jpg";
-      const contentType = "image/jpeg";
-      const { uploadUrl, publicUrl } = await getUploadUrl.mutateAsync({
-        data: { filename, contentType },
-      });
-      await uploadImageToSignedUrl(uploadUrl, asset.uri, contentType);
+      // Supabase issues the signed URL itself; no API round trip first.
+      const publicUrl = await uploadImage(asset.uri, "image/jpeg");
       setImageUrl(publicUrl);
     } catch {
       Alert.alert("Upload failed", "Could not upload image. Please try again.");
@@ -70,8 +71,13 @@ export default function AddProductScreen() {
     }
     setSaving(true);
     try {
+      if (!business) {
+        Alert.alert("No business", "Create your business page before adding items.");
+        return;
+      }
       await createProduct.mutateAsync({
-        data: {
+        businessId: business.id,
+        input: {
           name: name.trim(),
           categoryId,
           description: description.trim() || null,

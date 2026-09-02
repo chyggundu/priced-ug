@@ -15,8 +15,10 @@ import { useLocalSearchParams, useRouter } from "expo-router";
 import { Feather } from "@expo/vector-icons";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { pickImageAsset } from "@/lib/imagePicker";
-import { uploadImageToSignedUrl } from "@/lib/uploadImage";
-import { useUpdateProduct, useGetMyProducts, useGetUploadUrl, useGetCategories } from "@workspace/api-client-react";
+import { useAuth } from "@clerk/expo";
+import { uploadImage } from "@/lib/storage";
+import { useCategories, useMyBusiness } from "@/lib/queries";
+import { useMyProducts, useUpdateProduct } from "@/lib/mutations";
 import { useColors } from "@/hooks/useColors";
 
 export default function EditProductScreen() {
@@ -27,10 +29,11 @@ export default function EditProductScreen() {
   const productId = parseInt(id ?? "0");
   const topPad = Platform.OS === "web" ? 67 : insets.top;
 
-  const { data: products = [] } = useGetMyProducts();
-  const { data: categories = [] } = useGetCategories();
+  const { userId } = useAuth();
+  const { data: business } = useMyBusiness(userId);
+  const { data: products = [] } = useMyProducts(business?.id);
+  const { data: categories = [] } = useCategories();
   const updateProduct = useUpdateProduct();
-  const getUploadUrl = useGetUploadUrl();
 
   const product = products.find((p) => p.id === productId);
 
@@ -62,12 +65,8 @@ export default function EditProductScreen() {
 
     setUploading(true);
     try {
-      const filename = asset.uri.split("/").pop() ?? "image.jpg";
-      const contentType = "image/jpeg";
-      const { uploadUrl, publicUrl } = await getUploadUrl.mutateAsync({
-        data: { filename, contentType },
-      });
-      await uploadImageToSignedUrl(uploadUrl, asset.uri, contentType);
+      // Supabase issues the signed URL itself; no API round trip first.
+      const publicUrl = await uploadImage(asset.uri, "image/jpeg");
       setImageUrl(publicUrl);
     } catch {
       Alert.alert("Upload failed", "Could not upload image. Please try again.");
@@ -89,7 +88,7 @@ export default function EditProductScreen() {
     try {
       await updateProduct.mutateAsync({
         productId,
-        data: {
+        input: {
           name: name.trim(),
           categoryId,
           description: description.trim() || null,

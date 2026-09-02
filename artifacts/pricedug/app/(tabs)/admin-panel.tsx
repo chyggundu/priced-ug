@@ -12,13 +12,13 @@ import {
 } from "react-native";
 import { Feather } from "@expo/vector-icons";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
+import { useCategories } from "@/lib/queries";
 import {
-  useGetAdminBusinesses,
-  useGetCategories,
+  useAdminBusinesses,
   useCreateCategory,
   useDeleteCategory,
-  useToggleBusinessVisibility,
-} from "@workspace/api-client-react";
+  useSetBusinessVisibility,
+} from "@/lib/mutations";
 import { useColors } from "@/hooks/useColors";
 import { useAppAuth } from "@/context/AuthContext";
 import { useRouter } from "expo-router";
@@ -32,11 +32,11 @@ export default function AdminPanelScreen() {
   const [newCategory, setNewCategory] = useState("");
   const [activeTab, setActiveTab] = useState<"businesses" | "categories">("businesses");
 
-  const { data: businesses = [], isLoading: bizLoading, refetch: refetchBiz } = useGetAdminBusinesses();
-  const { data: categories = [], isLoading: catLoading, refetch: refetchCat } = useGetCategories();
+  const { data: businesses = [], isLoading: bizLoading, refetch: refetchBiz } = useAdminBusinesses();
+  const { data: categories = [], isLoading: catLoading, refetch: refetchCat } = useCategories();
   const createCategory = useCreateCategory();
   const deleteCategory = useDeleteCategory();
-  const toggleVisibility = useToggleBusinessVisibility();
+  const toggleVisibility = useSetBusinessVisibility();
 
   if (!isAdmin) {
     return (
@@ -49,7 +49,7 @@ export default function AdminPanelScreen() {
 
   const handleAddCategory = async () => {
     if (!newCategory.trim()) return;
-    await createCategory.mutateAsync({ data: { name: newCategory.trim() } });
+    await createCategory.mutateAsync(newCategory.trim());
     setNewCategory("");
     refetchCat();
   };
@@ -61,7 +61,7 @@ export default function AdminPanelScreen() {
         text: "Delete",
         style: "destructive",
         onPress: async () => {
-          await deleteCategory.mutateAsync({ id });
+          await deleteCategory.mutateAsync(id);
           refetchCat();
         },
       },
@@ -81,7 +81,7 @@ export default function AdminPanelScreen() {
           text: willHide ? "Hide" : "Unhide",
           style: willHide ? "destructive" : "default",
           onPress: async () => {
-            await toggleVisibility.mutateAsync({ id, data: { isHidden: willHide } });
+            await toggleVisibility.mutateAsync({ businessId: id, isHidden: willHide });
             refetchBiz();
           },
         },

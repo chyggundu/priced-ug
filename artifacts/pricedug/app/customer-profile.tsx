@@ -17,10 +17,7 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useAuth } from "@clerk/expo";
 import * as Location from "expo-location";
 import MapPicker from "@/components/MapPicker";
-import {
-  useGetMyCustomerProfile,
-  useSaveMyCustomerProfile,
-} from "@workspace/api-client-react";
+import { useMyCustomerProfile, useSaveMyCustomerProfile } from "@/lib/mutations";
 import { useColors } from "@/hooks/useColors";
 
 export default function CustomerProfileScreen() {
@@ -28,11 +25,9 @@ export default function CustomerProfileScreen() {
   const router = useRouter();
   const insets = useSafeAreaInsets();
   const topPad = Platform.OS === "web" ? 67 : insets.top;
-  const { isSignedIn } = useAuth();
+  const { isSignedIn, userId } = useAuth();
 
-  const { data: profile, isLoading } = useGetMyCustomerProfile({
-    query: { enabled: !!isSignedIn, retry: false },
-  });
+  const { data: profile, isLoading } = useMyCustomerProfile(isSignedIn ? userId : null);
   const saveProfile = useSaveMyCustomerProfile();
 
   const [fullName, setFullName] = useState("");
@@ -86,7 +81,8 @@ export default function CustomerProfileScreen() {
     setSaving(true);
     try {
       await saveProfile.mutateAsync({
-        data: {
+        clerkUserId: userId as string,
+        input: {
           fullName: fullName.trim(),
           phone: phone.trim(),
           district: district.trim(),

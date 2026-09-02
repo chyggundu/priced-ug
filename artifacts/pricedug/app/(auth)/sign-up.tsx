@@ -14,6 +14,8 @@ import { Link, useRouter } from "expo-router";
 import { useSignUp } from "@clerk/expo";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
+import { GoogleAuthButton } from "@/components/GoogleAuthButton";
+
 export default function SignUpScreen() {
   const { signUp, errors, fetchStatus } = useSignUp();
   const router = useRouter();
@@ -110,6 +112,8 @@ export default function SignUpScreen() {
         >
           {fetchStatus === "fetching" ? <ActivityIndicator color="#fff" /> : <Text style={styles.buttonText}>Sign Up</Text>}
         </Pressable>
+
+        <GoogleAuthButton mode="sign-up" />
 
         <View style={styles.footer}>
           <Text style={styles.footerText}>Already have an account? </Text>

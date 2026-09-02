@@ -1,61 +1,41 @@
-modules = ["nodejs-24", "python-3.11", "postgresql-16"]
+modules = ["nodejs-24"]
 
 [deployment]
 router = "application"
 deploymentTarget = "autoscale"
 
-[deployment.postBuild]
-args = ["pnpm", "store", "prune"]
-env = { "CI" = "true" }
-
 [workflows]
-runButton = "Project"
+runButton = "Mobile"
+
+# Two independent apps; neither has a server of its own. Data comes straight
+# from Supabase, so nothing needs a Postgres module or a backend process here.
 
 [[workflows.workflow]]
-name = "Project"
-mode = "parallel"
-author = "agent"
-
-[[workflows.workflow.tasks]]
-task = "workflow.run"
-args = "test"
-
-[[workflows.workflow]]
-name = "test"
+name = "Mobile"
 author = "agent"
 
 [[workflows.workflow.tasks]]
 task = "shell.exec"
-args = "pnpm --filter @workspace/api-server run test"
+args = "cd artifacts/pricedug && pnpm install --ignore-workspace && pnpm exec expo start"
 
-[workflows.workflow.metadata]
-isValidation = true
+[[workflows.workflow]]
+name = "Web"
+author = "agent"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "cd web && pnpm install --ignore-workspace && pnpm run dev"
 
 [agent]
-stack = "PNPM_WORKSPACE"
 expertMode = true
 
-[postMerge]
-path = "scripts/post-merge.sh"
-timeoutMs = 20000
-
 [[ports]]
-localPort = 8080
+localPort = 3000
 externalPort = 80
 
 [[ports]]
 localPort = 8081
 externalPort = 8081
 
-[[ports]]
-localPort = 26152
-externalPort = 3000
-
 [nix]
 channel = "stable-25_05"
-
-[userenv]
-
-[userenv.shared]
-ADMIN_USER_ID = "user_3EZTcB0vgoAPoDtigaVu3JqvSVH"
-EXPO_PUBLIC_ADMIN_USER_ID = "user_3EZTcB0vgoAPoDtigaVu3JqvSVH"

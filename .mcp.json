@@ -1,14 +1,8 @@
 {
   "mcpServers": {
     "supabase": {
-      "command": "npx",
-      "args": [
-        "-y",
-        "@supabase/mcp-server-supabase@latest",
-        "--project-ref=nirodctxmpvswrjyvlqq"
-      ],
-      "env": {
-      }
+      "type": "http",
+      "url": "https://mcp.supabase.com/mcp?project_ref=nirodctxmpvswrjyvlqq&features=docs%2Caccount%2Cdatabase%2Cdebugging%2Cdevelopment%2Cfunctions%2Cbranching"
     }
   }
 }
