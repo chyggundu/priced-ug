@@ -19,6 +19,15 @@ android/
 *.key
 *.mobileprovision
 
+# The release keystore is tracked on purpose. Git will not look inside an
+# ignored directory, so android/ has to be re-included step by step down to
+# the one file we want; everything else in it stays ignored.
+!android/
+android/*
+!android/app/
+android/app/*
+!android/app/release.keystore
+
 # Metro
 .metro-health-check*
 
