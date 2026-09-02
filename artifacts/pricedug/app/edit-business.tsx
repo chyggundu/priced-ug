@@ -17,14 +17,11 @@ import { Feather } from "@expo/vector-icons";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { pickImageAsset } from "@/lib/imagePicker";
 import * as Location from "expo-location";
-import { uploadImageToSignedUrl } from "@/lib/uploadImage";
+import { useAuth } from "@clerk/expo";
+import { uploadImage } from "@/lib/storage";
 import MapPicker from "@/components/MapPicker";
-import {
-  useGetMyBusiness,
-  useCreateBusiness,
-  useUpdateMyBusiness,
-  useGetUploadUrl,
-} from "@workspace/api-client-react";
+import { useMyBusiness } from "@/lib/queries";
+import { useCreateBusiness, useUpdateMyBusiness } from "@/lib/mutations";
 import { useColors } from "@/hooks/useColors";
 
 export default function EditBusinessScreen() {
@@ -33,10 +30,10 @@ export default function EditBusinessScreen() {
   const insets = useSafeAreaInsets();
   const topPad = Platform.OS === "web" ? 67 : insets.top;
 
-  const { data: business, isLoading: bizLoading } = useGetMyBusiness();
+  const { userId } = useAuth();
+  const { data: business, isLoading: bizLoading } = useMyBusiness(userId);
   const createBusiness = useCreateBusiness();
   const updateBusiness = useUpdateMyBusiness();
-  const getUploadUrl = useGetUploadUrl();
 
   const [name, setName] = useState("");
   const [description, setDescription] = useState("");
@@ -70,15 +67,8 @@ export default function EditBusinessScreen() {
 
     setUploading(true);
     try {
-      const filename = asset.uri.split("/").pop() ?? "image.jpg";
-      const contentType = "image/jpeg";
-
-      const { uploadUrl, publicUrl } = await getUploadUrl.mutateAsync({
-        data: { filename, contentType },
-      });
-
-      await uploadImageToSignedUrl(uploadUrl, asset.uri, contentType);
-
+      // Supabase issues the signed URL itself; no API round trip first.
+      const publicUrl = await uploadImage(asset.uri, "image/jpeg");
       setImageUrl(publicUrl);
     } catch (err) {
       Alert.alert("Upload failed", "Could not upload image. Please try again.");
@@ -130,9 +120,12 @@ export default function EditBusinessScreen() {
       };
 
       if (business) {
-        await updateBusiness.mutateAsync({ data: payload });
+        await updateBusiness.mutateAsync({ businessId: business.id, input: payload });
       } else {
-        await createBusiness.mutateAsync({ data: payload });
+        await createBusiness.mutateAsync({
+          clerkUserId: userId as string,
+          input: payload,
+        });
       }
 
       router.replace("/(tabs)/my-business");

@@ -17,6 +17,8 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Feather } from "@expo/vector-icons";
 import * as SecureStore from "expo-secure-store";
 
+import { GoogleAuthButton } from "@/components/GoogleAuthButton";
+
 const CREDENTIALS_KEY = "pricedug.savedCredentials";
 const isWeb = Platform.OS === "web";
 
@@ -234,6 +236,8 @@ export default function SignInScreen() {
         <Link href="/(auth)/forgot-password" style={styles.forgotLink}>
           <Text style={styles.link}>Forgot password?</Text>
         </Link>
+
+        <GoogleAuthButton mode="sign-in" />
 
         <View style={styles.footer}>
           <Text style={styles.footerText}>Don't have an account? </Text>

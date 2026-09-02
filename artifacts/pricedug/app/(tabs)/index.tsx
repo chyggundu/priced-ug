@@ -7,30 +7,27 @@ import {
   Pressable,
   TextInput,
   ActivityIndicator,
-  Image,
   Platform,
   Linking,
+  type NativeScrollEvent,
+  type NativeSyntheticEvent,
 } from "react-native";
 import { useRouter } from "expo-router";
 import { Feather } from "@expo/vector-icons";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useAuth } from "@clerk/expo";
-import { useGetCategories, useGetProducts } from "@workspace/api-client-react";
+import { Image as ExpoImage } from "expo-image";
+import { useCategories, useCities, useProducts } from "@/lib/queries";
 import { useColors } from "@/hooks/useColors";
 
 const WHATSAPP_NUMBER = "1234567890"; // Replace with actual WhatsApp number
 
-function parsePrice(price?: string | null): number | null {
-  if (!price) return null;
-  const numeric = parseInt(price.replace(/[^0-9]/g, ""), 10);
-  return Number.isFinite(numeric) && numeric > 0 ? numeric : null;
-}
 
 export default function BrowseScreen() {
   const colors = useColors();
   const router = useRouter();
   const insets = useSafeAreaInsets();
-  const { isSignedIn } = useAuth();
+  const { isSignedIn, isLoaded: authLoaded } = useAuth();
   const [selectedCategory, setSelectedCategory] = useState<number | null>(null);
   const [searchQuery, setSearchQuery] = useState("");
   const [searchInput, setSearchInput] = useState("");
@@ -43,37 +40,44 @@ export default function BrowseScreen() {
     return () => clearTimeout(handle);
   }, [searchInput]);
 
-  const { data: categories = [], isLoading: categoriesLoading } = useGetCategories();
-  const { data: products = [], isLoading: productsLoading } = useGetProducts({
-    ...(selectedCategory ? { categoryId: selectedCategory } : {}),
-    ...(searchQuery ? { q: searchQuery } : {}),
+  const { data: categoriesData, isLoading: categoriesLoading } = useCategories();
+  const { data: citiesData } = useCities();
+  const {
+    data: productPages,
+    isLoading: productsLoading,
+    fetchNextPage,
+    hasNextPage,
+    isFetchingNextPage,
+  } = useProducts({
+    categoryId: selectedCategory,
+    search: searchQuery,
+    city: selectedCity,
+    sortBy,
   });
 
-  const cities = Array.from(
-    new Set(
-      products
-        .map((p) => (p.businessCity ?? "").trim())
-        .filter((c) => c.length > 0)
-    )
-  ).sort((a, b) => a.localeCompare(b));
+  // A query can resolve to nothing while it is still settling, so never assume
+  // the data is already an array.
+  const categories = Array.isArray(categoriesData) ? categoriesData : [];
+  const cities = Array.isArray(citiesData) ? citiesData : [];
 
-  const filteredProducts = products
-    .filter((p) =>
-      selectedCity && cities.includes(selectedCity)
-        ? (p.businessCity ?? "").trim() === selectedCity
-        : true
-    )
-    .sort((a, b) => {
-      if (sortBy === "priceAsc" || sortBy === "priceDesc") {
-        const aPrice = parsePrice(a.price);
-        const bPrice = parsePrice(b.price);
-        if (aPrice == null && bPrice == null) return 0;
-        if (aPrice == null) return 1;
-        if (bPrice == null) return -1;
-        return sortBy === "priceAsc" ? aPrice - bPrice : bPrice - aPrice;
-      }
-      return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
-    });
+  // Postgres has already filtered and ordered these; the pages only need
+  // flattening back into one list for the grid.
+  const filteredProducts = React.useMemo(
+    () => (productPages?.pages ?? []).flat(),
+    [productPages]
+  );
+
+  // Pull the next page slightly before the last row is reached, so scrolling
+  // does not visibly stall at the bottom.
+  const onScroll = React.useCallback(
+    (e: NativeSyntheticEvent<NativeScrollEvent>) => {
+      if (!hasNextPage || isFetchingNextPage) return;
+      const { layoutMeasurement, contentOffset, contentSize } = e.nativeEvent;
+      const remaining = contentSize.height - layoutMeasurement.height - contentOffset.y;
+      if (remaining < 600) void fetchNextPage();
+    },
+    [hasNextPage, isFetchingNextPage, fetchNextPage]
+  );
 
   const sortOptions: { key: typeof sortBy; label: string }[] = [
     { key: "newest", label: "Newest" },
@@ -135,9 +139,14 @@ export default function BrowseScreen() {
         </View>
       </View>
 
-      <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
+      <ScrollView
+        style={styles.content}
+        showsVerticalScrollIndicator={false}
+        onScroll={onScroll}
+        scrollEventThrottle={16}
+      >
         {/* Customer Sign Up prompt (signed-out visitors only) */}
-        {!isSignedIn && (
+        {authLoaded && !isSignedIn && (
           <View style={styles.section}>
             <Pressable
               style={[styles.signupBanner, { backgroundColor: colors.primary }]}
@@ -286,7 +295,16 @@ export default function BrowseScreen() {
                   onPress={() => router.push(`/business/${product.businessId}?highlight=${product.id}`)}
                 >
                   {product.imageUrl ? (
-                    <Image source={{ uri: product.imageUrl }} style={styles.businessImage} />
+                    <ExpoImage
+                      source={{ uri: product.imageUrl }}
+                      style={styles.businessImage}
+                      contentFit="cover"
+                      // Memory + disk cache, so a thumbnail is fetched once and
+                      // survives relaunches instead of re-downloading.
+                      cachePolicy="memory-disk"
+                      transition={150}
+                      recyclingKey={String(product.id)}
+                    />
                   ) : (
                     <View style={[styles.businessImagePlaceholder, { backgroundColor: colors.secondary }]}>
                       <Feather name="package" size={28} color={colors.primary} />

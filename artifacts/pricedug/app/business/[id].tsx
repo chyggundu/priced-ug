@@ -13,7 +13,7 @@ import {
 import { useLocalSearchParams, useRouter } from "expo-router";
 import { Feather } from "@expo/vector-icons";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import { useGetBusiness, useGetBusinessProducts } from "@workspace/api-client-react";
+import { useBusiness, useBusinessProducts } from "@/lib/queries";
 import { useColors } from "@/hooks/useColors";
 import { BusinessReviews } from "@/components/BusinessReviews";
 
@@ -26,10 +26,10 @@ export default function BusinessDetailScreen() {
   const highlightId = highlight ? parseInt(highlight) : null;
   const topPad = Platform.OS === "web" ? 67 : insets.top;
 
-  const { data: business, isLoading: bizLoading } = useGetBusiness(businessId);
-  const { data: products = [], isLoading: productsLoading } = useGetBusinessProducts(businessId, {
-    query: { enabled: !!business },
-  });
+  const { data: business, isLoading: bizLoading } = useBusiness(businessId);
+  const { data: products = [], isLoading: productsLoading } = useBusinessProducts(
+    business ? businessId : null
+  );
 
   const orderedProducts = React.useMemo(() => {
     if (highlightId == null) return products;

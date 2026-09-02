@@ -1,35 +1,20 @@
 ---
-name: typecheck baseline & expo router types
-description: Why `pnpm run typecheck` is red at baseline in this repo, and how expo-router typed routes behave
+name: Typecheck baseline & expo router types
+description: Both apps typecheck clean; how to run each, and when expo-router route types regenerate
 ---
 
-# Pre-existing typecheck failures (not yours to fix)
+Both apps are at **zero** TypeScript errors. Treat any error as new.
 
-`pnpm run typecheck` is RED at baseline across leaf artifacts, independent of any
-single change. Recurring categories that appear in untouched files:
+- Mobile: `cd artifacts/pricedug && npx tsc -p tsconfig.json --noEmit`
+- Web: `cd web && npx tsc --noEmit`
 
-- **react-query `queryKey` strictness**: orval-generated hooks type the `query`
-  option as a full `UseQueryOptions` (queryKey required), but every call site
-  passes `{ query: { enabled, retry } }` without it → TS2741. Pervasive in
-  `artifacts/pricedug` (e.g. my-business.tsx, business/[id].tsx).
-- **express `req.params` typing**: `req.params.id` is `string | string[]`, so
-  `parseInt(req.params.id)` → TS2345 in api-server routes (businesses, products,
-  categories, reviews).
-- **Feather icon `"user-circle"`**: not in the installed `@expo/vector-icons`
-  Feather union → TS2820 in account.tsx.
+There is no root `pnpm run typecheck` any more — the workspace is gone and each
+app is typechecked from its own directory.
 
-**Why:** these come from dependency type versions vs committed generated/handwritten
-code, not from feature work.
+The old baseline was red with React Query v5 `queryKey` errors and a
+`Feather name="user-circle"` that is not a real icon. Both were fixed when the
+screens moved to Supabase; `user-circle` had been silently rendering nothing.
 
-**How to apply:** When verifying a change, compare against this baseline — new code
-should only add the SAME category of "errors" the codebase already tolerates
-(match existing `{ query: { enabled } }` convention). Runtime is unaffected: Metro
-(Babel) and esbuild strip types, so the apps build/run despite red typecheck.
-
-# expo-router typed routes regenerate at dev time
-
-Adding a screen file under `artifacts/pricedug/app/` does NOT immediately make its
-path valid in TS — `app/.expo/types/router.d.ts` is regenerated when the expo dev
-server runs. New route paths (e.g. `/customer-profile`) fail typecheck until you
-restart the `artifacts/pricedug: expo` workflow, after which they appear in the
-union and resolve.
+expo-router route types under `.expo/types/` regenerate only when the Expo dev
+server runs, so a fresh clone can report missing route types until
+`expo start` has been run once.

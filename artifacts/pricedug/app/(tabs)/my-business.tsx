@@ -14,22 +14,20 @@ import { useRouter } from "expo-router";
 import { Feather } from "@expo/vector-icons";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useAuth } from "@clerk/expo";
-import {
-  useGetMyBusiness,
-  useGetMyProducts,
-  useDeleteProduct,
-} from "@workspace/api-client-react";
+import { useMyBusiness } from "@/lib/queries";
+import { useDeleteProduct, useMyProducts } from "@/lib/mutations";
 import { useColors } from "@/hooks/useColors";
 
 export default function MyBusinessScreen() {
   const colors = useColors();
   const router = useRouter();
   const insets = useSafeAreaInsets();
-  const { isSignedIn } = useAuth();
+  const { isSignedIn, userId } = useAuth();
   const topPad = Platform.OS === "web" ? 67 : insets.top;
 
-  const { data: business, isLoading: bizLoading } = useGetMyBusiness({ query: { enabled: !!isSignedIn } });
-  const { data: products = [], isLoading: productsLoading, refetch: refetchProducts } = useGetMyProducts({ query: { enabled: !!isSignedIn && !!business } });
+  const { data: business, isLoading: bizLoading } = useMyBusiness(isSignedIn ? userId : null);
+  const { data: products = [], isLoading: productsLoading, refetch: refetchProducts } =
+    useMyProducts(business?.id);
   const deleteProduct = useDeleteProduct();
 
   if (!isSignedIn) {
@@ -68,7 +66,7 @@ export default function MyBusinessScreen() {
           text: "Delete",
           style: "destructive",
           onPress: async () => {
-            await deleteProduct.mutateAsync({ productId });
+            await deleteProduct.mutateAsync(productId);
             refetchProducts();
           },
         },

@@ -10,11 +10,11 @@ import {
 } from "react-native";
 import { Feather } from "@expo/vector-icons";
 import {
-  useGetBusinessReviews,
   useCreateReview,
-  useReplyToReview,
   useDeleteReview,
-} from "@workspace/api-client-react";
+  useReplyToReview,
+  useReviews,
+} from "@/lib/mutations";
 import { useColors } from "@/hooks/useColors";
 import { useAppAuth } from "@/context/AuthContext";
 
@@ -66,10 +66,10 @@ export function BusinessReviews({
   const colors = useColors();
   const { userId, isAdmin } = useAppAuth();
 
-  const { data: reviews = [], isLoading, refetch } = useGetBusinessReviews(businessId);
-  const createReview = useCreateReview();
-  const replyToReview = useReplyToReview();
-  const deleteReview = useDeleteReview();
+  const { data: reviews = [], isLoading, refetch } = useReviews(businessId);
+  const createReview = useCreateReview(businessId);
+  const replyToReview = useReplyToReview(businessId);
+  const deleteReview = useDeleteReview(businessId);
 
   const [rating, setRating] = useState(0);
   const [comment, setComment] = useState("");
@@ -91,10 +91,7 @@ export function BusinessReviews({
       return;
     }
     try {
-      await createReview.mutateAsync({
-        businessId,
-        data: { rating, comment: comment.trim() || null },
-      });
+      await createReview.mutateAsync({ rating, comment: comment.trim() || null });
       setRating(0);
       setComment("");
       refetch();
@@ -107,7 +104,7 @@ export function BusinessReviews({
     const text = (replyTexts[reviewId] ?? "").trim();
     if (!text) return;
     try {
-      await replyToReview.mutateAsync({ reviewId, data: { reply: text } });
+      await replyToReview.mutateAsync({ reviewId, reply: text });
       setReplyTexts((prev) => ({ ...prev, [reviewId]: "" }));
       refetch();
     } catch {
@@ -123,7 +120,7 @@ export function BusinessReviews({
         style: "destructive",
         onPress: async () => {
           try {
-            await deleteReview.mutateAsync({ reviewId });
+            await deleteReview.mutateAsync(reviewId);
             refetch();
           } catch {
             Alert.alert("Error", "Could not delete the review.");
