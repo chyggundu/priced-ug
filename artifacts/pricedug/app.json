@@ -2,7 +2,7 @@
   "expo": {
     "name": "Priced Ug",
     "slug": "pricedug",
-    "version": "1.2.4",
+    "version": "1.2.5",
     "orientation": "portrait",
     "icon": "./assets/images/icon.png",
     "scheme": "pricedug",
@@ -19,7 +19,7 @@
     },
     "android": {
       "package": "com.pricedug.mobile",
-      "versionCode": 12
+      "versionCode": 13
     },
     "web": {
       "favicon": "./assets/images/favicon.png"
@@ -43,9 +43,11 @@
         "expo-image-picker",
         {
           "photosPermission": "Allow Priced Ug to access your photos to upload product and business images.",
-          "cameraPermission": "Allow Priced Ug to use your camera to take product and business photos."
+          "cameraPermission": "Allow Priced Ug to use your camera to take product and business photos.",
+          "microphonePermission": "Allow Priced Ug to use your microphone when recording product videos."
         }
-      ]
+      ],
+      "expo-video"
     ],
     "experiments": {
       "typedRoutes": true,

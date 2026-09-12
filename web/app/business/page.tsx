@@ -201,23 +201,7 @@ function BusinessDetail() {
                     product.id === highlightId ? "border-brand-500" : "border-line"
                   }`}
                 >
-                  {product.imageUrls.length > 1 ? (
-                    // Mobile opens a swipeable viewer; on the web a horizontal
-                    // strip shows the same photos without hiding any behind a tap.
-                    <ul className="flex snap-x gap-1 overflow-x-auto">
-                      {product.imageUrls.map((url) => (
-                        <li key={url} className="shrink-0 snap-start">
-                          {/* eslint-disable-next-line @next/next/no-img-element */}
-                          <img src={url} alt="" className="h-44 w-56 object-cover" />
-                        </li>
-                      ))}
-                    </ul>
-                  ) : product.imageUrl ? (
-                    // eslint-disable-next-line @next/next/no-img-element
-                    <img src={product.imageUrl} alt="" className="h-44 w-full object-cover" />
-                  ) : (
-                    <div className="h-44 w-full bg-ink-900/5" />
-                  )}
+                  <ProductMedia product={product} />
                   <div className="p-4">
                     <p className="font-semibold">{product.name}</p>
                     {formatPrice(product.price, product.priceType) && (
@@ -227,15 +211,6 @@ function BusinessDetail() {
                     )}
                     {product.description && (
                       <p className="mt-2 line-clamp-3 text-sm text-ink-600">{product.description}</p>
-                    )}
-
-                    {product.videoUrl && (
-                      <video
-                        src={product.videoUrl}
-                        controls
-                        playsInline
-                        className="mt-3 w-full rounded-[8px] border border-line"
-                      />
                     )}
 
                     <ul className="mt-3 flex flex-wrap gap-1.5 text-xs text-ink-400">
@@ -276,5 +251,52 @@ function BusinessDetail() {
         />
       </main>
     </>
+  );
+}
+
+/**
+ * Photos followed by the video, in one strip — the same order the mobile app
+ * puts them in, where the video is the last slide of the gallery rather than a
+ * separate player further down the card.
+ *
+ * Mobile pages one slide at a time because a phone has room for one; here the
+ * strip scrolls, so nothing is hidden behind a swipe.
+ */
+function ProductMedia({ product }: { product: Product }) {
+  const photos = product.imageUrls.length > 0 ? product.imageUrls : product.imageUrl ? [product.imageUrl] : [];
+  const slideCount = photos.length + (product.videoUrl ? 1 : 0);
+
+  if (slideCount === 0) {
+    return <div className="h-44 w-full bg-ink-900/5" />;
+  }
+
+  if (slideCount === 1) {
+    return photos.length === 1 ? (
+      // eslint-disable-next-line @next/next/no-img-element
+      <img src={photos[0]} alt="" className="h-44 w-full object-cover" />
+    ) : (
+      <video src={product.videoUrl!} controls playsInline className="h-44 w-full bg-black object-contain" />
+    );
+  }
+
+  return (
+    <ul className="flex snap-x gap-1 overflow-x-auto">
+      {photos.map((url) => (
+        <li key={url} className="shrink-0 snap-start">
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img src={url} alt="" className="h-44 w-56 object-cover" />
+        </li>
+      ))}
+      {product.videoUrl && (
+        <li className="shrink-0 snap-start">
+          <video
+            src={product.videoUrl}
+            controls
+            playsInline
+            className="h-44 w-56 bg-black object-contain"
+          />
+        </li>
+      )}
+    </ul>
   );
 }

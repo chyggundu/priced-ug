@@ -43,7 +43,7 @@ export const persistOptions = {
   maxAge: 24 * 60 * 60 * 1000,
   // Bump when a cached shape changes, so old entries are discarded rather than
   // deserialised into the wrong type.
-  buster: "v1",
+  buster: "v2",
   dehydrateOptions: {
     shouldDehydrateQuery: (query: Query) => {
       if (query.state.status !== "success") return false;

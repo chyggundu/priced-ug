@@ -5,5 +5,8 @@
       "Bash(lsof -iTCP:8081 -sTCP:LISTEN -n)",
       "Bash(java -version)"
     ]
-  }
+  },
+  "enabledMcpjsonServers": [
+    "supabase"
+  ]
 }

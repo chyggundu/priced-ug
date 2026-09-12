@@ -19,6 +19,8 @@ import { useAuth } from "@clerk/expo";
 import { Image as ExpoImage } from "expo-image";
 import { useCategories, useCities, useProducts } from "@/lib/queries";
 import { useColors } from "@/hooks/useColors";
+import { priceLabel } from "@/constants/product";
+import { MediaBadges } from "@/components/ProductMediaGallery";
 
 const WHATSAPP_NUMBER = "1234567890"; // Replace with actual WhatsApp number
 
@@ -294,29 +296,36 @@ export default function BrowseScreen() {
                   style={[styles.businessCard, { backgroundColor: colors.card, borderColor: colors.border }]}
                   onPress={() => router.push(`/business/${product.businessId}?highlight=${product.id}`)}
                 >
-                  {product.imageUrl ? (
-                    <ExpoImage
-                      source={{ uri: product.imageUrl }}
-                      style={styles.businessImage}
-                      contentFit="cover"
-                      // Memory + disk cache, so a thumbnail is fetched once and
-                      // survives relaunches instead of re-downloading.
-                      cachePolicy="memory-disk"
-                      transition={150}
-                      recyclingKey={String(product.id)}
+                  <View>
+                    {product.imageUrl ? (
+                      <ExpoImage
+                        source={{ uri: product.imageUrl }}
+                        style={styles.businessImage}
+                        contentFit="cover"
+                        // Memory + disk cache, so a thumbnail is fetched once and
+                        // survives relaunches instead of re-downloading.
+                        cachePolicy="memory-disk"
+                        transition={150}
+                        recyclingKey={String(product.id)}
+                      />
+                    ) : (
+                      <View style={[styles.businessImagePlaceholder, { backgroundColor: colors.secondary }]}>
+                        <Feather name="package" size={28} color={colors.primary} />
+                      </View>
+                    )}
+                    {/* The grid shows one cover; these say there is more to see. */}
+                    <MediaBadges
+                      photoCount={product.imageUrls?.length}
+                      hasVideo={!!product.videoUrl}
                     />
-                  ) : (
-                    <View style={[styles.businessImagePlaceholder, { backgroundColor: colors.secondary }]}>
-                      <Feather name="package" size={28} color={colors.primary} />
-                    </View>
-                  )}
+                  </View>
                   <View style={styles.businessInfo}>
                     <Text style={[styles.businessName, { color: colors.foreground }]} numberOfLines={1}>
                       {product.name}
                     </Text>
                     {product.price && (
                       <Text style={[styles.priceText, { color: colors.primary }]} numberOfLines={1}>
-                        UGX {product.price}
+                        {priceLabel(product.price, product.priceType)}
                       </Text>
                     )}
                     <View style={styles.addressRow}>

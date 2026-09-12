@@ -15,7 +15,9 @@ import { Feather } from "@expo/vector-icons";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useBusiness, useBusinessProducts } from "@/lib/queries";
 import { useColors } from "@/hooks/useColors";
+import { priceLabel } from "@/constants/product";
 import { BusinessReviews } from "@/components/BusinessReviews";
+import { ProductMediaGallery } from "@/components/ProductMediaGallery";
 
 export default function BusinessDetailScreen() {
   const colors = useColors();
@@ -178,13 +180,12 @@ export default function BusinessDetailScreen() {
                     product.id === highlightId && { borderColor: colors.primary, borderWidth: 2 },
                   ]}
                 >
-                  {product.imageUrl ? (
-                    <Image source={{ uri: product.imageUrl }} style={styles.productImage} />
-                  ) : (
-                    <View style={[styles.productImagePlaceholder, { backgroundColor: colors.secondary }]}>
-                      <Feather name="image" size={24} color={colors.primary} />
-                    </View>
-                  )}
+                  <ProductMediaGallery
+                    imageUrl={product.imageUrl}
+                    imageUrls={product.imageUrls}
+                    videoUrl={product.videoUrl}
+                    height={220}
+                  />
                   <View style={styles.productInfo}>
                     <Text style={[styles.productName, { color: colors.foreground }]} numberOfLines={2}>
                       {product.name}
@@ -198,7 +199,7 @@ export default function BusinessDetailScreen() {
                     )}
                     {product.price && (
                       <Text style={[styles.productPrice, { color: colors.primary }]}>
-                        UGX {product.price}
+                        {priceLabel(product.price, product.priceType)}
                       </Text>
                     )}
                     {product.description && (
@@ -206,24 +207,30 @@ export default function BusinessDetailScreen() {
                         {product.description}
                       </Text>
                     )}
-                    {(product.size || product.materials) && (
-                      <View style={styles.tagRow}>
-                        {product.size && (
-                          <View style={[styles.tag, { backgroundColor: colors.muted }]}>
-                            <Text style={[styles.tagText, { color: colors.mutedForeground }]}>
-                              Size: {product.size}
-                            </Text>
-                          </View>
-                        )}
-                        {product.materials && (
-                          <View style={[styles.tag, { backgroundColor: colors.muted }]}>
-                            <Text style={[styles.tagText, { color: colors.mutedForeground }]}>
-                              {product.materials}
-                            </Text>
-                          </View>
-                        )}
-                      </View>
-                    )}
+                    {/* Same tag set the website shows under a product. */}
+                    {(() => {
+                      const tags = [
+                        product.condition,
+                        product.size ? `Size: ${product.size}` : null,
+                        product.materials,
+                        product.color,
+                        product.deliveredByBusiness ? "Delivered by business" : null,
+                        product.deliveredByPricedUg ? "Delivered by Priced Ug" : null,
+                      ].filter((tag): tag is string => !!tag);
+
+                      if (tags.length === 0) return null;
+                      return (
+                        <View style={styles.tagRow}>
+                          {tags.map((tag) => (
+                            <View key={tag} style={[styles.tag, { backgroundColor: colors.muted }]}>
+                              <Text style={[styles.tagText, { color: colors.mutedForeground }]}>
+                                {tag}
+                              </Text>
+                            </View>
+                          ))}
+                        </View>
+                      );
+                    })()}
                     {business.phone && (
                       <Pressable
                         style={[styles.inquireBtn, { backgroundColor: "#25D366" }]}

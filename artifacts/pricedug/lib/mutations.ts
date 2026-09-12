@@ -22,9 +22,16 @@ const mapProductRow = (r: any): Product => ({
   name: r.name,
   description: r.description ?? null,
   price: r.price ?? null,
+  priceType: r.price_type ?? null,
   imageUrl: r.image_url ?? null,
+  imageUrls: (r.image_urls ?? []) as string[],
+  videoUrl: r.video_url ?? null,
   size: r.size ?? null,
   materials: r.materials ?? null,
+  color: r.color ?? null,
+  condition: r.condition ?? null,
+  deliveredByPricedUg: r.delivered_by_priced_ug ?? false,
+  deliveredByBusiness: r.delivered_by_business ?? false,
   createdAt: r.created_at,
   businessName: r.business_name ?? null,
   businessImageUrl: r.business_image_url ?? null,
@@ -55,9 +62,16 @@ export type ProductInput = {
   categoryId?: number | null;
   description?: string | null;
   price?: string | null;
+  priceType?: string | null;
   size?: string | null;
   materials?: string | null;
+  color?: string | null;
+  condition?: string | null;
   imageUrl?: string | null;
+  imageUrls?: string[];
+  videoUrl?: string | null;
+  deliveredByPricedUg?: boolean;
+  deliveredByBusiness?: boolean;
 };
 
 /** Only keys the caller actually set are sent, so a partial edit never blanks a column. */
@@ -69,9 +83,16 @@ function productPayload(input: ProductInput): Record<string, unknown> {
     ["categoryId", "category_id"],
     ["description", "description"],
     ["price", "price"],
+    ["priceType", "price_type"],
     ["size", "size"],
     ["materials", "materials"],
+    ["color", "color"],
+    ["condition", "condition"],
     ["imageUrl", "image_url"],
+    ["imageUrls", "image_urls"],
+    ["videoUrl", "video_url"],
+    ["deliveredByPricedUg", "delivered_by_priced_ug"],
+    ["deliveredByBusiness", "delivered_by_business"],
   ] as const) {
     if (src[key] !== undefined) out[column] = src[key];
   }
@@ -537,6 +558,28 @@ export function useSetBusinessVisibility() {
       if (error) throw error;
     },
     onSuccess: invalidate,
+  });
+}
+
+/*
+  RPC for the same reason the admin one is: the business, its products, its
+  reviews and its category links all have to go in one transaction. The
+  function derives the owner from the JWT, so there is nothing to pass and
+  nothing a client could point at someone else's business.
+*/
+export function useDeleteMyBusiness() {
+  const invalidate = useBusinessInvalidation();
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (): Promise<void> => {
+      const { error } = await supabase.rpc("delete_my_business");
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      invalidate();
+      void qc.invalidateQueries({ queryKey: ["my-products"] });
+      void qc.invalidateQueries({ queryKey: ["products"] });
+    },
   });
 }
 

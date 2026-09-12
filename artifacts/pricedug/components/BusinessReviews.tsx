@@ -16,6 +16,7 @@ import {
   useReviews,
 } from "@/lib/mutations";
 import { useColors } from "@/hooks/useColors";
+import { describeError } from "@/lib/errors";
 import { useAppAuth } from "@/context/AuthContext";
 
 function Stars({
@@ -95,8 +96,10 @@ export function BusinessReviews({
       setRating(0);
       setComment("");
       refetch();
-    } catch {
-      Alert.alert("Error", "Could not submit your review. Please try again.");
+    } catch (error) {
+      // The Postgres error says why (not signed in, already reviewed, own
+      // business); hiding it behind "try again" made every failure look alike.
+      Alert.alert("Could not submit review", describeError(error));
     }
   };
 
@@ -107,8 +110,8 @@ export function BusinessReviews({
       await replyToReview.mutateAsync({ reviewId, reply: text });
       setReplyTexts((prev) => ({ ...prev, [reviewId]: "" }));
       refetch();
-    } catch {
-      Alert.alert("Error", "Could not post your reply. Please try again.");
+    } catch (error) {
+      Alert.alert("Could not post reply", describeError(error));
     }
   };
 
@@ -122,8 +125,8 @@ export function BusinessReviews({
           try {
             await deleteReview.mutateAsync(reviewId);
             refetch();
-          } catch {
-            Alert.alert("Error", "Could not delete the review.");
+          } catch (error) {
+            Alert.alert("Could not delete review", describeError(error));
           }
         },
       },
@@ -215,8 +218,13 @@ export function BusinessReviews({
                   </Text>
                   <Stars rating={review.rating} color={colors.primary} mutedColor={colors.border} />
                 </View>
-                {isAdmin && (
-                  <Pressable onPress={() => confirmDelete(review.id)} hitSlop={8}>
+                {/* An admin moderates any review; an author can withdraw their own. */}
+                {(isAdmin || review.isMine) && (
+                  <Pressable
+                    onPress={() => confirmDelete(review.id)}
+                    hitSlop={8}
+                    accessibilityLabel="Delete review"
+                  >
                     <Feather name="trash-2" size={18} color={colors.primary} />
                   </Pressable>
                 )}
