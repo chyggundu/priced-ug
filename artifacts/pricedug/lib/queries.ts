@@ -22,9 +22,16 @@ export type Product = {
   name: string;
   description: string | null;
   price: string | null;
+  priceType: string | null;
   imageUrl: string | null;
+  imageUrls: string[];
+  videoUrl: string | null;
   size: string | null;
   materials: string | null;
+  color: string | null;
+  condition: string | null;
+  deliveredByPricedUg: boolean;
+  deliveredByBusiness: boolean;
   createdAt: string;
   businessName: string | null;
   businessImageUrl: string | null;
@@ -48,9 +55,16 @@ const mapProduct = (r: any): Product => ({
   name: r.name,
   description: r.description ?? null,
   price: r.price ?? null,
+  priceType: r.price_type ?? null,
   imageUrl: r.image_url ?? null,
+  imageUrls: (r.image_urls ?? []) as string[],
+  videoUrl: r.video_url ?? null,
   size: r.size ?? null,
   materials: r.materials ?? null,
+  color: r.color ?? null,
+  condition: r.condition ?? null,
+  deliveredByPricedUg: r.delivered_by_priced_ug ?? false,
+  deliveredByBusiness: r.delivered_by_business ?? false,
   createdAt: r.created_at,
   businessName: r.business_name ?? null,
   businessImageUrl: r.business_image_url ?? null,

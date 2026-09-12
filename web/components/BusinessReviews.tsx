@@ -1,7 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
-import { useAuth } from "@clerk/react";
+import { useAuth, useUser } from "@clerk/react";
 import {
   createReview,
   deleteReview,
@@ -10,9 +10,12 @@ import {
   type Review,
 } from "@/lib/api";
 import { isClerkConfigured } from "@/lib/clerk";
+import { isAdminUser } from "@/lib/admin";
 
 /** Mirrors the reviews section of the mobile app's business screen. */
 export function BusinessReviews({ businessId, isOwner }: { businessId: number; isOwner: boolean }) {
+  const { user } = useUser();
+  const isAdmin = isAdminUser(user);
   const [reviews, setReviews] = useState<Review[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -31,6 +34,14 @@ export function BusinessReviews({ businessId, isOwner }: { businessId: number; i
       ? (reviews.reduce((sum, r) => sum + r.rating, 0) / reviews.length).toFixed(1)
       : null;
 
+  /*
+    The RPC rejects reviewing your own business and a second review from the
+    same person. Hiding the form in those cases means the rejection never has
+    to be shown.
+  */
+  const hasReviewed = reviews.some((r) => r.isMine);
+  const canWrite = !isOwner && !hasReviewed;
+
   return (
     <section className="mt-12">
       <h2 className="text-lg font-bold tracking-tight">
@@ -44,7 +55,13 @@ export function BusinessReviews({ businessId, isOwner }: { businessId: number; i
 
       {error && <p className="mt-3 text-sm text-brand-600">{error}</p>}
 
-      {isClerkConfigured && <ReviewComposer businessId={businessId} onDone={load} />}
+      {isClerkConfigured && canWrite && <ReviewComposer businessId={businessId} onDone={load} />}
+
+      {isOwner && (
+        <p className="mt-3 text-sm text-ink-400">
+          You can reply to reviews about your business below.
+        </p>
+      )}
 
       {loading ? (
         <div className="mt-4 h-20 animate-pulse rounded-[10px] bg-ink-900/5" />
@@ -71,17 +88,21 @@ export function BusinessReviews({ businessId, isOwner }: { businessId: number; i
 
               {isOwner && !review.reply && <ReplyForm reviewId={review.id} onDone={load} />}
 
-              {review.isMine && (
+              {/* An admin moderates any review; an author can withdraw their own. */}
+              {(isAdmin || review.isMine) && (
                 <button
                   type="button"
                   className="mt-3 text-sm font-medium text-brand-500 transition hover:text-brand-600"
                   onClick={() => {
-                    if (window.confirm("Delete your review?")) {
+                    const prompt = review.isMine
+                      ? "Delete your review?"
+                      : "Delete this review?";
+                    if (window.confirm(prompt)) {
                       void deleteReview(review.id).then(load);
                     }
                   }}
                 >
-                  Delete my review
+                  {review.isMine ? "Delete my review" : "Delete review"}
                 </button>
               )}
             </li>

@@ -569,6 +569,17 @@ export async function adminDeleteBusiness(id: number): Promise<void> {
   if (error) raise(error);
 }
 
+/*
+  RPC for the same reason the admin one is: the business, its products, its
+  reviews and its category links all have to go in one transaction. The
+  function derives the owner from the JWT, so there is nothing to pass and
+  nothing a client could point at someone else's business.
+*/
+export async function deleteMyBusiness(): Promise<void> {
+  const { error } = await sb().rpc("delete_my_business");
+  if (error) raise(error);
+}
+
 export async function createCategory(name: string): Promise<Category> {
   const { data, error } = await sb().from("categories").insert({ name }).select().single();
   if (error) raise(error);
@@ -611,4 +622,36 @@ export async function uploadFile(file: File): Promise<string> {
   }
 
   return sb().storage.from(BUCKET).getPublicUrl(path).data.publicUrl;
+}
+
+/**
+ * Turns a public URL from this bucket back into its object path, or null when
+ * the URL points somewhere else.
+ */
+function toObjectPath(url: string): string | null {
+  const marker = `/storage/v1/object/public/${BUCKET}/`;
+  const index = url.indexOf(marker);
+  if (index === -1) return null;
+  const path = url.slice(index + marker.length).split("?")[0];
+  return path ? decodeURIComponent(path) : null;
+}
+
+/**
+ * Removes uploaded files from the bucket, used when the row that referenced
+ * them is deleted. Returns how many were removed.
+ *
+ * Deleting the database row is what the user asked for and it has already
+ * happened by the time this runs, so a storage failure is reported rather than
+ * thrown — an orphaned file is a smaller problem than an error on a delete
+ * that actually succeeded.
+ */
+export async function deleteUploadedFiles(urls: (string | null | undefined)[]): Promise<number> {
+  const paths = Array.from(
+    new Set(urls.filter((u): u is string => !!u).map(toObjectPath).filter((p): p is string => !!p)),
+  );
+  if (paths.length === 0) return 0;
+
+  const { data, error } = await sb().storage.from(BUCKET).remove(paths);
+  if (error) raise(error);
+  return data?.length ?? 0;
 }

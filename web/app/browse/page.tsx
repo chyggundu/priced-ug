@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
 import { Nav } from "@/components/Nav";
 import { FavoriteButton } from "@/components/FavoriteButton";
+import { MediaBadges } from "@/components/MediaBadges";
 import { getCategories, searchProducts, type Category, type ProductSearchResult } from "@/lib/api";
 import { formatPrice } from "@/lib/formatPrice";
 import { isSupabaseConfigured } from "@/lib/supabase";
@@ -146,16 +147,22 @@ export default function BrowsePage() {
                   href={`/business?id=${product.businessId}&item=${product.id}`}
                   className="group block overflow-hidden rounded-[10px] border border-line transition duration-300 hover:-translate-y-0.5 hover:border-brand-500 hover:shadow-lg hover:shadow-black/5"
                 >
-                  {product.imageUrl ? (
-                    // eslint-disable-next-line @next/next/no-img-element
-                    <img
-                      src={product.imageUrl}
-                      alt=""
-                      className="h-44 w-full object-cover transition duration-500 group-hover:scale-[1.03]"
+                  <div className="relative">
+                    {product.imageUrl ? (
+                      // eslint-disable-next-line @next/next/no-img-element
+                      <img
+                        src={product.imageUrl}
+                        alt=""
+                        className="h-44 w-full object-cover transition duration-500 group-hover:scale-[1.03]"
+                      />
+                    ) : (
+                      <div className="h-44 w-full bg-ink-900/5" />
+                    )}
+                    <MediaBadges
+                      photoCount={product.imageUrls?.length}
+                      hasVideo={!!product.videoUrl}
                     />
-                  ) : (
-                    <div className="h-44 w-full bg-ink-900/5" />
-                  )}
+                  </div>
                   <div className="p-4">
                     <p className="truncate font-semibold">{product.name}</p>
                     {formatPrice(product.price, product.priceType) && (

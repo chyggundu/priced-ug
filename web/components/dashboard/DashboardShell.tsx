@@ -15,6 +15,8 @@ export const primaryButton =
   "rounded-[10px] bg-brand-500 px-5 py-3 text-[15px] font-semibold text-white transition duration-300 hover:bg-brand-600 disabled:cursor-not-allowed disabled:opacity-50";
 export const ghostButton =
   "rounded-[10px] border border-line px-5 py-3 text-[15px] font-semibold text-ink-600 transition duration-300 hover:border-brand-500 hover:text-brand-500";
+export const dangerButton =
+  "rounded-[10px] border border-brand-500 px-5 py-3 text-[15px] font-semibold text-brand-500 transition duration-300 hover:bg-brand-500 hover:text-white disabled:cursor-not-allowed disabled:opacity-50";
 
 export function Notice({ tone = "error", children }: { tone?: "error" | "info"; children: React.ReactNode }) {
   const styles =

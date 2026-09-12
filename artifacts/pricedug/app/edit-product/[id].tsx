@@ -8,18 +8,21 @@ import {
   TextInput,
   ActivityIndicator,
   Alert,
-  Image,
   Platform,
 } from "react-native";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import { Feather } from "@expo/vector-icons";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import { pickImageAsset } from "@/lib/imagePicker";
 import { useAuth } from "@clerk/expo";
-import { uploadImage } from "@/lib/storage";
+import { ProductMediaEditor } from "@/components/ProductMediaEditor";
 import { useCategories, useMyBusiness } from "@/lib/queries";
 import { useMyProducts, useUpdateProduct } from "@/lib/mutations";
 import { useColors } from "@/hooks/useColors";
+import { PRICE_TYPE_OPTIONS } from "@/constants/product";
+import {
+  ProductAttributeFields,
+  type ProductAttributes,
+} from "@/components/ProductAttributeFields";
 
 export default function EditProductScreen() {
   const colors = useColors();
@@ -43,7 +46,15 @@ export default function EditProductScreen() {
   const [price, setPrice] = useState("");
   const [size, setSize] = useState("");
   const [materials, setMaterials] = useState("");
-  const [imageUrl, setImageUrl] = useState<string | null>(null);
+  const [priceType, setPriceType] = useState<string>("exact");
+  const [attributes, setAttributes] = useState<ProductAttributes>({
+    color: "",
+    condition: "",
+    deliveredByBusiness: false,
+    deliveredByPricedUg: false,
+  });
+  const [imageUrls, setImageUrls] = useState<string[]>([]);
+  const [videoUrl, setVideoUrl] = useState<string | null>(null);
   const [uploading, setUploading] = useState(false);
   const [saving, setSaving] = useState(false);
 
@@ -55,25 +66,25 @@ export default function EditProductScreen() {
       setPrice(product.price ?? "");
       setSize(product.size ?? "");
       setMaterials(product.materials ?? "");
-      setImageUrl(product.imageUrl ?? null);
+      setPriceType(product.priceType ?? "exact");
+      setAttributes({
+        color: product.color ?? "",
+        condition: product.condition ?? "",
+        deliveredByBusiness: product.deliveredByBusiness,
+        deliveredByPricedUg: product.deliveredByPricedUg,
+      });
+      // Products saved before the gallery existed only have a cover image;
+      // seeding the strip with it keeps that photo when the row is re-saved.
+      setImageUrls(
+        product.imageUrls && product.imageUrls.length > 0
+          ? product.imageUrls
+          : product.imageUrl
+            ? [product.imageUrl]
+            : [],
+      );
+      setVideoUrl(product.videoUrl ?? null);
     }
   }, [product]);
-
-  const pickImage = async () => {
-    const asset = await pickImageAsset([4, 3]);
-    if (!asset) return;
-
-    setUploading(true);
-    try {
-      // Supabase issues the signed URL itself; no API round trip first.
-      const publicUrl = await uploadImage(asset.uri, "image/jpeg");
-      setImageUrl(publicUrl);
-    } catch {
-      Alert.alert("Upload failed", "Could not upload image. Please try again.");
-    } finally {
-      setUploading(false);
-    }
-  };
 
   const handleSave = async () => {
     if (!name.trim()) {
@@ -93,9 +104,16 @@ export default function EditProductScreen() {
           categoryId,
           description: description.trim() || null,
           price: price.trim() || null,
+          priceType,
+          color: attributes.color.trim() || null,
+          condition: attributes.condition || null,
+          deliveredByBusiness: attributes.deliveredByBusiness,
+          deliveredByPricedUg: attributes.deliveredByPricedUg,
           size: size.trim() || null,
           materials: materials.trim() || null,
-          imageUrl: imageUrl ?? null,
+          imageUrl: imageUrls[0] ?? null,
+          imageUrls,
+          videoUrl,
         },
       });
       router.replace("/(tabs)/my-business");
@@ -131,28 +149,13 @@ export default function EditProductScreen() {
       </View>
 
       <ScrollView style={styles.content} keyboardShouldPersistTaps="handled" showsVerticalScrollIndicator={false}>
-        <Pressable onPress={pickImage} style={styles.imagePicker}>
-          {imageUrl ? (
-            <Image source={{ uri: imageUrl }} style={styles.productImage} />
-          ) : (
-            <View style={[styles.imagePlaceholder, { backgroundColor: colors.secondary }]}>
-              {uploading ? (
-                <ActivityIndicator color={colors.primary} />
-              ) : (
-                <>
-                  <Feather name="camera" size={32} color={colors.primary} />
-                  <Text style={[styles.imagePlaceholderText, { color: colors.primary }]}>Add product photo</Text>
-                </>
-              )}
-            </View>
-          )}
-          {imageUrl && !uploading && (
-            <View style={styles.changeImageOverlay}>
-              <Feather name="camera" size={16} color="#fff" />
-              <Text style={styles.changeImageText}>Change</Text>
-            </View>
-          )}
-        </Pressable>
+        <ProductMediaEditor
+          imageUrls={imageUrls}
+          onChangeImageUrls={setImageUrls}
+          videoUrl={videoUrl}
+          onChangeVideoUrl={setVideoUrl}
+          onBusyChange={setUploading}
+        />
 
         <View style={styles.form}>
           <Text style={[styles.label, { color: colors.foreground }]}>Product Name *</Text>
@@ -182,7 +185,25 @@ export default function EditProductScreen() {
             })}
           </View>
 
-          <Text style={[styles.label, { color: colors.foreground }]}>Price (UGX)</Text>
+          <Text style={[styles.label, { color: colors.foreground }]}>Price type</Text>
+          <View style={styles.categoryWrap}>
+            {PRICE_TYPE_OPTIONS.map((option) => {
+              const selected = priceType === option.value;
+              return (
+                <Pressable
+                  key={option.value}
+                  style={[styles.categoryChip, { backgroundColor: selected ? colors.primary : colors.muted }]}
+                  onPress={() => setPriceType(option.value)}
+                >
+                  <Text style={[styles.categoryChipText, { color: selected ? "#fff" : colors.foreground }]}>
+                    {option.label}
+                  </Text>
+                </Pressable>
+              );
+            })}
+          </View>
+
+          <Text style={[styles.label, { color: colors.foreground }]}>Price</Text>
           <TextInput
             style={[styles.input, { backgroundColor: colors.muted, color: colors.foreground }]}
             value={price}
@@ -222,6 +243,8 @@ export default function EditProductScreen() {
             placeholderTextColor={colors.mutedForeground}
           />
 
+          <ProductAttributeFields value={attributes} onChange={setAttributes} />
+
           <Pressable
             style={[styles.saveBtn, { backgroundColor: colors.primary, opacity: saving || uploading ? 0.6 : 1 }]}
             onPress={handleSave}
@@ -251,23 +274,6 @@ const styles = StyleSheet.create({
   headerTitle: { flex: 1, fontSize: 17, fontWeight: "600" as const, textAlign: "center" },
   saveText: { fontSize: 16, fontWeight: "600" as const },
   content: { flex: 1 },
-  imagePicker: { position: "relative" },
-  productImage: { width: "100%", height: 240, resizeMode: "cover" },
-  imagePlaceholder: { width: "100%", height: 200, alignItems: "center", justifyContent: "center", gap: 10 },
-  imagePlaceholderText: { fontSize: 14, fontWeight: "500" as const },
-  changeImageOverlay: {
-    position: "absolute",
-    bottom: 12,
-    right: 12,
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 6,
-    backgroundColor: "rgba(0,0,0,0.6)",
-    paddingHorizontal: 12,
-    paddingVertical: 6,
-    borderRadius: 8,
-  },
-  changeImageText: { color: "#fff", fontSize: 12 },
   form: { padding: 16, gap: 4 },
   label: { fontSize: 14, fontWeight: "600" as const, marginBottom: 6, marginTop: 12 },
   input: { borderRadius: 10, paddingHorizontal: 14, paddingVertical: 13, fontSize: 15 },

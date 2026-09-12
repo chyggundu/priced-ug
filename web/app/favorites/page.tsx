@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useEffect, useState } from "react";
 import { getFavorites, type Favorites } from "@/lib/api";
 import { DashboardShell, Notice, RequireSignIn } from "@/components/dashboard/DashboardShell";
+import { MediaBadges } from "@/components/MediaBadges";
 import { formatPrice } from "@/lib/formatPrice";
 
 /** Mirrors the mobile app's favorites screen. */
@@ -90,12 +91,19 @@ function FavoritesList() {
                   href={`/business?id=${product.businessId}&item=${product.id}`}
                   className="flex gap-4 rounded-[10px] border border-line p-3 transition hover:border-brand-500"
                 >
-                  {product.imageUrl ? (
-                    // eslint-disable-next-line @next/next/no-img-element
-                    <img src={product.imageUrl} alt="" className="size-16 rounded-[8px] object-cover" />
-                  ) : (
-                    <div className="size-16 rounded-[8px] bg-ink-900/5" />
-                  )}
+                  <div className="relative shrink-0">
+                    {product.imageUrl ? (
+                      // eslint-disable-next-line @next/next/no-img-element
+                      <img src={product.imageUrl} alt="" className="size-16 rounded-[8px] object-cover" />
+                    ) : (
+                      <div className="size-16 rounded-[8px] bg-ink-900/5" />
+                    )}
+                    <MediaBadges
+                      photoCount={product.imageUrls?.length}
+                      hasVideo={!!product.videoUrl}
+                      compact
+                    />
+                  </div>
                   <div className="min-w-0">
                     <p className="truncate font-semibold">{product.name}</p>
                     {formatPrice(product.price, product.priceType) && (

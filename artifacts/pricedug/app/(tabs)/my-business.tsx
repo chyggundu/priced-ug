@@ -15,8 +15,12 @@ import { Feather } from "@expo/vector-icons";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useAuth } from "@clerk/expo";
 import { useMyBusiness } from "@/lib/queries";
-import { useDeleteProduct, useMyProducts } from "@/lib/mutations";
+import { useDeleteMyBusiness, useDeleteProduct, useMyProducts } from "@/lib/mutations";
+import { deleteUploadedFiles } from "@/lib/storage";
+import { describeError } from "@/lib/errors";
 import { useColors } from "@/hooks/useColors";
+import { priceLabel } from "@/constants/product";
+import { MediaBadges } from "@/components/ProductMediaGallery";
 
 export default function MyBusinessScreen() {
   const colors = useColors();
@@ -29,6 +33,7 @@ export default function MyBusinessScreen() {
   const { data: products = [], isLoading: productsLoading, refetch: refetchProducts } =
     useMyProducts(business?.id);
   const deleteProduct = useDeleteProduct();
+  const deleteBusiness = useDeleteMyBusiness();
 
   if (!isSignedIn) {
     return (
@@ -89,6 +94,57 @@ export default function MyBusinessScreen() {
       </View>
     );
   }
+
+  /*
+    Two taps, and the first one spells out what goes with it — this removes
+    the listing every buyer sees, not just the dashboard entry.
+  */
+  const handleDeleteBusiness = () => {
+    Alert.alert(
+      "Delete Business",
+      `This permanently deletes "${business.name}", its ${products.length} product${
+        products.length === 1 ? "" : "s"
+      } and every review left for it. This cannot be undone.`,
+      [
+        { text: "Cancel", style: "cancel" },
+        {
+          text: "Delete",
+          style: "destructive",
+          onPress: async () => {
+            // Collected before the rows go, since the URLs only live on them.
+            const mediaUrls = [
+              business.imageUrl,
+              ...products.flatMap((p) => [p.imageUrl, p.videoUrl, ...(p.imageUrls ?? [])]),
+            ];
+            try {
+              await deleteBusiness.mutateAsync();
+            } catch (error) {
+              Alert.alert("Could not delete business", describeError(error));
+              return;
+            }
+
+            /*
+              The business is gone at this point. A storage failure leaves
+              orphaned files, which is worth telling the user about but is not
+              a failed deletion.
+            */
+            try {
+              await deleteUploadedFiles(mediaUrls);
+              Alert.alert(
+                "Business deleted",
+                "Your business page, its products, reviews and uploaded photos and videos have all been permanently deleted.",
+              );
+            } catch {
+              Alert.alert(
+                "Business deleted",
+                "Your business page, its products and reviews have been permanently deleted. Some uploaded photos or videos could not be removed from storage.",
+              );
+            }
+          },
+        },
+      ],
+    );
+  };
 
   if (business.isHidden) {
     return (
@@ -165,6 +221,23 @@ export default function MyBusinessScreen() {
             <Feather name="edit-2" size={14} color={colors.primary} />
             <Text style={[styles.editBtnText, { color: colors.primary }]}>Edit Business Info</Text>
           </Pressable>
+
+          <Pressable
+            style={[styles.deleteBtn, { borderColor: colors.destructive }]}
+            onPress={handleDeleteBusiness}
+            disabled={deleteBusiness.isPending}
+          >
+            {deleteBusiness.isPending ? (
+              <ActivityIndicator size="small" color={colors.destructive} />
+            ) : (
+              <>
+                <Feather name="trash-2" size={14} color={colors.destructive} />
+                <Text style={[styles.editBtnText, { color: colors.destructive }]}>
+                  Delete Business
+                </Text>
+              </>
+            )}
+          </Pressable>
         </View>
 
         {/* Products */}
@@ -196,20 +269,26 @@ export default function MyBusinessScreen() {
             <View style={styles.productsList}>
               {products.map((product) => (
                 <View key={product.id} style={[styles.productCard, { backgroundColor: colors.card, borderColor: colors.border }]}>
-                  {product.imageUrl ? (
-                    <Image source={{ uri: product.imageUrl }} style={styles.productImage} />
-                  ) : (
-                    <View style={[styles.productImagePlaceholder, { backgroundColor: colors.secondary }]}>
-                      <Feather name="image" size={20} color={colors.primary} />
-                    </View>
-                  )}
+                  <View>
+                    {product.imageUrl ? (
+                      <Image source={{ uri: product.imageUrl }} style={styles.productImage} />
+                    ) : (
+                      <View style={[styles.productImagePlaceholder, { backgroundColor: colors.secondary }]}>
+                        <Feather name="image" size={20} color={colors.primary} />
+                      </View>
+                    )}
+                    <MediaBadges
+                      photoCount={product.imageUrls?.length}
+                      hasVideo={!!product.videoUrl}
+                    />
+                  </View>
                   <View style={styles.productDetails}>
                     <Text style={[styles.productName, { color: colors.foreground }]} numberOfLines={1}>
                       {product.name}
                     </Text>
                     {product.price && (
                       <Text style={[styles.productPrice, { color: colors.primary }]}>
-                        UGX {product.price}
+                        {priceLabel(product.price, product.priceType)}
                       </Text>
                     )}
                     {product.size && (
@@ -307,6 +386,17 @@ const styles = StyleSheet.create({
     borderWidth: 1.5,
   },
   editBtnText: { fontSize: 14, fontWeight: "600" as const },
+  deleteBtn: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    gap: 6,
+    margin: 14,
+    marginTop: 0,
+    paddingVertical: 10,
+    borderRadius: 8,
+    borderWidth: 1.5,
+  },
   productsSection: { paddingHorizontal: 16 },
   productsSectionHeader: { flexDirection: "row", alignItems: "center", justifyContent: "space-between", marginBottom: 12 },
   sectionTitle: { fontSize: 18, fontWeight: "700" as const },
