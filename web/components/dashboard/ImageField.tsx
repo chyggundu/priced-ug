@@ -2,12 +2,17 @@
 
 import { useState } from "react";
 import { uploadFile } from "@/lib/api";
+import { looksLikeVideo } from "@/lib/media";
 import { label } from "./DashboardShell";
 
 /**
  * Picks files from disk and uploads them to the same Supabase bucket the app
- * uses, returning public URLs. Used for the business banner (single) and product
- * photos (up to `max`).
+ * uses, returning public URLs. Used for the business banner (single), product
+ * photos (up to `max`) and the product video.
+ *
+ * Previews match what was uploaded: a video URL gets a `<video>` element, not
+ * an `<img>` that renders as a broken-image icon and reads as a failed upload.
+ * Photos are previewed `object-contain`, since nothing here crops.
  */
 export function ImageField({
   title,
@@ -55,14 +60,26 @@ export function ImageField({
         <ul className="mt-3 flex flex-wrap gap-3">
           {urls.map((url) => (
             <li key={url} className="relative">
-              {/* Plain <img>: these are runtime Supabase URLs and the site is a
-                  static export with image optimisation disabled anyway. */}
-              {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img
-                src={url}
-                alt=""
-                className="size-24 rounded-[10px] border border-line object-cover"
-              />
+              {looksLikeVideo(url) ? (
+                <video
+                  src={url}
+                  controls
+                  playsInline
+                  preload="metadata"
+                  className="size-24 rounded-[10px] border border-line bg-ink-900 object-contain"
+                />
+              ) : (
+                <>
+                  {/* Plain <img>: these are runtime Supabase URLs and the site is a
+                      static export with image optimisation disabled anyway. */}
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img
+                    src={url}
+                    alt=""
+                    className="size-24 rounded-[10px] border border-line bg-ink-900 object-contain"
+                  />
+                </>
+              )}
               <button
                 type="button"
                 onClick={() => onChange(urls.filter((u) => u !== url))}
@@ -89,7 +106,13 @@ export function ImageField({
               e.target.value = "";
             }}
           />
-          {busy ? "Uploading…" : max > 1 ? "Add photos" : "Choose image"}
+          {busy
+            ? "Uploading…"
+            : max > 1
+              ? "Add photos"
+              : accept.startsWith("video")
+                ? "Choose video"
+                : "Choose image"}
         </label>
       )}
 

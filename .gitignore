@@ -56,3 +56,6 @@ config.bat
 .env
 .env.local
 .env*.local
+
+# Compiled output of `npm test` in each app
+.test-build/

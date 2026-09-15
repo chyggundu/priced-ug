@@ -301,7 +301,7 @@ export default function BrowseScreen() {
                       <ExpoImage
                         source={{ uri: product.imageUrl }}
                         style={styles.businessImage}
-                        contentFit="cover"
+                        contentFit="contain"
                         // Memory + disk cache, so a thumbnail is fetched once and
                         // survives relaunches instead of re-downloading.
                         cachePolicy="memory-disk"
@@ -310,7 +310,13 @@ export default function BrowseScreen() {
                       />
                     ) : (
                       <View style={[styles.businessImagePlaceholder, { backgroundColor: colors.secondary }]}>
-                        <Feather name="package" size={28} color={colors.primary} />
+                        {/* An item can be listed with a clip and no photo; the
+                            play icon says so instead of reading as empty. */}
+                        <Feather
+                          name={product.videoUrl ? "play-circle" : "package"}
+                          size={28}
+                          color={colors.primary}
+                        />
                       </View>
                     )}
                     {/* The grid shows one cover; these say there is more to see. */}
@@ -434,7 +440,8 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     overflow: "hidden",
   },
-  businessImage: { width: "100%", height: 120, resizeMode: "cover" },
+  // Whole picture, dark mat behind the letter-boxing — no cropped covers.
+  businessImage: { width: "100%", height: 120, resizeMode: "contain", backgroundColor: "#0b0b0b" },
   businessImagePlaceholder: {
     width: "100%",
     height: 120,

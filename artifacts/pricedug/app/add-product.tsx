@@ -18,6 +18,7 @@ import { ProductMediaEditor } from "@/components/ProductMediaEditor";
 import { useCategories, useMyBusiness } from "@/lib/queries";
 import { useCreateProduct } from "@/lib/mutations";
 import { useColors } from "@/hooks/useColors";
+import { describeError } from "@/lib/errors";
 import { PRICE_TYPE_OPTIONS } from "@/constants/product";
 import {
   ProductAttributeFields,
@@ -92,8 +93,10 @@ export default function AddProductScreen() {
         },
       });
       router.replace("/(tabs)/my-business");
-    } catch {
-      Alert.alert("Error", "Failed to add product. Please try again.");
+    } catch (error) {
+      // Says which column or policy rejected the row, rather than hiding a
+      // gallery or video write failure behind one generic line.
+      Alert.alert("Could not add item", describeError(error));
     } finally {
       setSaving(false);
     }

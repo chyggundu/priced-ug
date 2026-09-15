@@ -15,6 +15,7 @@ import {
 import { useRouter } from "expo-router";
 import { Feather } from "@expo/vector-icons";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
+import { describeError } from "@/lib/errors";
 import { pickImageAsset } from "@/lib/imagePicker";
 import * as Location from "expo-location";
 import { useAuth } from "@clerk/expo";
@@ -62,16 +63,16 @@ export default function EditBusinessScreen() {
   }, [business]);
 
   const pickImage = async () => {
-    const asset = await pickImageAsset([16, 9]);
+    const asset = await pickImageAsset();
     if (!asset) return;
 
     setUploading(true);
     try {
       // Supabase issues the signed URL itself; no API round trip first.
-      const publicUrl = await uploadImage(asset.uri, "image/jpeg");
+      const publicUrl = await uploadImage(asset.uri, asset.mimeType ?? "image/jpeg");
       setImageUrl(publicUrl);
     } catch (err) {
-      Alert.alert("Upload failed", "Could not upload image. Please try again.");
+      Alert.alert("Upload failed", describeError(err));
     } finally {
       setUploading(false);
     }
@@ -338,7 +339,9 @@ const styles = StyleSheet.create({
   saveText: { fontSize: 16, fontWeight: "600" as const },
   content: { flex: 1 },
   imagePicker: { position: "relative" },
-  bannerImage: { width: "100%", height: 200, resizeMode: "cover" },
+  // The header is shown whole rather than cropped to a banner shape, so what
+  // the owner picked is what everyone sees.
+  bannerImage: { width: "100%", height: 200, resizeMode: "contain", backgroundColor: "#0b0b0b" },
   imagePlaceholder: { width: "100%", height: 200, alignItems: "center", justifyContent: "center", gap: 8 },
   imagePlaceholderText: { fontSize: 14, fontWeight: "500" as const },
   changeImageOverlay: {

@@ -95,7 +95,7 @@ export default function NearbyPage() {
                 >
                   {business.imageUrl ? (
                     // eslint-disable-next-line @next/next/no-img-element
-                    <img src={business.imageUrl} alt="" className="size-14 rounded-[8px] object-cover" />
+                    <img src={business.imageUrl} alt="" className="size-14 rounded-[8px] bg-ink-900 object-contain" />
                   ) : (
                     <div className="size-14 rounded-[8px] bg-ink-900/5" />
                   )}

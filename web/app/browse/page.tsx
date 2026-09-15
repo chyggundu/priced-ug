@@ -153,7 +153,17 @@ export default function BrowsePage() {
                       <img
                         src={product.imageUrl}
                         alt=""
-                        className="h-44 w-full object-cover transition duration-500 group-hover:scale-[1.03]"
+                        className="h-44 w-full bg-ink-900 object-contain transition duration-500 group-hover:scale-[1.03]"
+                      />
+                    ) : product.videoUrl ? (
+                      // An item can be listed with a clip and no photo. Its
+                      // first frame is the cover, rather than an empty tile.
+                      <video
+                        src={product.videoUrl}
+                        muted
+                        playsInline
+                        preload="metadata"
+                        className="h-44 w-full bg-ink-900 object-contain"
                       />
                     ) : (
                       <div className="h-44 w-full bg-ink-900/5" />

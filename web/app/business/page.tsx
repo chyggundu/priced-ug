@@ -8,6 +8,8 @@ import { FavoriteButton } from "@/components/FavoriteButton";
 import { ShareButton } from "@/components/ShareButton";
 import { BusinessMap } from "@/components/BusinessMap";
 import { Notice } from "@/components/dashboard/DashboardShell";
+import { MediaLightbox, useLightbox } from "@/components/MediaLightbox";
+import { buildMediaSlides } from "@/lib/media";
 import { getBusiness, getBusinessProducts, type Business, type Product } from "@/lib/api";
 import { formatPrice, whatsappHref } from "@/lib/formatPrice";
 import { getCurrentUserId } from "@/lib/supabase";
@@ -94,10 +96,7 @@ function BusinessDetail() {
     <>
       <Nav />
 
-      {business.imageUrl && (
-        // eslint-disable-next-line @next/next/no-img-element
-        <img src={business.imageUrl} alt="" className="h-56 w-full object-cover sm:h-72" />
-      )}
+      {business.imageUrl && <BusinessBanner url={business.imageUrl} />}
 
       <main className="mx-auto w-full max-w-4xl px-5 py-8">
         <div className="flex items-start justify-between gap-4">
@@ -255,48 +254,104 @@ function BusinessDetail() {
 }
 
 /**
+ * The store's header picture, shown whole rather than cropped to a banner
+ * strip, and opening full-screen when clicked.
+ */
+function BusinessBanner({ url }: { url: string }) {
+  const lightbox = useLightbox();
+  return (
+    <>
+      <button
+        type="button"
+        onClick={() => lightbox.open(0)}
+        aria-label="Open store picture"
+        className="block w-full cursor-zoom-in bg-ink-900"
+      >
+        {/* eslint-disable-next-line @next/next/no-img-element */}
+        <img src={url} alt="" className="h-56 w-full object-contain sm:h-72" />
+      </button>
+      <MediaLightbox
+        slides={[{ type: "image", uri: url }]}
+        index={lightbox.index}
+        onIndexChange={lightbox.setIndex}
+        onClose={lightbox.close}
+      />
+    </>
+  );
+}
+
+/**
  * Photos followed by the video, in one strip — the same order the mobile app
  * puts them in, where the video is the last slide of the gallery rather than a
  * separate player further down the card.
  *
  * Mobile pages one slide at a time because a phone has room for one; here the
- * strip scrolls, so nothing is hidden behind a swipe.
+ * strip scrolls, so nothing is hidden behind a swipe. Clicking any slide opens
+ * it full-screen, video included.
+ *
+ * Nothing is cropped: `object-contain` on a dark mat shows the seller's whole
+ * picture whatever shape it is.
  */
 function ProductMedia({ product }: { product: Product }) {
-  const photos = product.imageUrls.length > 0 ? product.imageUrls : product.imageUrl ? [product.imageUrl] : [];
-  const slideCount = photos.length + (product.videoUrl ? 1 : 0);
+  const slides = buildMediaSlides(product.imageUrl, product.imageUrls, product.videoUrl);
+  const lightbox = useLightbox();
 
-  if (slideCount === 0) {
+  if (slides.length === 0) {
     return <div className="h-44 w-full bg-ink-900/5" />;
   }
 
-  if (slideCount === 1) {
-    return photos.length === 1 ? (
-      // eslint-disable-next-line @next/next/no-img-element
-      <img src={photos[0]} alt="" className="h-44 w-full object-cover" />
-    ) : (
-      <video src={product.videoUrl!} controls playsInline className="h-44 w-full bg-black object-contain" />
-    );
-  }
+  const frame = "h-44 bg-ink-900 object-contain";
 
   return (
-    <ul className="flex snap-x gap-1 overflow-x-auto">
-      {photos.map((url) => (
-        <li key={url} className="shrink-0 snap-start">
-          {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img src={url} alt="" className="h-44 w-56 object-cover" />
-        </li>
-      ))}
-      {product.videoUrl && (
-        <li className="shrink-0 snap-start">
-          <video
-            src={product.videoUrl}
-            controls
-            playsInline
-            className="h-44 w-56 bg-black object-contain"
-          />
-        </li>
-      )}
-    </ul>
+    <>
+      <ul className="flex snap-x gap-1 overflow-x-auto bg-ink-900">
+        {slides.map((slide, i) => (
+          <li key={`${slide.uri}-${i}`} className="shrink-0 snap-start">
+            {slide.type === "image" ? (
+              <button
+                type="button"
+                onClick={() => lightbox.open(i)}
+                aria-label={`Open photo ${i + 1}`}
+                className="block cursor-zoom-in"
+              >
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img
+                  src={slide.uri}
+                  alt=""
+                  className={`${frame} ${slides.length === 1 ? "w-full" : "w-56"}`}
+                />
+              </button>
+            ) : (
+              // The inline player keeps its own controls; the expand button
+              // next to it is what opens the clip full-screen.
+              <div className="relative">
+                <video
+                  src={slide.uri}
+                  controls
+                  playsInline
+                  preload="metadata"
+                  className={`${frame} ${slides.length === 1 ? "w-full" : "w-56"}`}
+                />
+                <button
+                  type="button"
+                  onClick={() => lightbox.open(i)}
+                  aria-label="Open video"
+                  className="absolute right-2 top-2 rounded-full bg-black/60 px-2 py-1 text-xs font-semibold text-white transition hover:bg-black/80"
+                >
+                  ⤢
+                </button>
+              </div>
+            )}
+          </li>
+        ))}
+      </ul>
+
+      <MediaLightbox
+        slides={slides}
+        index={lightbox.index}
+        onIndexChange={lightbox.setIndex}
+        onClose={lightbox.close}
+      />
+    </>
   );
 }

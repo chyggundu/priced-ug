@@ -13,6 +13,9 @@ import { Feather } from "@expo/vector-icons";
 import { useVideoPlayer, VideoView } from "expo-video";
 
 import { useColors } from "@/hooks/useColors";
+import { MediaViewer } from "@/components/MediaViewer";
+import { describeError } from "@/lib/errors";
+import { buildMediaSlides } from "@/lib/media";
 import { pickImageAssets, pickVideoAsset } from "@/lib/imagePicker";
 import { uploadMedia } from "@/lib/storage";
 
@@ -24,7 +27,7 @@ function VideoPreview({ uri }: { uri: string }) {
     p.loop = true;
     p.muted = true;
   });
-  return <VideoView player={player} style={styles.videoPreview} nativeControls contentFit="cover" />;
+  return <VideoView player={player} style={styles.videoPreview} nativeControls contentFit="contain" />;
 }
 
 /**
@@ -49,6 +52,7 @@ export function ProductMediaEditor({
   const colors = useColors();
   const [uploadingPhotos, setUploadingPhotos] = useState(false);
   const [uploadingVideo, setUploadingVideo] = useState(false);
+  const [viewerAt, setViewerAt] = useState<number | null>(null);
 
   const setBusy = (photos: boolean, video: boolean) => {
     setUploadingPhotos(photos);
@@ -75,8 +79,9 @@ export function ProductMediaEditor({
       }
       onChangeImageUrls([...imageUrls, ...uploaded]);
     } catch (error) {
-      const message = error instanceof Error ? error.message : "Please try again.";
-      Alert.alert("Upload failed", message);
+      // The reason matters here: a rejected MIME type and a size limit look
+      // identical behind "Please try again", and both are fixable by the user.
+      Alert.alert("Upload failed", describeError(error));
     } finally {
       setBusy(false, uploadingVideo);
     }
@@ -94,8 +99,7 @@ export function ProductMediaEditor({
     try {
       onChangeVideoUrl(await uploadMedia(asset.uri, asset.mimeType ?? "video/mp4"));
     } catch (error) {
-      const message = error instanceof Error ? error.message : "Please try again.";
-      Alert.alert("Upload failed", message);
+      Alert.alert("Upload failed", describeError(error));
     } finally {
       setBusy(uploadingPhotos, false);
     }
@@ -121,7 +125,9 @@ export function ProductMediaEditor({
       >
         {imageUrls.map((url, index) => (
           <View key={`${url}-${index}`} style={styles.thumbWrap}>
-            <Image source={{ uri: url }} style={styles.thumb} />
+            <Pressable onPress={() => setViewerAt(index)} accessibilityLabel={`Open photo ${index + 1}`}>
+              <Image source={{ uri: url }} style={styles.thumb} />
+            </Pressable>
             {index === 0 && (
               <View style={[styles.coverBadge, { backgroundColor: colors.primary }]}>
                 <Text style={styles.coverBadgeText}>Cover</Text>
@@ -180,6 +186,13 @@ export function ProductMediaEditor({
           )}
         </Pressable>
       )}
+
+      <MediaViewer
+        slides={buildMediaSlides(null, imageUrls, null)}
+        startIndex={viewerAt ?? 0}
+        visible={viewerAt !== null}
+        onClose={() => setViewerAt(null)}
+      />
     </View>
   );
 }
@@ -189,7 +202,9 @@ const styles = StyleSheet.create({
   label: { fontSize: 14, fontWeight: "600" as const },
   strip: { gap: 10, paddingRight: 16, paddingBottom: 4 },
   thumbWrap: { position: "relative", overflow: "hidden", borderRadius: 10 },
-  thumb: { width: 96, height: 96, borderRadius: 10, resizeMode: "cover" },
+  // `contain` on a dark mat: the strip is a check that the right picture was
+  // picked, so it must not crop away the part the seller cared about.
+  thumb: { width: 96, height: 96, borderRadius: 10, resizeMode: "contain", backgroundColor: "#0b0b0b" },
   coverBadge: {
     position: "absolute",
     bottom: 6,

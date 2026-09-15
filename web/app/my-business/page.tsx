@@ -177,7 +177,15 @@ function MyBusiness() {
                     <img
                       src={product.imageUrl}
                       alt=""
-                      className="size-20 rounded-[8px] object-cover"
+                      className="size-20 rounded-[8px] bg-ink-900 object-contain"
+                    />
+                  ) : product.videoUrl ? (
+                    <video
+                      src={product.videoUrl}
+                      muted
+                      playsInline
+                      preload="metadata"
+                      className="size-20 rounded-[8px] bg-ink-900 object-contain"
                     />
                   ) : (
                     <div className="size-20 rounded-[8px] bg-ink-900/5" />

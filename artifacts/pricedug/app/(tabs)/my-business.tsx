@@ -21,6 +21,7 @@ import { describeError } from "@/lib/errors";
 import { useColors } from "@/hooks/useColors";
 import { priceLabel } from "@/constants/product";
 import { MediaBadges } from "@/components/ProductMediaGallery";
+import { MediaViewer } from "@/components/MediaViewer";
 
 export default function MyBusinessScreen() {
   const colors = useColors();
@@ -28,6 +29,8 @@ export default function MyBusinessScreen() {
   const insets = useSafeAreaInsets();
   const { isSignedIn, userId } = useAuth();
   const topPad = Platform.OS === "web" ? 67 : insets.top;
+  // Declared above the early returns below, so the hook order never changes.
+  const [bannerOpen, setBannerOpen] = useState(false);
 
   const { data: business, isLoading: bizLoading } = useMyBusiness(isSignedIn ? userId : null);
   const { data: products = [], isLoading: productsLoading, refetch: refetchProducts } =
@@ -172,7 +175,9 @@ export default function MyBusinessScreen() {
         {/* Business Card */}
         <View style={[styles.businessCard, { backgroundColor: colors.card, borderColor: colors.border }]}>
           {business.imageUrl ? (
-            <Image source={{ uri: business.imageUrl }} style={styles.businessBanner} />
+            <Pressable onPress={() => setBannerOpen(true)} accessibilityLabel="Open store picture">
+              <Image source={{ uri: business.imageUrl }} style={styles.businessBanner} />
+            </Pressable>
           ) : (
             <View style={[styles.businessBannerPlaceholder, { backgroundColor: colors.secondary }]}>
               <Feather name="image" size={32} color={colors.primary} />
@@ -274,7 +279,13 @@ export default function MyBusinessScreen() {
                       <Image source={{ uri: product.imageUrl }} style={styles.productImage} />
                     ) : (
                       <View style={[styles.productImagePlaceholder, { backgroundColor: colors.secondary }]}>
-                        <Feather name="image" size={20} color={colors.primary} />
+                        {/* An item can be listed with a clip and no photo; the
+                            play icon says so instead of reading as empty. */}
+                        <Feather
+                          name={product.videoUrl ? "play-circle" : "image"}
+                          size={20}
+                          color={colors.primary}
+                        />
                       </View>
                     )}
                     <MediaBadges
@@ -318,6 +329,14 @@ export default function MyBusinessScreen() {
 
         <View style={{ height: Platform.OS === "web" ? 100 : insets.bottom + 80 }} />
       </ScrollView>
+
+      {business.imageUrl && (
+        <MediaViewer
+          slides={[{ type: "image", uri: business.imageUrl }]}
+          visible={bannerOpen}
+          onClose={() => setBannerOpen(false)}
+        />
+      )}
     </View>
   );
 }
@@ -351,7 +370,7 @@ const styles = StyleSheet.create({
   viewPublicText: { fontSize: 14, fontWeight: "500" as const },
   content: { flex: 1 },
   businessCard: { margin: 16, borderRadius: 12, borderWidth: 1, overflow: "hidden" },
-  businessBanner: { width: "100%", height: 160, resizeMode: "cover" },
+  businessBanner: { width: "100%", height: 160, resizeMode: "contain", backgroundColor: "#0b0b0b" },
   businessBannerPlaceholder: { width: "100%", height: 160, alignItems: "center", justifyContent: "center" },
   hiddenBanner: {
     position: "absolute",
@@ -407,7 +426,7 @@ const styles = StyleSheet.create({
   emptySubtext: { fontSize: 13 },
   productsList: { gap: 10 },
   productCard: { flexDirection: "row", borderRadius: 10, borderWidth: 1, overflow: "hidden", alignItems: "center" },
-  productImage: { width: 80, height: 80, resizeMode: "cover" },
+  productImage: { width: 80, height: 80, resizeMode: "contain", backgroundColor: "#0b0b0b" },
   productImagePlaceholder: { width: 80, height: 80, alignItems: "center", justifyContent: "center" },
   productDetails: { flex: 1, padding: 10 },
   productName: { fontSize: 14, fontWeight: "600" as const, marginBottom: 3 },
