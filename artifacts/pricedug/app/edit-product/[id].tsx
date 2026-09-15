@@ -18,6 +18,7 @@ import { ProductMediaEditor } from "@/components/ProductMediaEditor";
 import { useCategories, useMyBusiness } from "@/lib/queries";
 import { useMyProducts, useUpdateProduct } from "@/lib/mutations";
 import { useColors } from "@/hooks/useColors";
+import { describeError } from "@/lib/errors";
 import { PRICE_TYPE_OPTIONS } from "@/constants/product";
 import {
   ProductAttributeFields,
@@ -117,8 +118,8 @@ export default function EditProductScreen() {
         },
       });
       router.replace("/(tabs)/my-business");
-    } catch {
-      Alert.alert("Error", "Failed to update product. Please try again.");
+    } catch (error) {
+      Alert.alert("Could not update item", describeError(error));
     } finally {
       setSaving(false);
     }

@@ -18,6 +18,7 @@ import { useColors } from "@/hooks/useColors";
 import { priceLabel } from "@/constants/product";
 import { BusinessReviews } from "@/components/BusinessReviews";
 import { ProductMediaGallery } from "@/components/ProductMediaGallery";
+import { MediaViewer } from "@/components/MediaViewer";
 
 export default function BusinessDetailScreen() {
   const colors = useColors();
@@ -27,6 +28,7 @@ export default function BusinessDetailScreen() {
   const businessId = parseInt(id ?? "0");
   const highlightId = highlight ? parseInt(highlight) : null;
   const topPad = Platform.OS === "web" ? 67 : insets.top;
+  const [bannerOpen, setBannerOpen] = React.useState(false);
 
   const { data: business, isLoading: bizLoading } = useBusiness(businessId);
   const { data: products = [], isLoading: productsLoading } = useBusinessProducts(
@@ -89,7 +91,9 @@ export default function BusinessDetailScreen() {
       <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
         {/* Business Banner */}
         {business.imageUrl ? (
-          <Image source={{ uri: business.imageUrl }} style={styles.banner} />
+          <Pressable onPress={() => setBannerOpen(true)} accessibilityLabel="Open store picture">
+            <Image source={{ uri: business.imageUrl }} style={styles.banner} />
+          </Pressable>
         ) : (
           <View style={[styles.bannerPlaceholder, { backgroundColor: colors.secondary }]}>
             <Feather name="briefcase" size={48} color={colors.primary} />
@@ -251,6 +255,14 @@ export default function BusinessDetailScreen() {
 
         <View style={{ height: Platform.OS === "web" ? 40 : insets.bottom + 32 }} />
       </ScrollView>
+
+      {business.imageUrl && (
+        <MediaViewer
+          slides={[{ type: "image", uri: business.imageUrl }]}
+          visible={bannerOpen}
+          onClose={() => setBannerOpen(false)}
+        />
+      )}
     </View>
   );
 }
@@ -269,7 +281,8 @@ const styles = StyleSheet.create({
   backBtn: { width: 40, height: 40, alignItems: "center", justifyContent: "center" },
   headerTitle: { flex: 1, fontSize: 16, fontWeight: "600" as const, textAlign: "center" },
   content: { flex: 1 },
-  banner: { width: "100%", height: 220, resizeMode: "cover" },
+  // Store header and item pictures are letter-boxed, never cropped.
+  banner: { width: "100%", height: 220, resizeMode: "contain", backgroundColor: "#0b0b0b" },
   bannerPlaceholder: { width: "100%", height: 220, alignItems: "center", justifyContent: "center" },
   infoSection: { padding: 16 },
   businessName: { fontSize: 22, fontWeight: "700" as const, marginBottom: 10 },
@@ -287,7 +300,7 @@ const styles = StyleSheet.create({
   emptyText: { fontSize: 15 },
   productsGrid: { gap: 14 },
   productCard: { borderRadius: 12, borderWidth: 1, overflow: "hidden" },
-  productImage: { width: "100%", height: 200, resizeMode: "cover" },
+  productImage: { width: "100%", height: 200, resizeMode: "contain", backgroundColor: "#0b0b0b" },
   productImagePlaceholder: { width: "100%", height: 160, alignItems: "center", justifyContent: "center" },
   productInfo: { padding: 14 },
   productName: { fontSize: 16, fontWeight: "600" as const, marginBottom: 6 },

@@ -19,7 +19,7 @@
     },
     "android": {
       "package": "com.pricedug.mobile",
-      "versionCode": 13
+      "versionCode": 14
     },
     "web": {
       "favicon": "./assets/images/favicon.png"

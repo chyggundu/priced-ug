@@ -124,7 +124,7 @@ function AccessCustomer() {
             <img
               src={customer.addressPhotoUrl}
               alt="Customer address"
-              className="mt-4 w-full max-w-sm rounded-[10px] border border-line object-cover"
+              className="mt-4 w-full max-w-sm rounded-[10px] border border-line bg-ink-900 object-contain"
             />
           )}
 

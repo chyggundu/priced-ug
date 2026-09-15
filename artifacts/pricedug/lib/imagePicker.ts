@@ -1,8 +1,6 @@
 import * as ImagePicker from "expo-image-picker";
 import { Alert, Linking, Platform } from "react-native";
 
-type Aspect = [number, number];
-
 async function launchLibraryMultiple(
   selectionLimit: number,
 ): Promise<ImagePicker.ImagePickerAsset[]> {
@@ -16,18 +14,16 @@ async function launchLibraryMultiple(
   return result.assets ?? [];
 }
 
-async function launchLibrary(aspect: Aspect): Promise<ImagePicker.ImagePickerAsset | null> {
+async function launchLibrary(): Promise<ImagePicker.ImagePickerAsset | null> {
   const result = await ImagePicker.launchImageLibraryAsync({
     mediaTypes: "images",
     quality: 0.8,
-    allowsEditing: true,
-    aspect,
   });
   if (result.canceled) return null;
   return result.assets[0] ?? null;
 }
 
-async function launchCamera(aspect: Aspect): Promise<ImagePicker.ImagePickerAsset | null> {
+async function launchCamera(): Promise<ImagePicker.ImagePickerAsset | null> {
   const permission = await ImagePicker.requestCameraPermissionsAsync();
   if (!permission.granted) {
     if (!permission.canAskAgain && Platform.OS !== "web") {
@@ -49,8 +45,6 @@ async function launchCamera(aspect: Aspect): Promise<ImagePicker.ImagePickerAsse
     const result = await ImagePicker.launchCameraAsync({
       mediaTypes: "images",
       quality: 0.8,
-      allowsEditing: true,
-      aspect,
     });
     if (result.canceled) return null;
     return result.assets[0] ?? null;
@@ -70,12 +64,14 @@ async function launchCamera(aspect: Aspect): Promise<ImagePicker.ImagePickerAsse
  * library, then returns the selected asset (or null if cancelled/denied).
  * On web there is no native action sheet, so it falls back to the library
  * picker (mobile browsers expose the camera through the file picker).
+ *
+ * Nothing here crops. The picker's editor is deliberately off so the asset
+ * comes back at its own aspect ratio, and every surface that shows it letter-
+ * boxes rather than trims.
  */
-export async function pickImageAsset(
-  aspect: Aspect = [4, 3],
-): Promise<ImagePicker.ImagePickerAsset | null> {
+export async function pickImageAsset(): Promise<ImagePicker.ImagePickerAsset | null> {
   if (Platform.OS === "web") {
-    return launchLibrary(aspect);
+    return launchLibrary();
   }
 
   return new Promise((resolve) => {
@@ -83,8 +79,8 @@ export async function pickImageAsset(
       "Add Photo",
       undefined,
       [
-        { text: "Take Photo", onPress: () => void launchCamera(aspect).then(resolve) },
-        { text: "Choose from Library", onPress: () => void launchLibrary(aspect).then(resolve) },
+        { text: "Take Photo", onPress: () => void launchCamera().then(resolve) },
+        { text: "Choose from Library", onPress: () => void launchLibrary().then(resolve) },
         { text: "Cancel", style: "cancel", onPress: () => resolve(null) },
       ],
       { cancelable: true, onDismiss: () => resolve(null) },
@@ -99,7 +95,6 @@ export async function pickImageAsset(
  */
 export async function pickImageAssets(
   selectionLimit: number,
-  aspect: Aspect = [4, 3],
 ): Promise<ImagePicker.ImagePickerAsset[]> {
   if (selectionLimit < 1) return [];
   if (Platform.OS === "web") {
@@ -113,7 +108,7 @@ export async function pickImageAssets(
       [
         {
           text: "Take Photo",
-          onPress: () => void launchCamera(aspect).then((a) => resolve(a ? [a] : [])),
+          onPress: () => void launchCamera().then((a) => resolve(a ? [a] : [])),
         },
         {
           text: "Choose from Library",

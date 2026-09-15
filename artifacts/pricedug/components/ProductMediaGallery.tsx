@@ -5,6 +5,7 @@ import {
   LayoutChangeEvent,
   NativeScrollEvent,
   NativeSyntheticEvent,
+  Pressable,
   ScrollView,
   StyleSheet,
   Text,
@@ -14,8 +15,8 @@ import { Feather } from "@expo/vector-icons";
 import { useVideoPlayer, VideoView } from "expo-video";
 
 import { useColors } from "@/hooks/useColors";
-
-type Slide = { type: "image"; uri: string } | { type: "video"; uri: string };
+import { MediaViewer } from "@/components/MediaViewer";
+import { buildMediaSlides } from "@/lib/media";
 
 function VideoSlide({ uri, width, height }: { uri: string; width: number; height: number }) {
   const player = useVideoPlayer(uri, (p) => {
@@ -33,6 +34,10 @@ function VideoSlide({ uri, width, height }: { uri: string; width: number; height
 
 /**
  * Swipeable photo carousel with the product's video as a final slide.
+ *
+ * Photos are letter-boxed rather than cropped: a seller's picture is shown
+ * whole, whatever shape it is. Tapping one opens the full-screen viewer at
+ * that slide.
  *
  * Falls back to the single cover image when a product predates the gallery
  * columns, so older rows still render exactly as they did before.
@@ -52,17 +57,16 @@ export function ProductMediaGallery({
 }) {
   const colors = useColors();
   const [index, setIndex] = useState(0);
+  const [viewerAt, setViewerAt] = useState<number | null>(null);
   // Measured rather than assumed: the card this sits in has its own padding
   // and border, and a paging ScrollView drifts if the page width is off.
   const [measured, setMeasured] = useState<number | null>(null);
   const slideWidth = width ?? measured ?? Dimensions.get("window").width - 32;
 
-  const slides = useMemo<Slide[]>(() => {
-    const photos = imageUrls && imageUrls.length > 0 ? imageUrls : imageUrl ? [imageUrl] : [];
-    const out: Slide[] = photos.map((uri) => ({ type: "image", uri }) as const);
-    if (videoUrl) out.push({ type: "video", uri: videoUrl });
-    return out;
-  }, [imageUrl, imageUrls, videoUrl]);
+  const slides = useMemo(
+    () => buildMediaSlides(imageUrl, imageUrls, videoUrl),
+    [imageUrl, imageUrls, videoUrl],
+  );
 
   const onScroll = (e: NativeSyntheticEvent<NativeScrollEvent>) => {
     const next = Math.round(e.nativeEvent.contentOffset.x / slideWidth);
@@ -73,6 +77,15 @@ export function ProductMediaGallery({
     const w = Math.round(e.nativeEvent.layout.width);
     if (w > 0 && w !== measured) setMeasured(w);
   };
+
+  const viewer = (
+    <MediaViewer
+      slides={slides}
+      startIndex={viewerAt ?? 0}
+      visible={viewerAt !== null}
+      onClose={() => setViewerAt(null)}
+    />
+  );
 
   if (slides.length === 0) {
     return (
@@ -87,12 +100,17 @@ export function ProductMediaGallery({
 
   if (slides.length === 1 && slides[0].type === "image") {
     return (
-      <Image
-        onLayout={onLayout}
-        source={{ uri: slides[0].uri }}
-        style={{ width: "100%", height }}
-        resizeMode="cover"
-      />
+      <>
+        <Pressable onPress={() => setViewerAt(0)} accessibilityLabel="Open photo">
+          <Image
+            onLayout={onLayout}
+            source={{ uri: slides[0].uri }}
+            style={[styles.media, { width: "100%", height }]}
+            resizeMode="contain"
+          />
+        </Pressable>
+        {viewer}
+      </>
     );
   }
 
@@ -107,12 +125,17 @@ export function ProductMediaGallery({
       >
         {slides.map((slide, i) =>
           slide.type === "image" ? (
-            <Image
+            <Pressable
               key={`${slide.uri}-${i}`}
-              source={{ uri: slide.uri }}
-              style={{ width: slideWidth, height }}
-              resizeMode="cover"
-            />
+              onPress={() => setViewerAt(i)}
+              accessibilityLabel={`Open photo ${i + 1}`}
+            >
+              <Image
+                source={{ uri: slide.uri }}
+                style={[styles.media, { width: slideWidth, height }]}
+                resizeMode="contain"
+              />
+            </Pressable>
           ) : (
             <VideoSlide key={`${slide.uri}-${i}`} uri={slide.uri} width={slideWidth} height={height} />
           ),
@@ -137,6 +160,8 @@ export function ProductMediaGallery({
           {index + 1}/{slides.length}
         </Text>
       </View>
+
+      {viewer}
     </View>
   );
 }
@@ -170,6 +195,9 @@ export function MediaBadges({
 
 const styles = StyleSheet.create({
   placeholder: { alignItems: "center", justifyContent: "center" },
+  // A dark mat behind the letter-boxing, so a tall or square photo reads as
+  // deliberately framed rather than as a layout gap.
+  media: { backgroundColor: "#0b0b0b" },
   dots: {
     position: "absolute",
     bottom: 8,

@@ -66,7 +66,7 @@ function FavoritesList() {
                 >
                   {business.imageUrl ? (
                     // eslint-disable-next-line @next/next/no-img-element
-                    <img src={business.imageUrl} alt="" className="size-16 rounded-[8px] object-cover" />
+                    <img src={business.imageUrl} alt="" className="size-16 rounded-[8px] bg-ink-900 object-contain" />
                   ) : (
                     <div className="size-16 rounded-[8px] bg-ink-900/5" />
                   )}
@@ -94,7 +94,15 @@ function FavoritesList() {
                   <div className="relative shrink-0">
                     {product.imageUrl ? (
                       // eslint-disable-next-line @next/next/no-img-element
-                      <img src={product.imageUrl} alt="" className="size-16 rounded-[8px] object-cover" />
+                      <img src={product.imageUrl} alt="" className="size-16 rounded-[8px] bg-ink-900 object-contain" />
+                    ) : product.videoUrl ? (
+                      <video
+                        src={product.videoUrl}
+                        muted
+                        playsInline
+                        preload="metadata"
+                        className="size-16 rounded-[8px] bg-ink-900 object-contain"
+                      />
                     ) : (
                       <div className="size-16 rounded-[8px] bg-ink-900/5" />
                     )}
