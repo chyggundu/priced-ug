@@ -14,6 +14,7 @@ import { useVideoPlayer, VideoView } from "expo-video";
 
 import { useColors } from "@/hooks/useColors";
 import { MediaViewer } from "@/components/MediaViewer";
+import { ImageCropper } from "@/components/ImageCropper";
 import { describeError } from "@/lib/errors";
 import { buildMediaSlides } from "@/lib/media";
 import { pickImageAssets, pickVideoAsset } from "@/lib/imagePicker";
@@ -53,6 +54,9 @@ export function ProductMediaEditor({
   const [uploadingPhotos, setUploadingPhotos] = useState(false);
   const [uploadingVideo, setUploadingVideo] = useState(false);
   const [viewerAt, setViewerAt] = useState<number | null>(null);
+  // Which photo the (optional) crop editor is open on. Cropping is never
+  // forced: a photo is uploaded whole and only trimmed if the seller asks.
+  const [cropAt, setCropAt] = useState<number | null>(null);
 
   const setBusy = (photos: boolean, video: boolean) => {
     setUploadingPhotos(photos);
@@ -81,6 +85,22 @@ export function ProductMediaEditor({
     } catch (error) {
       // The reason matters here: a rejected MIME type and a size limit look
       // identical behind "Please try again", and both are fixable by the user.
+      Alert.alert("Upload failed", describeError(error));
+    } finally {
+      setBusy(false, uploadingVideo);
+    }
+  };
+
+  const replaceWithCropped = async (croppedUri: string) => {
+    const index = cropAt;
+    setCropAt(null);
+    if (index === null) return;
+
+    setBusy(true, uploadingVideo);
+    try {
+      const url = await uploadMedia(croppedUri, "image/jpeg");
+      onChangeImageUrls(imageUrls.map((existing, i) => (i === index ? url : existing)));
+    } catch (error) {
       Alert.alert("Upload failed", describeError(error));
     } finally {
       setBusy(false, uploadingVideo);
@@ -133,6 +153,14 @@ export function ProductMediaEditor({
                 <Text style={styles.coverBadgeText}>Cover</Text>
               </View>
             )}
+            <Pressable
+              style={styles.cropBtn}
+              onPress={() => setCropAt(index)}
+              hitSlop={8}
+              accessibilityLabel={`Crop photo ${index + 1}`}
+            >
+              <Feather name="crop" size={13} color="#fff" />
+            </Pressable>
             <Pressable
               style={styles.removeBtn}
               onPress={() => removePhoto(index)}
@@ -187,6 +215,13 @@ export function ProductMediaEditor({
         </Pressable>
       )}
 
+      <ImageCropper
+        uri={cropAt === null ? null : (imageUrls[cropAt] ?? null)}
+        visible={cropAt !== null}
+        onCancel={() => setCropAt(null)}
+        onCropped={(croppedUri) => void replaceWithCropped(croppedUri)}
+      />
+
       <MediaViewer
         slides={buildMediaSlides(null, imageUrls, null)}
         startIndex={viewerAt ?? 0}
@@ -214,6 +249,17 @@ const styles = StyleSheet.create({
     borderRadius: 6,
   },
   coverBadgeText: { color: "#fff", fontSize: 10, fontWeight: "600" as const },
+  cropBtn: {
+    position: "absolute",
+    bottom: 5,
+    right: 5,
+    width: 24,
+    height: 24,
+    borderRadius: 12,
+    backgroundColor: "rgba(0,0,0,0.75)",
+    alignItems: "center",
+    justifyContent: "center",
+  },
   removeBtn: {
     position: "absolute",
     top: 5,
