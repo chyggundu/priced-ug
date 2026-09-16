@@ -17,6 +17,7 @@ import { Feather } from "@expo/vector-icons";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { describeError } from "@/lib/errors";
 import { pickImageAsset } from "@/lib/imagePicker";
+import { ImageCropper } from "@/components/ImageCropper";
 import * as Location from "expo-location";
 import { useAuth } from "@clerk/expo";
 import { uploadImage } from "@/lib/storage";
@@ -61,6 +62,22 @@ export default function EditBusinessScreen() {
       setLongitude(business.longitude ?? null);
     }
   }, [business]);
+
+  // The header photo is uploaded whole; this opens the optional crop editor
+  // on it afterwards, for an owner who does want to trim or zoom in.
+  const [cropping, setCropping] = useState(false);
+
+  const cropImage = async (croppedUri: string) => {
+    setCropping(false);
+    setUploading(true);
+    try {
+      setImageUrl(await uploadImage(croppedUri, "image/jpeg"));
+    } catch (err) {
+      Alert.alert("Upload failed", describeError(err));
+    } finally {
+      setUploading(false);
+    }
+  };
 
   const pickImage = async () => {
     const asset = await pickImageAsset();
@@ -183,12 +200,30 @@ export default function EditBusinessScreen() {
             </View>
           )}
           {imageUrl && !uploading && (
-            <View style={styles.changeImageOverlay}>
-              <Feather name="camera" size={18} color="#fff" />
-              <Text style={styles.changeImageText}>Change photo</Text>
-            </View>
+            <>
+              <View style={styles.changeImageOverlay}>
+                <Feather name="camera" size={18} color="#fff" />
+                <Text style={styles.changeImageText}>Change photo</Text>
+              </View>
+              <Pressable
+                style={styles.cropOverlay}
+                onPress={() => setCropping(true)}
+                hitSlop={8}
+                accessibilityLabel="Crop business photo"
+              >
+                <Feather name="crop" size={15} color="#fff" />
+                <Text style={styles.changeImageText}>Crop</Text>
+              </Pressable>
+            </>
           )}
         </Pressable>
+
+        <ImageCropper
+          uri={imageUrl}
+          visible={cropping}
+          onCancel={() => setCropping(false)}
+          onCropped={(croppedUri) => void cropImage(croppedUri)}
+        />
 
         <View style={styles.form}>
           <Text style={[styles.label, { color: colors.foreground }]}>Business Name *</Text>
@@ -344,6 +379,18 @@ const styles = StyleSheet.create({
   bannerImage: { width: "100%", height: 200, resizeMode: "contain", backgroundColor: "#0b0b0b" },
   imagePlaceholder: { width: "100%", height: 200, alignItems: "center", justifyContent: "center", gap: 8 },
   imagePlaceholderText: { fontSize: 14, fontWeight: "500" as const },
+  cropOverlay: {
+    position: "absolute",
+    top: 10,
+    right: 10,
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 6,
+    paddingHorizontal: 10,
+    paddingVertical: 6,
+    borderRadius: 16,
+    backgroundColor: "rgba(0,0,0,0.6)",
+  },
   changeImageOverlay: {
     position: "absolute",
     bottom: 12,

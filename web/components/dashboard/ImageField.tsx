@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { uploadFile } from "@/lib/api";
 import { looksLikeVideo } from "@/lib/media";
+import { ImageCropper } from "@/components/ImageCropper";
 import { label } from "./DashboardShell";
 
 /**
@@ -12,7 +13,8 @@ import { label } from "./DashboardShell";
  *
  * Previews match what was uploaded: a video URL gets a `<video>` element, not
  * an `<img>` that renders as a broken-image icon and reads as a failed upload.
- * Photos are previewed `object-contain`, since nothing here crops.
+ * Photos are previewed `object-contain`, since nothing crops on upload. Each
+ * photo carries a Crop button instead, so trimming stays the owner's choice.
  */
 export function ImageField({
   title,
@@ -31,6 +33,25 @@ export function ImageField({
 }) {
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  /** The photo the crop editor is open on, or null when it is closed. */
+  const [cropping, setCropping] = useState<string | null>(null);
+
+  const replaceWithCropped = async (file: File) => {
+    const original = cropping;
+    setCropping(null);
+    if (!original) return;
+
+    setError(null);
+    setBusy(true);
+    try {
+      const url = await uploadFile(file);
+      onChange(urls.map((existing) => (existing === original ? url : existing)));
+    } catch (e) {
+      setError(e instanceof Error ? e.message : "Upload failed. Please try again.");
+    } finally {
+      setBusy(false);
+    }
+  };
 
   const handleFiles = async (files: FileList | null) => {
     if (!files?.length) return;
@@ -80,6 +101,17 @@ export function ImageField({
                   />
                 </>
               )}
+              {!looksLikeVideo(url) && (
+                <button
+                  type="button"
+                  onClick={() => setCropping(url)}
+                  aria-label="Crop picture"
+                  title="Crop"
+                  className="absolute bottom-1 right-1 rounded-full bg-black/70 px-2 py-1 text-[11px] font-semibold text-white transition hover:bg-black/85"
+                >
+                  Crop
+                </button>
+              )}
               <button
                 type="button"
                 onClick={() => onChange(urls.filter((u) => u !== url))}
@@ -117,6 +149,14 @@ export function ImageField({
       )}
 
       {error && <p className="mt-2 text-sm text-brand-600">{error}</p>}
+
+      {cropping && (
+        <ImageCropper
+          src={cropping}
+          onCancel={() => setCropping(null)}
+          onCropped={(file) => void replaceWithCropped(file)}
+        />
+      )}
     </div>
   );
 }

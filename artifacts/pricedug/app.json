@@ -2,7 +2,7 @@
   "expo": {
     "name": "Priced Ug",
     "slug": "pricedug",
-    "version": "1.2.5",
+    "version": "1.2.6",
     "orientation": "portrait",
     "icon": "./assets/images/icon.png",
     "scheme": "pricedug",
@@ -19,7 +19,7 @@
     },
     "android": {
       "package": "com.pricedug.mobile",
-      "versionCode": 14
+      "versionCode": 15
     },
     "web": {
       "favicon": "./assets/images/favicon.png"
