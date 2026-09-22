@@ -15,11 +15,13 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useCategories } from "@/lib/queries";
 import {
   useAdminBusinesses,
+  useAdminDeleteBusiness,
   useCreateCategory,
   useDeleteCategory,
   useSetBusinessVisibility,
 } from "@/lib/mutations";
 import { useColors } from "@/hooks/useColors";
+import { describeError } from "@/lib/errors";
 import { useAppAuth } from "@/context/AuthContext";
 import { useRouter } from "expo-router";
 
@@ -32,11 +34,18 @@ export default function AdminPanelScreen() {
   const [newCategory, setNewCategory] = useState("");
   const [activeTab, setActiveTab] = useState<"businesses" | "categories">("businesses");
 
-  const { data: businesses = [], isLoading: bizLoading, refetch: refetchBiz } = useAdminBusinesses();
+  const {
+    data: businesses = [],
+    isLoading: bizLoading,
+    isFetching: bizFetching,
+    error: bizError,
+    refetch: refetchBiz,
+  } = useAdminBusinesses();
   const { data: categories = [], isLoading: catLoading, refetch: refetchCat } = useCategories();
   const createCategory = useCreateCategory();
   const deleteCategory = useDeleteCategory();
   const toggleVisibility = useSetBusinessVisibility();
+  const deleteBusiness = useAdminDeleteBusiness();
 
   if (!isAdmin) {
     return (
@@ -68,21 +77,49 @@ export default function AdminPanelScreen() {
     ]);
   };
 
+  // "Block" is the admin-facing name for `is_hidden`: a blocked business is
+  // hidden from the public and from its owner until it is unblocked.
   const handleToggleVisibility = (id: number, currentlyHidden: boolean, name: string) => {
     const willHide = !currentlyHidden;
     Alert.alert(
-      willHide ? "Hide Business" : "Unhide Business",
+      willHide ? "Block Business" : "Unblock Business",
       willHide
-        ? `"${name}" will be hidden from the public and from the owner until you unhide it.`
+        ? `"${name}" will be hidden from the public and from the owner until you unblock it.`
         : `"${name}" will be visible to the public and the owner again.`,
       [
         { text: "Cancel", style: "cancel" },
         {
-          text: willHide ? "Hide" : "Unhide",
+          text: willHide ? "Block" : "Unblock",
           style: willHide ? "destructive" : "default",
           onPress: async () => {
-            await toggleVisibility.mutateAsync({ businessId: id, isHidden: willHide });
-            refetchBiz();
+            try {
+              await toggleVisibility.mutateAsync({ businessId: id, isHidden: willHide });
+              refetchBiz();
+            } catch (error) {
+              Alert.alert(willHide ? "Could not block" : "Could not unblock", describeError(error));
+            }
+          },
+        },
+      ]
+    );
+  };
+
+  const handleDeleteBusiness = (id: number, name: string) => {
+    Alert.alert(
+      "Delete Business",
+      `Delete "${name}" with all its items and reviews? This cannot be undone.`,
+      [
+        { text: "Cancel", style: "cancel" },
+        {
+          text: "Delete",
+          style: "destructive",
+          onPress: async () => {
+            try {
+              await deleteBusiness.mutateAsync(id);
+              refetchBiz();
+            } catch (error) {
+              Alert.alert("Could not delete", describeError(error));
+            }
           },
         },
       ]
@@ -119,6 +156,29 @@ export default function AdminPanelScreen() {
           <View style={styles.section}>
             {bizLoading ? (
               <ActivityIndicator color={colors.primary} style={{ marginTop: 32 }} />
+            ) : bizError ? (
+              // A failed request used to fall through to "No businesses
+              // registered", which hid the real reason the list was empty.
+              <View style={styles.empty}>
+                <Feather name="alert-triangle" size={32} color={colors.destructive} />
+                <Text style={[styles.emptyText, { color: colors.foreground, textAlign: "center" }]}>
+                  Could not load businesses
+                </Text>
+                <Text style={[styles.bizAddr, { color: colors.mutedForeground, textAlign: "center" }]}>
+                  {describeError(bizError)}
+                </Text>
+                <Pressable
+                  onPress={() => refetchBiz()}
+                  disabled={bizFetching}
+                  style={[styles.toggleBtn, { backgroundColor: colors.primary, marginTop: 8 }]}
+                >
+                  {bizFetching ? (
+                    <ActivityIndicator size="small" color="#fff" />
+                  ) : (
+                    <Text style={styles.toggleBtnText}>Retry</Text>
+                  )}
+                </Pressable>
+              </View>
             ) : businesses.length === 0 ? (
               <View style={styles.empty}>
                 <Feather name="briefcase" size={32} color={colors.mutedForeground} />
@@ -133,7 +193,7 @@ export default function AdminPanelScreen() {
                       {b.isHidden && (
                         <View style={[styles.hiddenBadge, { backgroundColor: colors.secondary }]}>
                           <Feather name="eye-off" size={10} color={colors.primary} />
-                          <Text style={[styles.hiddenBadgeText, { color: colors.primary }]}>Hidden</Text>
+                          <Text style={[styles.hiddenBadgeText, { color: colors.primary }]}>Blocked</Text>
                         </View>
                       )}
                     </View>
@@ -154,8 +214,15 @@ export default function AdminPanelScreen() {
                       onPress={() => handleToggleVisibility(b.id, b.isHidden, b.name)}
                       style={[styles.toggleBtn, { backgroundColor: b.isHidden ? "#22C55E" : "#E01E37" }]}
                     >
-                      <Feather name={b.isHidden ? "eye" : "eye-off"} size={13} color="#fff" />
-                      <Text style={styles.toggleBtnText}>{b.isHidden ? "Unhide" : "Hide"}</Text>
+                      <Feather name={b.isHidden ? "unlock" : "slash"} size={13} color="#fff" />
+                      <Text style={styles.toggleBtnText}>{b.isHidden ? "Unblock" : "Block"}</Text>
+                    </Pressable>
+                    <Pressable
+                      onPress={() => handleDeleteBusiness(b.id, b.name)}
+                      style={styles.previewBtn}
+                      accessibilityLabel={`Delete ${b.name}`}
+                    >
+                      <Feather name="trash-2" size={18} color={colors.destructive} />
                     </Pressable>
                   </View>
                 </View>

@@ -24,7 +24,7 @@ import {
 } from "@/components/dashboard/DashboardShell";
 import { isAdminUser } from "@/lib/admin";
 
-/** Mirrors the mobile app's admin panel: categories, and business visibility. */
+/** Mirrors the mobile app's admin panel: categories, and blocking or deleting businesses. */
 export default function AdminPage() {
   return (
     <RequireSignIn>
@@ -100,7 +100,7 @@ function AdminPanel() {
   }
 
   return (
-    <DashboardShell title="Admin" description="Categories and business visibility.">
+    <DashboardShell title="Admin" description="Categories, and blocking or deleting businesses.">
       {error && <Notice>{error}</Notice>}
 
       <section className="mt-6">
@@ -181,16 +181,26 @@ function AdminPanel() {
 
               {business.isHidden && (
                 <span className="rounded-full bg-ink-900/5 px-3 py-1 text-xs font-semibold text-ink-600">
-                  Hidden
+                  Blocked
                 </span>
               )}
 
               <button
                 type="button"
                 className={ghostButton}
-                onClick={() => void run(() => setBusinessVisibility(business.id, !business.isHidden))}
+                // "Block" is the admin-facing name for `is_hidden`: hidden from
+                // the public and from the owner until unblocked.
+                onClick={() => {
+                  const block = !business.isHidden;
+                  const message = block
+                    ? `Block "${business.name}"? It will be hidden from the public and the owner until you unblock it.`
+                    : `Unblock "${business.name}"? It will be visible again.`;
+                  if (window.confirm(message)) {
+                    void run(() => setBusinessVisibility(business.id, block));
+                  }
+                }}
               >
-                {business.isHidden ? "Unhide" : "Hide"}
+                {business.isHidden ? "Unblock" : "Block"}
               </button>
 
               <button
