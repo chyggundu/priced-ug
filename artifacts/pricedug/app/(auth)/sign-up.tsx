@@ -15,6 +15,7 @@ import { useSignUp } from "@clerk/expo";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 import { GoogleAuthButton } from "@/components/GoogleAuthButton";
+import { PhoneAuthButton } from "@/components/PhoneAuthButton";
 
 export default function SignUpScreen() {
   const { signUp, errors, fetchStatus } = useSignUp();
@@ -114,6 +115,7 @@ export default function SignUpScreen() {
         </Pressable>
 
         <GoogleAuthButton mode="sign-up" />
+        <PhoneAuthButton mode="sign-up" />
 
         <View style={styles.footer}>
           <Text style={styles.footerText}>Already have an account? </Text>

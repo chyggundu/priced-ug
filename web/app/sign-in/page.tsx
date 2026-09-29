@@ -13,6 +13,7 @@ import {
 } from "@/components/auth/AuthShell";
 import { AuthUnavailable } from "@/components/auth/AuthUnavailable";
 import { GoogleAuthButton } from "@/components/auth/GoogleAuthButton";
+import { PhoneAuthButton } from "@/components/auth/PhoneAuthButton";
 import { isClerkConfigured } from "@/lib/clerk";
 
 /**
@@ -193,6 +194,7 @@ function SignInForm() {
       </form>
 
       <GoogleAuthButton mode="sign-in" />
+      <PhoneAuthButton mode="sign-in" />
 
       <p className="mt-8 text-center text-sm text-ink-600">
         Don&apos;t have an account?{" "}

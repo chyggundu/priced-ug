@@ -18,6 +18,7 @@ import { Feather } from "@expo/vector-icons";
 import * as SecureStore from "expo-secure-store";
 
 import { GoogleAuthButton } from "@/components/GoogleAuthButton";
+import { PhoneAuthButton } from "@/components/PhoneAuthButton";
 
 const CREDENTIALS_KEY = "pricedug.savedCredentials";
 const isWeb = Platform.OS === "web";
@@ -238,6 +239,7 @@ export default function SignInScreen() {
         </Link>
 
         <GoogleAuthButton mode="sign-in" />
+        <PhoneAuthButton mode="sign-in" />
 
         <View style={styles.footer}>
           <Text style={styles.footerText}>Don't have an account? </Text>
