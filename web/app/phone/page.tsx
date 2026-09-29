@@ -13,7 +13,41 @@ import {
 } from "@/components/auth/AuthShell";
 import { AuthUnavailable } from "@/components/auth/AuthUnavailable";
 import { isClerkConfigured } from "@/lib/clerk";
-import { formatForDisplay, isValidUgandanPhone, toE164 } from "@/lib/phone";
+import { formatForDisplay, isValidPhone, toE164 } from "@/lib/phone";
+
+/**
+ * Clerk reports the useful code in two places: the returned error carries a
+ * generic `code: "api_response_error"` with the real per-field code nested in
+ * `errors[0].code`. Reading only the top level made the sign-up fallback never
+ * fire, since the outer code never equals `form_identifier_not_found`.
+ */
+type ClerkLikeError = {
+  code?: string;
+  message?: string;
+  longMessage?: string;
+  errors?: { code?: string; message?: string; longMessage?: string }[];
+};
+
+function clerkCode(e: unknown): string | undefined {
+  const err = e as ClerkLikeError;
+  return err?.errors?.[0]?.code ?? err?.code;
+}
+
+function describeClerkError(e: unknown): string {
+  const err = e as ClerkLikeError;
+  const first = err?.errors?.[0];
+  const code = clerkCode(e);
+  if (code === "captcha_missing_token" || code === "captcha_invalid") {
+    return "Bot protection blocked this sign-up. Turn off Bot Protection for this Clerk instance, or sign in with email.";
+  }
+  return (
+    first?.longMessage ??
+    first?.message ??
+    err?.longMessage ??
+    err?.message ??
+    "Something went wrong. Please try again."
+  );
+}
 
 /** Seconds before "Resend code" becomes clickable again, matching Clerk's throttle. */
 const RESEND_COOLDOWN = 30;
@@ -73,20 +107,20 @@ function PhoneAuthForm() {
       failure here — it is the signal to register instead. Any other code is a
       real error and gets shown.
     */
-    if (signInError.code !== "form_identifier_not_found") {
-      setError(signInError.longMessage ?? signInError.message ?? "Couldn't send the code.");
+    if (clerkCode(signInError) !== "form_identifier_not_found") {
+      setError(describeClerkError(signInError));
       return;
     }
 
     const { error: createError } = await signUp.create({ phoneNumber: e164 });
     if (createError) {
-      setError(createError.longMessage ?? createError.message ?? "Couldn't create the account.");
+      setError(describeClerkError(createError));
       return;
     }
 
     const { error: sendError } = await signUp.verifications.sendPhoneCode();
     if (sendError) {
-      setError(sendError.longMessage ?? sendError.message ?? "Couldn't send the code.");
+      setError(describeClerkError(sendError));
       return;
     }
 
@@ -103,7 +137,7 @@ function PhoneAuthForm() {
         ? await signIn.phoneCode.sendCode()
         : await signUp.verifications.sendPhoneCode();
     if (resendError) {
-      setError(resendError.longMessage ?? resendError.message ?? "Couldn't resend the code.");
+      setError(describeClerkError(resendError));
       return;
     }
     setCooldown(RESEND_COOLDOWN);
@@ -116,7 +150,7 @@ function PhoneAuthForm() {
     if (mode === "sign-in") {
       const { error: verifyError } = await signIn.phoneCode.verifyCode({ code });
       if (verifyError) {
-        setError(verifyError.longMessage ?? verifyError.message ?? "That code didn't work.");
+        setError(describeClerkError(verifyError));
         return;
       }
       if (signIn.status === "complete") {
@@ -128,7 +162,7 @@ function PhoneAuthForm() {
 
     const { error: verifyError } = await signUp.verifications.verifyPhoneCode({ code });
     if (verifyError) {
-      setError(verifyError.longMessage ?? verifyError.message ?? "That code didn't work.");
+      setError(describeClerkError(verifyError));
       return;
     }
     if (signUp.status === "complete") {
@@ -192,16 +226,15 @@ function PhoneAuthForm() {
     <AuthShell
       tagline="Find the best deals in Uganda"
       title="Continue with phone"
-      subtitle="We'll text you a code. No password needed."
+      subtitle="We'll text you a code. No password needed. Include your country code, for example +256 or +92."
     >
       <form onSubmit={handleSend} className="flex flex-col gap-3">
         <div className="flex items-center rounded-[10px] border border-line bg-white transition focus-within:border-brand-500 focus-within:ring-2 focus-within:ring-brand-500/20">
-          <span className="pl-4 pr-2 text-[15px] font-semibold text-ink-600">+256</span>
           <input
-            className="w-full bg-transparent py-3 pr-4 text-[15px] text-ink-900 outline-none placeholder:text-ink-400"
+            className="w-full bg-transparent px-4 py-3 text-[15px] text-ink-900 outline-none placeholder:text-ink-400"
             value={phone}
             onChange={(e) => setPhone(e.target.value)}
-            placeholder="772 123 456"
+            placeholder="+256 772 123 456"
             type="tel"
             autoComplete="tel"
             autoFocus
@@ -213,7 +246,7 @@ function PhoneAuthForm() {
         <button
           type="submit"
           className={buttonClass}
-          disabled={!isValidUgandanPhone(phone) || busy}
+          disabled={!isValidPhone(phone) || busy}
         >
           {busy ? "Sending…" : "Send code"}
         </button>

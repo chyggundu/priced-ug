@@ -15,7 +15,53 @@ import { useSignIn, useSignUp } from "@clerk/expo";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Feather } from "@expo/vector-icons";
 
-import { formatForDisplay, isValidUgandanPhone, toE164 } from "@/lib/phone";
+import { formatForDisplay, isValidPhone, toE164 } from "@/lib/phone";
+
+
+/**
+ * Clerk reports the useful code in two different places. A returned error from
+ * the hooks carries a generic `code: "api_response_error"` with the real,
+ * per-field code nested in `errors[0].code`; a thrown ClerkAPIResponseError has
+ * the same array. Reading only the top level made the sign-up fallback below
+ * never fire, because the outer code never equals `form_identifier_not_found`.
+ */
+type ClerkLikeError = {
+  code?: string;
+  message?: string;
+  longMessage?: string;
+  errors?: { code?: string; message?: string; longMessage?: string }[];
+};
+
+function clerkCode(e: unknown): string | undefined {
+  const err = e as ClerkLikeError;
+  return err?.errors?.[0]?.code ?? err?.code;
+}
+
+function describeClerkError(e: unknown): string {
+  const err = e as ClerkLikeError;
+  const first = err?.errors?.[0];
+  const code = clerkCode(e);
+  if (code === "captcha_missing_token" || code === "captcha_invalid") {
+    return "Bot protection blocked this sign-up. Turn off Bot Protection for this Clerk instance, or sign in with email.";
+  }
+  return (
+    first?.longMessage ??
+    first?.message ??
+    err?.longMessage ??
+    err?.message ??
+    "Something went wrong. Please try again."
+  );
+}
+
+/** Clerk's code for re-submitting a verification that already succeeded. */
+function isAlreadyVerified(e: unknown): boolean {
+  return clerkCode(e) === "verification_already_verified";
+}
+
+/** Shown when a step succeeds but the flow still cannot finish. */
+function stalledMessage(what: string, status: string | null | undefined): string {
+  return `Could not finish ${what} (Clerk status: ${status ?? "unknown"}). Check the instance's required fields.`;
+}
 
 /** Seconds before "Resend code" becomes tappable again, matching Clerk's throttle. */
 const RESEND_COOLDOWN = 30;
@@ -58,21 +104,40 @@ export default function PhoneAuthScreen() {
     };
   }, [cooldown > 0]);
 
-  const finish = async (finalize: (opts: {
-    navigate: (args: { decorateUrl: (url: string) => string }) => void;
-  }) => Promise<unknown>) => {
-    await finalize({
-      navigate: ({ decorateUrl }) => {
-        const url = decorateUrl("/");
-        if (url.startsWith("http")) return;
-        router.replace("/(tabs)");
-      },
-    });
+  /*
+    The finalize call has to stay attached to its resource. Passing
+    `signUp.finalize` as a bare reference detaches it from `signUp`, and Clerk's
+    resources hold their state in private class fields — so the detached call
+    throws "attempted to use private field on non-instance" instead of
+    completing the sign-up. Callers hand over a closure that invokes the method
+    on its own object.
+  */
+  const navigateHome = {
+    navigate: ({ decorateUrl }: { decorateUrl: (url: string) => string }) => {
+      const url = decorateUrl("/");
+      if (url.startsWith("http")) return;
+      router.replace("/(tabs)");
+    },
   };
 
   const sendCode = async () => {
     if (!e164) return;
     setError(null);
+
+    try {
+      await sendCodeInner();
+    } catch (e) {
+      /*
+        Clerk rejects rather than returning `{ error }` for some failures —
+        `captcha_missing_token` from bot protection is one. Without this the
+        rejection was swallowed and the button looked dead.
+      */
+      setError(describeClerkError(e));
+    }
+  };
+
+  const sendCodeInner = async () => {
+    if (!e164) return;
 
     const { error: signInError } = await signIn.phoneCode.sendCode({ phoneNumber: e164 });
 
@@ -88,20 +153,20 @@ export default function PhoneAuthScreen() {
       failure here — it is the signal to register instead. Any other code is a
       real error and gets shown.
     */
-    if (signInError.code !== "form_identifier_not_found") {
-      setError(signInError.longMessage ?? signInError.message ?? "Couldn't send the code.");
+    if (clerkCode(signInError) !== "form_identifier_not_found") {
+      setError(describeClerkError(signInError));
       return;
     }
 
     const { error: createError } = await signUp.create({ phoneNumber: e164 });
     if (createError) {
-      setError(createError.longMessage ?? createError.message ?? "Couldn't create the account.");
+      setError(describeClerkError(createError));
       return;
     }
 
     const { error: sendError } = await signUp.verifications.sendPhoneCode();
     if (sendError) {
-      setError(sendError.longMessage ?? sendError.message ?? "Couldn't send the code.");
+      setError(describeClerkError(sendError));
       return;
     }
 
@@ -113,36 +178,70 @@ export default function PhoneAuthScreen() {
   const resend = async () => {
     if (cooldown > 0) return;
     setError(null);
+    try {
     const { error: resendError } =
       mode === "sign-in"
         ? await signIn.phoneCode.sendCode()
         : await signUp.verifications.sendPhoneCode();
     if (resendError) {
-      setError(resendError.longMessage ?? resendError.message ?? "Couldn't resend the code.");
+      setError(describeClerkError(resendError));
       return;
     }
     setCooldown(RESEND_COOLDOWN);
+    } catch (e) {
+      setError(describeClerkError(e));
+    }
   };
 
   const verify = async () => {
     setError(null);
+    try {
+      await verifyInner();
+    } catch (e) {
+      setError(describeClerkError(e));
+    }
+  };
 
+  const verifyInner = async () => {
     if (mode === "sign-in") {
       const { error: verifyError } = await signIn.phoneCode.verifyCode({ code });
-      if (verifyError) {
-        setError(verifyError.longMessage ?? verifyError.message ?? "That code didn't work.");
+      /*
+        A second tap on Verify re-submits a code Clerk has already accepted. That
+        is not a failure — the attempt did succeed — so fall through and let the
+        status decide, rather than showing the user a scary message.
+      */
+      if (verifyError && !isAlreadyVerified(verifyError)) {
+        setError(describeClerkError(verifyError));
         return;
       }
-      if (signIn.status === "complete") await finish(signIn.finalize);
+      if (signIn.status === "complete") {
+        await signIn.finalize(navigateHome);
+        return;
+      }
+      setError(stalledMessage("sign in", signIn.status));
       return;
     }
 
     const { error: verifyError } = await signUp.verifications.verifyPhoneCode({ code });
-    if (verifyError) {
-      setError(verifyError.longMessage ?? verifyError.message ?? "That code didn't work.");
+    if (verifyError && !isAlreadyVerified(verifyError)) {
+      setError(describeClerkError(verifyError));
       return;
     }
-    if (signUp.status === "complete") await finish(signUp.finalize);
+    if (signUp.status === "complete") {
+      await signUp.finalize(navigateHome);
+      return;
+    }
+    /*
+      The number verified but the account still is not usable — normally because
+      the Clerk instance asks for another field (an email, a password, a name).
+      Saying so beats leaving the screen sitting there doing nothing.
+    */
+    const outstanding = [...signUp.missingFields, ...signUp.unverifiedFields];
+    setError(
+      outstanding.length > 0
+        ? `Your number is verified, but this account still needs: ${outstanding.join(", ")}. Turn those off in Clerk, or finish signing up with email.`
+        : stalledMessage("sign up", signUp.status),
+    );
   };
 
   if (step === "code") {
@@ -229,16 +328,16 @@ export default function PhoneAuthScreen() {
 
         <Text style={styles.title}>Continue with phone</Text>
         <Text style={styles.subtitle}>
-          We&apos;ll text you a code. No password needed.
+          We&apos;ll text you a code. No password needed. Include your country
+          code, for example +256 or +92.
         </Text>
 
         <View style={styles.phoneWrapper}>
-          <Text style={styles.prefix}>+256</Text>
           <TextInput
             style={styles.phoneInput}
             value={phone}
             onChangeText={setPhone}
-            placeholder="772 123 456"
+            placeholder="+256 772 123 456"
             placeholderTextColor="#999"
             keyboardType="phone-pad"
             textContentType="telephoneNumber"
@@ -252,10 +351,10 @@ export default function PhoneAuthScreen() {
         <Pressable
           style={[
             styles.button,
-            (!isValidUgandanPhone(phone) || busy) && styles.buttonDisabled,
+            (!isValidPhone(phone) || busy) && styles.buttonDisabled,
           ]}
           onPress={sendCode}
-          disabled={!isValidUgandanPhone(phone) || busy}
+          disabled={!isValidPhone(phone) || busy}
         >
           {busy ? (
             <ActivityIndicator color="#fff" />
@@ -347,16 +446,9 @@ const styles = StyleSheet.create({
     borderRadius: 10,
     marginBottom: 12,
   },
-  prefix: {
-    paddingLeft: 16,
-    paddingRight: 8,
-    fontSize: 16,
-    color: "#555555",
-    fontWeight: "600" as const,
-  },
   phoneInput: {
     flex: 1,
-    paddingRight: 16,
+    paddingHorizontal: 16,
     paddingVertical: 14,
     fontSize: 16,
     color: "#1a1a1a",
