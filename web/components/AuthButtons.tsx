@@ -9,9 +9,9 @@ import { isClerkConfigured } from "@/lib/clerk";
  * up, signed in swaps them for the account entry point and a way out.
  *
  * Clerk loads asynchronously and this is a static page, so `isLoaded` is false on
- * first paint. Rendering the signed-out pair during that window would make the
- * buttons flip for anyone already signed in, so the slot stays empty (but
- * reserves its height) until Clerk knows the answer.
+ * first paint. The slot used to stay empty through that window, which left the
+ * header with no way in at all; showing Login and Sign up and swapping them once
+ * Clerk answers is the lesser evil.
  */
 export function AuthButtons() {
   // No Clerk key in this build: still offer the buttons (the pages explain the
@@ -25,7 +25,7 @@ function AuthButtonsLive() {
   const { user } = useUser();
   const { signOut } = useClerk();
 
-  if (!isLoaded) return <div className="h-9 w-[8.5rem]" aria-hidden />;
+  if (!isLoaded) return <SignedOutButtons />;
 
   if (isSignedIn) {
     return (
@@ -59,16 +59,16 @@ function AuthButtonsLive() {
 
 function SignedOutButtons() {
   return (
-    <div className="flex items-center gap-2">
+    <div className="flex items-center gap-1 sm:gap-2">
       <Link
         href="/sign-in"
-        className="rounded-lg px-3 py-2 text-sm font-semibold text-ink-600 transition duration-300 hover:text-brand-500"
+        className="rounded-lg px-1.5 py-2 text-sm font-semibold whitespace-nowrap text-ink-600 transition duration-300 hover:text-brand-500 sm:px-3"
       >
         Login
       </Link>
       <Link
         href="/sign-up"
-        className="rounded-lg bg-brand-500 px-4 py-2 text-sm font-semibold text-white shadow-sm shadow-brand-500/30 transition duration-300 hover:-translate-y-0.5 hover:bg-brand-600 hover:shadow-lg hover:shadow-brand-500/40 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-500"
+        className="rounded-lg bg-brand-500 px-2.5 py-2 whitespace-nowrap sm:px-4 text-sm font-semibold text-white shadow-sm shadow-brand-500/30 transition duration-300 hover:-translate-y-0.5 hover:bg-brand-600 hover:shadow-lg hover:shadow-brand-500/40 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-500"
       >
         Sign up
       </Link>

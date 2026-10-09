@@ -1,4 +1,5 @@
 import Image from "next/image";
+import Link from "next/link";
 import { StoreButtons } from "./StoreButtons";
 
 const STATS = [
@@ -50,7 +51,20 @@ export function Hero() {
             costs.
           </p>
 
-          <div className="animate-fade-up mt-8" id="download" style={{ animationDelay: "270ms" }}>
+          {/* Browsing is the first thing anyone should be able to do, and it needs
+              no account — so it leads, ahead of the store links. */}
+          <div className="animate-fade-up mt-8 flex flex-wrap items-center gap-3" style={{ animationDelay: "270ms" }}>
+            <Link
+              href="/browse"
+              className="inline-flex items-center gap-2 rounded-xl bg-brand-500 px-6 py-3.5 text-base font-semibold text-white shadow-sm shadow-brand-500/30 transition duration-300 hover:-translate-y-0.5 hover:bg-brand-600 hover:shadow-lg hover:shadow-brand-500/40 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-500"
+            >
+              Browse items
+              <span aria-hidden>&rarr;</span>
+            </Link>
+            <span className="text-sm text-ink-600">No sign-in needed</span>
+          </div>
+
+          <div className="animate-fade-up mt-6" id="download" style={{ animationDelay: "320ms" }}>
             <StoreButtons />
           </div>
 

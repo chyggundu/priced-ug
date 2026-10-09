@@ -7,7 +7,6 @@ import { site } from "@/content/site";
 import { AuthButtons } from "./AuthButtons";
 
 const NAV_LINKS = [
-  { href: "/browse", label: "Browse" },
   { href: "/#how-it-works", label: "How it works" },
   { href: "/#features", label: "Features" },
   { href: "/#contact", label: "Contact" },
@@ -36,7 +35,7 @@ export function Nav() {
     >
       <nav
         aria-label="Main"
-        className="mx-auto flex h-16 max-w-6xl items-center justify-between gap-6 px-5"
+        className="mx-auto flex h-16 max-w-6xl items-center justify-between gap-2 px-4 sm:gap-6 sm:px-5"
       >
         <Link href="/" className="group flex items-center gap-2.5">
           <Image
@@ -47,24 +46,36 @@ export function Nav() {
             className="size-8 transition duration-300 group-hover:-rotate-12 group-hover:scale-110"
             priority
           />
-          <span className="text-lg font-bold tracking-tight">{site.name}</span>
+          <span className="text-base font-bold tracking-tight whitespace-nowrap sm:text-lg">{site.name}</span>
         </Link>
 
-        {/* Tighter gap at md: five links, the wordmark and the CTA share one row. */}
-        <ul className="hidden items-center gap-5 md:flex lg:gap-7">
-          {NAV_LINKS.map((link) => (
-            <li key={link.href}>
-              <Link
-                href={link.href}
-                className="relative text-sm font-medium text-ink-600 transition after:absolute after:-bottom-1.5 after:left-0 after:h-0.5 after:w-0 after:rounded-full after:bg-brand-500 after:transition-[width] after:duration-300 hover:text-brand-500 hover:after:w-full"
-              >
-                {link.label}
-              </Link>
-            </li>
-          ))}
-        </ul>
+        <div className="flex items-center gap-1.5 sm:gap-5 lg:gap-7">
+          {/* Tighter gap at md: the links, the wordmark and the CTA share one row. */}
+          <ul className="hidden items-center gap-5 md:flex lg:gap-7">
+            {NAV_LINKS.map((link) => (
+              <li key={link.href}>
+                <Link
+                  href={link.href}
+                  className="relative text-sm font-medium text-ink-600 transition after:absolute after:-bottom-1.5 after:left-0 after:h-0.5 after:w-0 after:rounded-full after:bg-brand-500 after:transition-[width] after:duration-300 hover:text-brand-500 hover:after:w-full"
+                >
+                  {link.label}
+                </Link>
+              </li>
+            ))}
+          </ul>
 
-        <AuthButtons />
+          <AuthButtons />
+
+          {/* Browse is the entry point to the whole catalogue and needs no
+              sign-in, so it stays visible at every width — last in the row,
+              where a thumb reaches it on a phone. */}
+          <Link
+            href="/browse"
+            className="rounded-lg bg-brand-500 px-2.5 py-2 text-sm font-semibold whitespace-nowrap text-white shadow-sm shadow-brand-500/30 transition duration-300 hover:-translate-y-0.5 hover:bg-brand-600 hover:shadow-lg hover:shadow-brand-500/40 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-500 sm:px-3.5"
+          >
+            Browse
+          </Link>
+        </div>
       </nav>
     </header>
   );

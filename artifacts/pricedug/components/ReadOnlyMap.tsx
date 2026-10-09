@@ -35,15 +35,18 @@ export default function ReadOnlyMap({
   latitude,
   longitude,
   height = 200,
+  rounded = true,
 }: {
   latitude: number;
   longitude: number;
   height?: number;
+  /** Off when the map sits flush inside a card that already clips its corners. */
+  rounded?: boolean;
 }) {
   const html = useMemo(() => buildHtml(latitude, longitude), [latitude, longitude]);
 
   return (
-    <View style={[styles.wrap, { height }]}>
+    <View style={[styles.wrap, { height }, rounded ? null : { borderRadius: 0 }]}>
       {Platform.OS === "web"
         ? React.createElement("iframe", {
             srcDoc: html,

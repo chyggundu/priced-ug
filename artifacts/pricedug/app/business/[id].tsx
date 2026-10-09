@@ -19,6 +19,7 @@ import { priceLabel } from "@/constants/product";
 import { BusinessReviews } from "@/components/BusinessReviews";
 import { ProductMediaGallery } from "@/components/ProductMediaGallery";
 import { MediaViewer } from "@/components/MediaViewer";
+import { BusinessLocationMap } from "@/components/BusinessLocationMap";
 
 export default function BusinessDetailScreen() {
   const colors = useColors();
@@ -51,8 +52,12 @@ export default function BusinessDetailScreen() {
     Linking.openURL(`tel:${phone}`);
   };
 
-  const openDirections = (lat: number, lng: number) => {
-    Linking.openURL(`https://www.google.com/maps/dir/?api=1&destination=${lat},${lng}`);
+  const openDirections = (destination: string) => {
+    Linking.openURL(`https://www.google.com/maps/dir/?api=1&destination=${destination}`);
+  };
+
+  const openInMaps = (destination: string) => {
+    Linking.openURL(`https://www.google.com/maps/search/?api=1&query=${destination}`);
   };
 
   if (bizLoading) {
@@ -74,6 +79,17 @@ export default function BusinessDetailScreen() {
       </View>
     );
   }
+
+  // Most listings only typed an address, so the map and its links fall back to
+  // it rather than disappearing whenever a business never dropped a pin.
+  const locationLabel = [business.address, business.city].filter(Boolean).join(", ");
+  const locationQuery = locationLabel ? `${locationLabel}, Uganda` : null;
+  const destination =
+    business.latitude != null && business.longitude != null
+      ? `${business.latitude},${business.longitude}`
+      : locationQuery
+        ? encodeURIComponent(locationQuery)
+        : null;
 
   return (
     <View style={[styles.container, { backgroundColor: colors.background }]}>
@@ -121,23 +137,32 @@ export default function BusinessDetailScreen() {
           )}
 
           <View style={styles.detailsCard}>
-            {business.address && (
+            {locationLabel !== "" && (
               <View style={styles.detailRow}>
                 <Feather name="map-pin" size={16} color={colors.primary} />
-                <Text style={[styles.detailText, { color: colors.foreground }]}>{business.address}</Text>
+                <Text style={[styles.detailText, { color: colors.foreground }]}>{locationLabel}</Text>
               </View>
             )}
-            {business.latitude != null && business.longitude != null && (
+            {destination && (
               <>
-                {business.address && (
+                {locationLabel !== "" && (
                   <View style={[styles.separator, { backgroundColor: colors.border }]} />
                 )}
-                <Pressable
-                  style={styles.detailRow}
-                  onPress={() => openDirections(business.latitude!, business.longitude!)}
-                >
+                <Pressable style={styles.detailRow} onPress={() => openDirections(destination)}>
                   <Feather name="navigation" size={16} color={colors.primary} />
                   <Text style={[styles.detailText, { color: colors.primary }]}>Get Directions</Text>
+                </Pressable>
+                {/* The pin on a real map, inside the card — same as the web page. */}
+                <BusinessLocationMap
+                  latitude={business.latitude ?? null}
+                  longitude={business.longitude ?? null}
+                  query={locationQuery}
+                  borderColor={colors.border}
+                />
+                <View style={[styles.separator, { backgroundColor: colors.border }]} />
+                <Pressable style={styles.detailRow} onPress={() => openInMaps(destination)}>
+                  <Feather name="external-link" size={16} color={colors.primary} />
+                  <Text style={[styles.detailText, { color: colors.primary }]}>Open in Google Maps</Text>
                 </Pressable>
               </>
             )}

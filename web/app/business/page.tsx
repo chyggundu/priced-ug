@@ -7,6 +7,7 @@ import { BusinessReviews } from "@/components/BusinessReviews";
 import { FavoriteButton } from "@/components/FavoriteButton";
 import { ShareButton } from "@/components/ShareButton";
 import { BusinessMap } from "@/components/BusinessMap";
+import { DirectionsIcon, MapPinIcon } from "@/components/icons";
 import { Notice } from "@/components/dashboard/DashboardShell";
 import { MediaLightbox, useLightbox } from "@/components/MediaLightbox";
 import { buildMediaSlides } from "@/lib/media";
@@ -87,10 +88,22 @@ function BusinessDetail() {
     ? [...products].sort((a, b) => (a.id === highlightId ? -1 : b.id === highlightId ? 1 : 0))
     : products;
 
-  const mapsHref =
-    business.latitude != null && business.longitude != null
-      ? `https://www.google.com/maps/dir/?api=1&destination=${business.latitude},${business.longitude}`
+  // Most listings only typed an address, so the map links fall back to it
+  // rather than disappearing whenever a business never dropped a pin.
+  const locationLabel = [business.address, business.city].filter(Boolean).join(", ");
+  const locationQuery = locationLabel ? `${locationLabel}, Uganda` : null;
+  const hasPin = business.latitude != null && business.longitude != null;
+  const destination = hasPin
+    ? `${business.latitude},${business.longitude}`
+    : locationQuery
+      ? encodeURIComponent(locationQuery)
       : null;
+  const mapsHref = destination
+    ? `https://www.google.com/maps/dir/?api=1&destination=${destination}`
+    : null;
+  const viewHref = destination
+    ? `https://www.google.com/maps/search/?api=1&query=${destination}`
+    : null;
 
   return (
     <>
@@ -127,19 +140,44 @@ function BusinessDetail() {
 
         {business.description && <p className="mt-4 text-ink-600">{business.description}</p>}
 
-        {business.latitude != null && business.longitude != null && (
+        {/* Location card, laid out like the app: address, directions, then the
+            map itself inside the same card rather than floating above it. */}
+        <div className="mt-6 divide-y divide-line rounded-[10px] border border-line">
+          {locationLabel && (
+            <p className="flex items-start gap-2.5 px-4 py-3 text-[15px] text-ink-600">
+              <MapPinIcon className="mt-0.5 size-[18px] shrink-0 text-brand-500" />
+              <span>{locationLabel}</span>
+            </p>
+          )}
+
+          {mapsHref && (
+            <a
+              href={mapsHref}
+              target="_blank"
+              rel="noreferrer"
+              className="flex items-center gap-2.5 px-4 py-3 text-[15px] font-medium text-brand-500 transition hover:bg-brand-50"
+            >
+              <DirectionsIcon className="size-[18px] shrink-0" />
+              Get Directions
+            </a>
+          )}
+
           <BusinessMap
             latitude={business.latitude}
             longitude={business.longitude}
+            query={locationQuery}
             name={business.name}
           />
-        )}
 
-        <div className="mt-6 divide-y divide-line rounded-[10px] border border-line">
-          {(business.address || business.city) && (
-            <p className="px-4 py-3 text-[15px] text-ink-600">
-              {[business.address, business.city].filter(Boolean).join(", ")}
-            </p>
+          {viewHref && (
+            <a
+              href={viewHref}
+              target="_blank"
+              rel="noreferrer"
+              className="block px-4 py-3 text-[15px] font-medium text-brand-500 transition hover:bg-brand-50"
+            >
+              Open in Google Maps
+            </a>
           )}
 
           {(business.openingTime || business.closingTime) && (
@@ -150,17 +188,6 @@ function BusinessDetail() {
                   ? `Opens at ${business.openingTime}`
                   : `Closes at ${business.closingTime}`}
             </p>
-          )}
-
-          {mapsHref && (
-            <a
-              href={mapsHref}
-              target="_blank"
-              rel="noreferrer"
-              className="block px-4 py-3 text-[15px] font-medium text-brand-500 transition hover:bg-brand-50"
-            >
-              Open in Google Maps
-            </a>
           )}
 
           {/* Contacts open WhatsApp, never the dialer — same as the app. */}
