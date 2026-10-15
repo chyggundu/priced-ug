@@ -15,7 +15,7 @@
     },
     "ios": {
       "supportsTablet": false,
-      "bundleIdentifier": "com.pricedug.app",
+      "bundleIdentifier": "com.pricedug.mobile",
       "buildNumber": "18"
     },
     "android": {
