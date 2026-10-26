@@ -22,7 +22,7 @@ import { useColors } from "@/hooks/useColors";
 import { priceLabel } from "@/constants/product";
 import { MediaBadges } from "@/components/ProductMediaGallery";
 
-const WHATSAPP_NUMBER = "1234567890"; // Replace with actual WhatsApp number
+const WHATSAPP_NUMBER = "256787298866";
 
 
 export default function BrowseScreen() {

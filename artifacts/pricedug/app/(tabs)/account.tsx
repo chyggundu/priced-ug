@@ -8,7 +8,7 @@ import { useMyBusiness } from "@/lib/queries";
 import { useColors } from "@/hooks/useColors";
 import { useAppAuth } from "@/context/AuthContext";
 
-const WHATSAPP_NUMBER = "1234567890";
+const WHATSAPP_NUMBER = "256787298866";
 
 export default function AccountScreen() {
   const colors = useColors();

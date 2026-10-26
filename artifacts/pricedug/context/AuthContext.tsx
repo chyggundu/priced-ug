@@ -14,10 +14,16 @@ const AuthContext = createContext<AuthContextValue>({ isAdmin: false, userId: nu
   `is_admin()`. It used to compare against a Clerk user id, which broke twice
   over: ids differ between Clerk's development and production instances, and
   the variable was never set, so no one was ever an admin.
+
+  More than one address can hold admin rights (e.g. a second account used for
+  testing or App Store review access) via a comma-separated env var.
 */
-const ADMIN_EMAIL = (
-  process.env.EXPO_PUBLIC_ADMIN_EMAIL ?? "priceduganda@gmail.com"
-).toLowerCase();
+const ADMIN_EMAILS = (
+  process.env.EXPO_PUBLIC_ADMIN_EMAILS ?? "priceduganda@gmail.com,pricedugadmin@yopmail.com"
+)
+  .split(",")
+  .map((email) => email.trim().toLowerCase())
+  .filter(Boolean);
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const { userId, getToken } = useAuth();
@@ -31,7 +37,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const isAdmin = !!user?.emailAddresses.some(
     (email) =>
-      email.emailAddress.toLowerCase() === ADMIN_EMAIL &&
+      ADMIN_EMAILS.includes(email.emailAddress.toLowerCase()) &&
       email.verification?.status === "verified",
   );
 

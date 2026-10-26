@@ -10,15 +10,18 @@ type EmailBearing = {
   emailAddresses: { emailAddress: string; verification?: { status?: string | null } | null }[];
 };
 
-const ADMIN_EMAIL = (
-  process.env.NEXT_PUBLIC_ADMIN_EMAIL ?? "priceduganda@gmail.com"
-).toLowerCase();
+const ADMIN_EMAILS = (
+  process.env.NEXT_PUBLIC_ADMIN_EMAILS ?? "priceduganda@gmail.com,pricedugadmin@yopmail.com"
+)
+  .split(",")
+  .map((email) => email.trim().toLowerCase())
+  .filter(Boolean);
 
 export function isAdminUser(user: EmailBearing | null | undefined): boolean {
   if (!user) return false;
   return user.emailAddresses.some(
     (email) =>
-      email.emailAddress.toLowerCase() === ADMIN_EMAIL &&
+      ADMIN_EMAILS.includes(email.emailAddress.toLowerCase()) &&
       email.verification?.status === "verified",
   );
 }
