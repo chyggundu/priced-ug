@@ -1,7 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
-import { useAuth, useUser } from "@clerk/react";
+import { useAuth } from "@clerk/react";
 import {
   createReview,
   deleteReview,
@@ -10,12 +10,9 @@ import {
   type Review,
 } from "@/lib/api";
 import { isClerkConfigured } from "@/lib/clerk";
-import { isAdminUser } from "@/lib/admin";
 
 /** Mirrors the reviews section of the mobile app's business screen. */
 export function BusinessReviews({ businessId, isOwner }: { businessId: number; isOwner: boolean }) {
-  const { user } = useUser();
-  const isAdmin = isAdminUser(user);
   const [reviews, setReviews] = useState<Review[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -88,21 +85,18 @@ export function BusinessReviews({ businessId, isOwner }: { businessId: number; i
 
               {isOwner && !review.reply && <ReplyForm reviewId={review.id} onDone={load} />}
 
-              {/* An admin moderates any review; an author can withdraw their own. */}
-              {(isAdmin || review.isMine) && (
+              {/* Only the author can withdraw their own review. */}
+              {review.isMine && (
                 <button
                   type="button"
                   className="mt-3 text-sm font-medium text-brand-500 transition hover:text-brand-600"
                   onClick={() => {
-                    const prompt = review.isMine
-                      ? "Delete your review?"
-                      : "Delete this review?";
-                    if (window.confirm(prompt)) {
+                    if (window.confirm("Delete your review?")) {
                       void deleteReview(review.id).then(load);
                     }
                   }}
                 >
-                  {review.isMine ? "Delete my review" : "Delete review"}
+                  Delete my review
                 </button>
               )}
             </li>

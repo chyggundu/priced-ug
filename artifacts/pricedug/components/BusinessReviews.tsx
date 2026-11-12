@@ -65,7 +65,7 @@ export function BusinessReviews({
   ownerUserId: string;
 }) {
   const colors = useColors();
-  const { userId, isAdmin } = useAppAuth();
+  const { userId } = useAppAuth();
 
   const { data: reviews = [], isLoading, refetch } = useReviews(businessId);
   const createReview = useCreateReview(businessId);
@@ -218,8 +218,8 @@ export function BusinessReviews({
                   </Text>
                   <Stars rating={review.rating} color={colors.primary} mutedColor={colors.border} />
                 </View>
-                {/* An admin moderates any review; an author can withdraw their own. */}
-                {(isAdmin || review.isMine) && (
+                {/* Only the author can withdraw their own review. */}
+                {review.isMine && (
                   <Pressable
                     onPress={() => confirmDelete(review.id)}
                     hitSlop={8}
