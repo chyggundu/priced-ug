@@ -374,6 +374,8 @@ export type Customer = {
   street: string | null;
   latitude: number | null;
   longitude: number | null;
+  /** Whether businesses can find this customer with Access Customer. */
+  discoverable: boolean;
   createdAt: string;
   updatedAt: string;
 };
@@ -390,6 +392,7 @@ const mapCustomer = (r: any): Customer => ({
   street: r.street ?? null,
   latitude: r.latitude ?? null,
   longitude: r.longitude ?? null,
+  discoverable: r.discoverable ?? true,
   createdAt: r.created_at,
   updatedAt: r.updated_at,
 });
@@ -421,6 +424,7 @@ export type CustomerInput = {
   street?: string | null;
   latitude?: number | null;
   longitude?: number | null;
+  discoverable?: boolean;
 };
 
 export function useSaveMyCustomerProfile() {
@@ -446,6 +450,7 @@ export function useSaveMyCustomerProfile() {
             street: input.street ?? null,
             latitude: input.latitude ?? null,
             longitude: input.longitude ?? null,
+            discoverable: input.discoverable ?? true,
           },
           { onConflict: "clerk_user_id" },
         )

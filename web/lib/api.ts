@@ -458,6 +458,8 @@ export type Customer = {
   addressPhotoUrl: string | null;
   latitude: number | null;
   longitude: number | null;
+  /** Whether businesses can find this customer with Access Customer. */
+  discoverable: boolean;
   createdAt: string;
   updatedAt: string;
 };
@@ -472,6 +474,7 @@ export type CustomerInput = {
   addressPhotoUrl?: string | null;
   latitude?: number | null;
   longitude?: number | null;
+  discoverable?: boolean;
 };
 
 /* eslint-disable @typescript-eslint/no-explicit-any */
@@ -486,6 +489,7 @@ const mapCustomer = (r: any): Customer => ({
   addressPhotoUrl: r.address_photo_url ?? null,
   latitude: r.latitude ?? null,
   longitude: r.longitude ?? null,
+  discoverable: r.discoverable ?? true,
   createdAt: r.created_at,
   updatedAt: r.updated_at,
 });
@@ -518,6 +522,7 @@ export async function saveMyCustomerProfile(input: CustomerInput): Promise<Custo
         address_photo_url: input.addressPhotoUrl ?? null,
         latitude: input.latitude ?? null,
         longitude: input.longitude ?? null,
+        discoverable: input.discoverable ?? true,
       },
       { onConflict: "clerk_user_id" },
     )
@@ -531,7 +536,7 @@ export async function saveMyCustomerProfile(input: CustomerInput): Promise<Custo
 export async function lookupCustomer(phone: string, district: string): Promise<Customer> {
   const { data, error } = await sb().rpc("lookup_customer", { phone, district });
   if (error) raise(error);
-  if (!data) throw new Error("Customer not found");
+  if (!data) throw new Error("No customer matched those details, or they have turned off \"Let businesses find me\".");
   return mapCustomer(data);
 }
 

@@ -10,6 +10,7 @@ import {
   Alert,
   Platform,
   Modal,
+  Switch,
 } from "react-native";
 import { useRouter } from "expo-router";
 import { Feather } from "@expo/vector-icons";
@@ -41,6 +42,7 @@ export default function CustomerProfileScreen() {
   const [locating, setLocating] = useState(false);
   const [showMap, setShowMap] = useState(false);
   const [saving, setSaving] = useState(false);
+  const [discoverable, setDiscoverable] = useState(true);
 
   useEffect(() => {
     if (profile) {
@@ -52,6 +54,7 @@ export default function CustomerProfileScreen() {
       setStreet(profile.street ?? "");
       setLatitude(profile.latitude ?? null);
       setLongitude(profile.longitude ?? null);
+      setDiscoverable(profile.discoverable);
     }
   }, [profile]);
 
@@ -91,6 +94,7 @@ export default function CustomerProfileScreen() {
           street: street.trim() || null,
           latitude,
           longitude,
+          discoverable,
         },
       });
       Alert.alert("Saved", "Your profile has been saved.");
@@ -142,6 +146,9 @@ export default function CustomerProfileScreen() {
         <View style={styles.form}>
           <Text style={[styles.intro, { color: colors.mutedForeground }]}>
             Save your contact and delivery details so businesses you buy from can reach you.
+            While &quot;Let businesses find me&quot; is on, any business on Priced Ug that enters
+            your phone number and district can see your name, address and map location to
+            deliver your order.
           </Text>
 
           <Text style={[styles.label, { color: colors.foreground }]}>Full Name *</Text>
@@ -239,6 +246,23 @@ export default function CustomerProfileScreen() {
             </View>
           )}
 
+          <View style={[styles.switchRow, { borderColor: colors.border }]}>
+            <View style={{ flex: 1 }}>
+              <Text style={[styles.switchTitle, { color: colors.foreground }]}>
+                Let businesses find me
+              </Text>
+              <Text style={[styles.switchHint, { color: colors.mutedForeground }]}>
+                Turn off to stop businesses looking up your delivery details.
+              </Text>
+            </View>
+            <Switch
+              value={discoverable}
+              onValueChange={setDiscoverable}
+              trackColor={{ true: colors.primary }}
+              accessibilityLabel="Let businesses find me"
+            />
+          </View>
+
           <Pressable
             style={[styles.saveBtn, { backgroundColor: colors.primary, opacity: saving ? 0.6 : 1, marginTop: 24 }]}
             onPress={handleSave}
@@ -301,6 +325,16 @@ const styles = StyleSheet.create({
   locationInfo: { flexDirection: "row", alignItems: "center", justifyContent: "space-between", marginTop: 8 },
   locationCoords: { fontSize: 13 },
   locationClear: { fontSize: 13, fontWeight: "600" as const },
+  switchRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 12,
+    marginTop: 20,
+    paddingTop: 16,
+    borderTopWidth: 1,
+  },
+  switchTitle: { fontSize: 15, fontWeight: "600" as const },
+  switchHint: { fontSize: 13, lineHeight: 18, marginTop: 2 },
   saveBtn: { borderRadius: 10, paddingVertical: 16, alignItems: "center" },
   saveBtnText: { color: "#fff", fontSize: 16, fontWeight: "600" as const },
 });

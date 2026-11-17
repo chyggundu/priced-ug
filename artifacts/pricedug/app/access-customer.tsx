@@ -49,7 +49,7 @@ const LOOKUP_ERROR_CONTENT: Record<
   notFound: {
     icon: "user-x",
     title: "No customer found",
-    message: "No customer matches that phone number and district. Double-check the details and try again.",
+    message: "No customer matches that phone number and district, or they have turned off \"Let businesses find me\". Double-check the details and try again.",
   },
   forbidden: {
     icon: "lock",

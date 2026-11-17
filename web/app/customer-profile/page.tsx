@@ -40,6 +40,7 @@ function CustomerProfile() {
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [saved, setSaved] = useState(false);
+  const [discoverable, setDiscoverable] = useState(true);
 
   useEffect(() => {
     getMyCustomerProfile()
@@ -55,6 +56,7 @@ function CustomerProfile() {
         if (profile.latitude != null && profile.longitude != null) {
           setCoords({ latitude: profile.latitude, longitude: profile.longitude });
         }
+        setDiscoverable(profile.discoverable);
       })
       .catch((e: unknown) => setError(e instanceof Error ? e.message : "Could not load your profile."))
       .finally(() => setLoading(false));
@@ -92,6 +94,7 @@ function CustomerProfile() {
         addressPhotoUrl: photoUrls[0] ?? null,
         latitude: coords?.latitude ?? null,
         longitude: coords?.longitude ?? null,
+        discoverable,
       };
       await saveMyCustomerProfile(payload);
       setSaved(true);
@@ -113,7 +116,7 @@ function CustomerProfile() {
   return (
     <DashboardShell
       title="Delivery profile"
-      description="Businesses use these details to find you when delivering an order."
+      description="While “Let businesses find me” is on, any business on Priced Ug that enters your phone number and district can see your name, address, address photo and map pin to deliver your order."
     >
       <form onSubmit={handleSubmit} className="flex flex-col gap-5">
         <div>
@@ -202,6 +205,22 @@ function CustomerProfile() {
             Use my current location
           </button>
         </div>
+
+        <label className="flex items-start gap-3" htmlFor="discoverable">
+          <input
+            id="discoverable"
+            type="checkbox"
+            className="mt-1 h-4 w-4"
+            checked={discoverable}
+            onChange={(e) => setDiscoverable(e.target.checked)}
+          />
+          <span>
+            <span className="block font-medium">Let businesses find me</span>
+            <span className="block text-sm text-ink-400">
+              Turn off to stop businesses looking up your delivery details.
+            </span>
+          </span>
+        </label>
 
         {error && <Notice>{error}</Notice>}
         {saved && <Notice tone="info">Profile saved.</Notice>}
